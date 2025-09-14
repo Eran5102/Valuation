@@ -1,0 +1,575 @@
+{
+  "companies": [
+    {
+      "id": 1,
+      "name": "TechStart Inc.",
+      "foundedDate": "2022-01-15",
+      "industry": "Technology",
+      "status": "active",
+      "lastValuation": "2024-01-10",
+      "totalFunding": 5000000,
+      "employees": 25,
+      "description": "AI-powered software platform for enterprise automation",
+      "location": "San Francisco, CA",
+      "email": "contact@techstart.com",
+      "phone": "+1 (555) 123-4567",
+      "contact_person": "John Smith",
+      "updated_at": "2025-09-14T09:51:03.380Z"
+    },
+    {
+      "id": 2,
+      "name": "InnovateCorp",
+      "foundedDate": "2021-06-20",
+      "industry": "Healthcare",
+      "status": "Active",
+      "lastValuation": "2024-01-08",
+      "totalFunding": 12000000,
+      "employees": 45,
+      "description": "Medical device company developing surgical robotics"
+    },
+    {
+      "id": 3,
+      "name": "StartupXYZ",
+      "foundedDate": "2023-03-10",
+      "industry": "Fintech",
+      "status": "Active",
+      "lastValuation": "2024-01-05",
+      "totalFunding": 2500000,
+      "employees": 15,
+      "description": "Digital banking platform for small businesses"
+    }
+  ],
+  "shareClasses": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "shareType": "common",
+      "name": "Common Stock",
+      "roundDate": "2022-01-15",
+      "sharesOutstanding": 8000000,
+      "pricePerShare": 0.125,
+      "preferenceType": "non-participating",
+      "lpMultiple": 1,
+      "seniority": 2,
+      "participationCap": null,
+      "conversionRatio": 1,
+      "dividendsDeclared": false,
+      "dividendsRate": null,
+      "dividendsType": null,
+      "pik": false
+    },
+    {
+      "id": 2,
+      "companyId": 1,
+      "shareType": "preferred",
+      "name": "Series A Preferred",
+      "roundDate": "2023-06-01",
+      "sharesOutstanding": 2000000,
+      "pricePerShare": 2.5,
+      "preferenceType": "participating",
+      "lpMultiple": 1,
+      "seniority": 1,
+      "participationCap": null,
+      "conversionRatio": 1,
+      "dividendsDeclared": true,
+      "dividendsRate": 0.08,
+      "dividendsType": "cumulative",
+      "pik": false
+    },
+    {
+      "id": 3,
+      "companyId": 1,
+      "shareType": "preferred",
+      "name": "Series B Preferred",
+      "roundDate": "2024-03-15",
+      "sharesOutstanding": 1500000,
+      "pricePerShare": 4,
+      "preferenceType": "participating-with-cap",
+      "lpMultiple": 1.5,
+      "seniority": 0,
+      "participationCap": 3,
+      "conversionRatio": 1,
+      "dividendsDeclared": true,
+      "dividendsRate": 0.1,
+      "dividendsType": "non-cumulative",
+      "pik": true
+    }
+  ],
+  "valuations": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "title": "Series A 409A Valuation",
+      "valuationType": "409A",
+      "status": "completed",
+      "valuationDate": "2024-01-10",
+      "fairMarketValue": 2.5,
+      "totalValue": 25000000,
+      "methodology": "DCF",
+      "purpose": "Stock Option Grants",
+      "createdAt": "2024-01-08T10:00:00Z",
+      "updatedAt": "2024-01-10T15:30:00Z",
+      "assumptions": [
+        {
+          "id": "general",
+          "name": "General Information",
+          "icon": {},
+          "assumptions": [
+            {
+              "id": "company_name",
+              "name": "Company Name",
+              "value": "",
+              "type": "text",
+              "required": true
+            },
+            {
+              "id": "valuation_date",
+              "name": "Valuation Date",
+              "value": "",
+              "type": "date",
+              "required": true
+            },
+            {
+              "id": "fiscal_year_end",
+              "name": "Fiscal Year End",
+              "value": "12/31",
+              "type": "text"
+            },
+            {
+              "id": "industry",
+              "name": "Industry",
+              "value": "",
+              "type": "select",
+              "options": [
+                "Technology",
+                "Healthcare",
+                "Financial Services",
+                "Consumer",
+                "Industrial"
+              ]
+            },
+            {
+              "id": "stage",
+              "name": "Company Stage",
+              "value": "",
+              "type": "select",
+              "options": [
+                "Seed",
+                "Series A",
+                "Series B",
+                "Series C",
+                "Series D+",
+                "Pre-IPO"
+              ]
+            },
+            {
+              "id": "years_in_operation",
+              "name": "Years in Operation",
+              "value": "",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "id": "financial_metrics",
+          "name": "Financial Metrics",
+          "icon": {},
+          "assumptions": [
+            {
+              "id": "revenue_current",
+              "name": "Current Year Revenue",
+              "value": "",
+              "type": "currency",
+              "required": true
+            },
+            {
+              "id": "revenue_prior",
+              "name": "Prior Year Revenue",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "ebitda_current",
+              "name": "Current EBITDA",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "burn_rate",
+              "name": "Monthly Burn Rate",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "cash_balance",
+              "name": "Cash Balance",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "debt_outstanding",
+              "name": "Total Debt Outstanding",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "runway_months",
+              "name": "Cash Runway (Months)",
+              "value": "",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "id": "growth_assumptions",
+          "name": "Growth Assumptions",
+          "icon": {},
+          "assumptions": [
+            {
+              "id": "revenue_growth_y1",
+              "name": "Year 1 Revenue Growth",
+              "value": "25",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "revenue_growth_y2",
+              "name": "Year 2 Revenue Growth",
+              "value": "20",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "revenue_growth_y3",
+              "name": "Year 3 Revenue Growth",
+              "value": "15",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "revenue_growth_y4",
+              "name": "Year 4 Revenue Growth",
+              "value": "12",
+              "type": "percentage"
+            },
+            {
+              "id": "revenue_growth_y5",
+              "name": "Year 5 Revenue Growth",
+              "value": "10",
+              "type": "percentage"
+            },
+            {
+              "id": "terminal_growth_rate",
+              "name": "Terminal Growth Rate",
+              "value": "2.5",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "target_ebitda_margin",
+              "name": "Target EBITDA Margin",
+              "value": "15",
+              "type": "percentage"
+            }
+          ]
+        },
+        {
+          "id": "discount_rates",
+          "name": "Discount Rates",
+          "icon": {},
+          "assumptions": [
+            {
+              "id": "wacc",
+              "name": "Weighted Average Cost of Capital (WACC)",
+              "value": "12",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "cost_of_equity",
+              "name": "Cost of Equity",
+              "value": "15",
+              "type": "percentage"
+            },
+            {
+              "id": "cost_of_debt",
+              "name": "Cost of Debt",
+              "value": "6",
+              "type": "percentage"
+            },
+            {
+              "id": "tax_rate",
+              "name": "Tax Rate",
+              "value": "21",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "risk_free_rate",
+              "name": "Risk-Free Rate",
+              "value": "3.84",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "market_risk_premium",
+              "name": "Market Risk Premium",
+              "value": "7",
+              "type": "percentage"
+            },
+            {
+              "id": "size_premium",
+              "name": "Size Premium",
+              "value": "3.2",
+              "type": "percentage"
+            },
+            {
+              "id": "company_specific_premium",
+              "name": "Company-Specific Risk Premium",
+              "value": "2",
+              "type": "percentage"
+            }
+          ]
+        },
+        {
+          "id": "volatility_assumptions",
+          "name": "Volatility & Option Pricing",
+          "icon": {},
+          "assumptions": [
+            {
+              "id": "equity_volatility",
+              "name": "Equity Volatility",
+              "value": "55.6",
+              "type": "percentage",
+              "required": true
+            },
+            {
+              "id": "asset_volatility",
+              "name": "Asset Volatility",
+              "value": "45",
+              "type": "percentage"
+            },
+            {
+              "id": "time_to_liquidity",
+              "name": "Expected Time to Liquidity (Years)",
+              "value": "5",
+              "type": "number",
+              "required": true
+            },
+            {
+              "id": "probability_ipo",
+              "name": "Probability of IPO",
+              "value": "10",
+              "type": "percentage"
+            },
+            {
+              "id": "probability_ma",
+              "name": "Probability of M&A",
+              "value": "30",
+              "type": "percentage"
+            },
+            {
+              "id": "probability_dissolution",
+              "name": "Probability of Dissolution",
+              "value": "5",
+              "type": "percentage"
+            }
+          ]
+        },
+        {
+          "id": "market_approach",
+          "name": "Market Approach",
+          "icon": {},
+          "assumptions": [
+            {
+              "id": "revenue_multiple",
+              "name": "Revenue Multiple (EV/Revenue)",
+              "value": "3.5",
+              "type": "number"
+            },
+            {
+              "id": "ebitda_multiple",
+              "name": "EBITDA Multiple (EV/EBITDA)",
+              "value": "12",
+              "type": "number"
+            },
+            {
+              "id": "ps_ratio",
+              "name": "Price-to-Sales Ratio",
+              "value": "4",
+              "type": "number"
+            },
+            {
+              "id": "market_approach_weight",
+              "name": "Market Approach Weight",
+              "value": "30",
+              "type": "percentage"
+            },
+            {
+              "id": "income_approach_weight",
+              "name": "Income Approach Weight",
+              "value": "70",
+              "type": "percentage"
+            }
+          ]
+        },
+        {
+          "id": "backsolve",
+          "name": "Backsolve / Recent Transaction",
+          "icon": {},
+          "assumptions": [
+            {
+              "id": "last_round_date",
+              "name": "Last Funding Round Date",
+              "value": "",
+              "type": "date"
+            },
+            {
+              "id": "last_round_amount",
+              "name": "Last Round Amount Raised",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "last_round_premoney",
+              "name": "Last Round Pre-Money Valuation",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "last_round_price",
+              "name": "Last Round Price per Share",
+              "value": "",
+              "type": "currency"
+            },
+            {
+              "id": "backsolve_volatility",
+              "name": "Implied Volatility from Backsolve",
+              "value": "55",
+              "type": "percentage"
+            }
+          ]
+        }
+      ],
+      "cap_table": {
+        "shareClasses": [
+          {
+            "id": 1,
+            "companyId": 1,
+            "shareType": "common",
+            "name": "Common Stock",
+            "roundDate": "2022-01-15",
+            "sharesOutstanding": 8000000,
+            "pricePerShare": 0.0001,
+            "preferenceType": "non-participating",
+            "lpMultiple": 1,
+            "seniority": 2,
+            "participationCap": null,
+            "conversionRatio": 1,
+            "dividendsDeclared": false,
+            "dividendsRate": null,
+            "dividendsType": null,
+            "pik": false,
+            "amountInvested": 800,
+            "totalLP": 800,
+            "asConvertedShares": 8000000,
+            "totalDividends": 0
+          },
+          {
+            "id": 2,
+            "companyId": 1,
+            "shareType": "preferred",
+            "name": "Series A Preferred",
+            "roundDate": "2023-06-01",
+            "sharesOutstanding": 2000000,
+            "pricePerShare": 2.5,
+            "preferenceType": "participating",
+            "lpMultiple": 1,
+            "seniority": 1,
+            "participationCap": null,
+            "conversionRatio": 1,
+            "dividendsDeclared": false,
+            "dividendsRate": 0.08,
+            "dividendsType": "cumulative",
+            "pik": false,
+            "amountInvested": 5000000,
+            "totalLP": 5000000,
+            "asConvertedShares": 2000000,
+            "totalDividends": 0
+          },
+          {
+            "id": 3,
+            "companyId": 1,
+            "shareType": "preferred",
+            "name": "Series B Preferred",
+            "roundDate": "2024-03-15",
+            "sharesOutstanding": 1500000,
+            "pricePerShare": 4,
+            "preferenceType": "participating-with-cap",
+            "lpMultiple": 1.5,
+            "seniority": 1,
+            "participationCap": 3,
+            "conversionRatio": 1,
+            "dividendsDeclared": false,
+            "dividendsRate": 0.1,
+            "dividendsType": "non-cumulative",
+            "pik": true,
+            "amountInvested": 6000000,
+            "totalLP": 9000000,
+            "asConvertedShares": 1500000,
+            "totalDividends": 0
+          }
+        ],
+        "options": [
+          {
+            "id": "1757827366022",
+            "numOptions": 250000,
+            "exercisePrice": 1.25,
+            "type": "Options"
+          },
+          {
+            "id": "1757827475392",
+            "numOptions": 350000,
+            "exercisePrice": 1.36,
+            "type": "Options"
+          }
+        ],
+        "updated_at": "2025-09-14T05:51:13.829Z"
+      },
+      "updated_at": "2025-09-14T06:37:22.269Z"
+    },
+    {
+      "id": 2,
+      "companyId": 2,
+      "title": "Pre-Money Valuation",
+      "valuationType": "Pre-Money",
+      "status": "in_progress",
+      "valuationDate": "2024-01-15",
+      "fairMarketValue": 4.75,
+      "totalValue": 50000000,
+      "methodology": "Market",
+      "purpose": "Transaction Support",
+      "createdAt": "2024-01-12T09:15:00Z",
+      "updatedAt": "2024-01-15T11:20:00Z"
+    },
+    {
+      "id": 3,
+      "companyId": 3,
+      "title": "409A Valuation - Seed",
+      "valuationType": "409A",
+      "status": "draft",
+      "valuationDate": "2024-01-20",
+      "fairMarketValue": 1.25,
+      "totalValue": 8000000,
+      "methodology": "Asset",
+      "purpose": "Financial Reporting",
+      "createdAt": "2024-01-18T14:30:00Z",
+      "updatedAt": "2024-01-19T16:45:00Z"
+    }
+  ],
+  "nextId": {
+    "companies": 4,
+    "shareClasses": 3,
+    "valuations": 4
+  }
+}
