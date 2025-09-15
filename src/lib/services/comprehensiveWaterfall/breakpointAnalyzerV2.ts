@@ -121,7 +121,7 @@ export class BreakpointAnalyzer {
     // Configuration constants
     private readonly CONVERGENCE_TOLERANCE = 0.01;
     private readonly MAX_ITERATIONS = 100;
-    private readonly OPTION_BAND_THRESHOLD = 0.1; // 10% for grouping similar strikes
+    private readonly OPTION_BAND_THRESHOLD = 0.0; // Disabled: treat each strike as separate breakpoint
     
     constructor(shareClasses: DatabaseShareClass[], options: DatabaseOption[] = []) {
         this.shareClasses = shareClasses;
@@ -214,6 +214,7 @@ export class BreakpointAnalyzer {
     
     /**
      * Count expected breakpoints before calculation (for validation)
+     * Enhanced to include participating-with-cap voluntary conversions
      */
     private countExpectedBreakpoints(): Record<BreakpointType, number> {
         const distinctSeniorityRanks = new Set(
@@ -238,11 +239,14 @@ export class BreakpointAnalyzer {
             sc.participationCap !== null
         ).length;
         
+        // Enhanced voluntary conversion count: non-participating + participating-with-cap
+        const maxVoluntaryConversions = nonParticipatingPreferred + cappedParticipating;
+        
         return {
             [BreakpointType.LIQUIDATION_PREFERENCE]: distinctSeniorityRanks,
             [BreakpointType.PRO_RATA_DISTRIBUTION]: 1,
             [BreakpointType.OPTION_EXERCISE]: uniqueStrikePrices,
-            [BreakpointType.VOLUNTARY_CONVERSION]: nonParticipatingPreferred, // Max possible
+            [BreakpointType.VOLUNTARY_CONVERSION]: maxVoluntaryConversions, // Updated formula
             [BreakpointType.PARTICIPATION_CAP]: cappedParticipating
         };
     }
@@ -374,8 +378,9 @@ export class BreakpointAnalyzer {
     }
     
     /**
-     * Type 3: Option Exercise Breakpoints with Circularity Solver
+     * Type 3: Option Exercise Breakpoints with Sequential Dilution Logic
      * Mathematical Formula: Number of breakpoints = Number of unique strike prices > $0.01
+     * Enhanced with cumulative dilution from previously exercised options
      */
     private calculateOptionExerciseBreakpoints(): {
         breakpoints: BreakpointSpec[];
@@ -385,63 +390,70 @@ export class BreakpointAnalyzer {
         const criticalValues: CriticalValue[] = [];
         
         // Group options by unique strike price (excluding cheap options ≤ $0.01)
+        // Each strike price creates a separate breakpoint
         const strikeGroups = new Map<number, DatabaseOption[]>();
         
         for (const option of this.options.filter(opt => opt.exercisePrice > 0.01)) {
             const strike = option.exercisePrice;
             
-            // Check for option bands (strikes within 10% of each other)
-            let groupedStrike = strike;
-            for (const existingStrike of strikeGroups.keys()) {
-                if (Math.abs(strike - existingStrike) / existingStrike <= this.OPTION_BAND_THRESHOLD) {
-                    groupedStrike = existingStrike; // Group with existing strike
-                    break;
-                }
+            if (!strikeGroups.has(strike)) {
+                strikeGroups.set(strike, []);
             }
-            
-            if (!strikeGroups.has(groupedStrike)) {
-                strikeGroups.set(groupedStrike, []);
-            }
-            strikeGroups.get(groupedStrike)!.push(option);
+            strikeGroups.get(strike)!.push(option);
         }
         
-        // Sort strikes in ascending order
+        // Sort strikes in ascending order for sequential processing
         const sortedStrikes = Array.from(strikeGroups.keys()).sort((a, b) => a - b);
+        
+        // Track cumulative exercised options from lower strikes
+        let cumulativeExercisedOptions = 0;
+        let cumulativeOptionProceeds = 0;
         
         for (const strike of sortedStrikes) {
             const optionsAtStrike = strikeGroups.get(strike)!;
-            const totalOptions = optionsAtStrike.reduce(
+            const totalOptionsAtStrike = optionsAtStrike.reduce(
                 (sum, opt) => sum + (opt.vested || opt.numOptions), 
                 0
             );
             
-            // Solve circularity problem iteratively
-            const exitValue = this.solveOptionExerciseCircularity(strike, totalOptions);
+            // Solve circularity with cumulative dilution from previous option exercises
+            const exitValue = this.solveSequentialOptionExercise(
+                strike, 
+                totalOptionsAtStrike, 
+                cumulativeExercisedOptions, 
+                cumulativeOptionProceeds
+            );
             
             if (exitValue) {
                 const bandNote = optionsAtStrike.length > 1 ? 
                     ` (${optionsAtStrike.length} option grants banded)` : '';
                 
+                // Update cumulative counters for next iteration
+                cumulativeExercisedOptions += totalOptionsAtStrike;
+                cumulativeOptionProceeds += totalOptionsAtStrike * strike;
+                
                 breakpoints.push({
                     breakpointType: BreakpointType.OPTION_EXERCISE,
                     exitValue: new Decimal(exitValue),
                     affectedSecurities: [`Options @ $${strike.toFixed(2)}${bandNote}`],
-                    calculationMethod: 'iterative_convergence_solver',
+                    calculationMethod: 'sequential_dilution_solver',
                     priorityOrder: 2000 + Math.floor(strike * 100),
-                    explanation: `Options with strike $${strike.toFixed(2)} become profitable to exercise`,
-                    mathematicalDerivation: `Solved: share_value(exit) > strike_price with dilution (${totalOptions} options)`,
-                    dependencies: []
+                    explanation: `Options with strike $${strike.toFixed(2)} become profitable to exercise (sequential)`,
+                    mathematicalDerivation: `Solved with ${cumulativeExercisedOptions - totalOptionsAtStrike} prior options exercised: share_value(exit) > $${strike.toFixed(2)}`,
+                    dependencies: cumulativeExercisedOptions > totalOptionsAtStrike ? 
+                        [`prior_option_exercises_${cumulativeExercisedOptions - totalOptionsAtStrike}`] : []
                 });
                 
                 criticalValues.push({
                     value: new Decimal(exitValue),
-                    description: `Option exercise threshold for $${strike.toFixed(2)} strike`,
-                    affectedSecurities: [`${totalOptions} options`],
-                    triggers: [`option_exercise_${strike.toFixed(2)}`]
+                    description: `Sequential option exercise threshold for $${strike.toFixed(2)} strike`,
+                    affectedSecurities: [`${totalOptionsAtStrike} options (cumulative: ${cumulativeExercisedOptions})`],
+                    triggers: [`sequential_option_exercise_${strike.toFixed(2)}`]
                 });
                 
                 this.auditTrail.push(
-                    `Option Exercise Breakpoint: $${exitValue.toFixed(2)} for strike $${strike.toFixed(2)}${bandNote}`
+                    `Sequential Option Exercise: $${exitValue.toFixed(2)} for strike $${strike.toFixed(2)}${bandNote} ` +
+                    `(${cumulativeExercisedOptions} total options)`
                 );
             }
         }
@@ -450,11 +462,15 @@ export class BreakpointAnalyzer {
     }
     
     /**
-     * Iterative solver for option exercise circularity
-     * Problem: Options only exercise if share_value > strike_price
-     * But: share_value depends on whether options are exercised (dilution)
+     * Sequential iterative solver for option exercise with cumulative dilution
+     * Accounts for previously exercised options in the dilution calculation
      */
-    private solveOptionExerciseCircularity(strikePrice: number, optionCount: number): number | null {
+    private solveSequentialOptionExercise(
+        strikePrice: number, 
+        optionCount: number, 
+        priorExercisedOptions: number, 
+        priorOptionProceeds: number
+    ): number | null {
         let exitValue = strikePrice * optionCount * 10; // Initial guess
         let previousValue = 0;
         let iterations = 0;
@@ -466,30 +482,48 @@ export class BreakpointAnalyzer {
                iterations < this.MAX_ITERATIONS) {
             previousValue = exitValue;
             
-            // Calculate current share value with dilution
+            // Calculate share base including previously exercised options
             const baseShares = this.getTotalSharesWithoutOptions();
-            const optionProceeds = optionCount * strikePrice;
+            const currentShareBase = baseShares + priorExercisedOptions;
             
-            // Determine if options would exercise at this exit value
-            const shareValueWithoutOptions = (exitValue - totalLp) / baseShares;
-            const shareValueWithOptions = (exitValue + optionProceeds - totalLp) / (baseShares + optionCount);
+            // Calculate total proceeds including prior option exercises
+            const currentOptionProceeds = optionCount * strikePrice;
+            const totalProceeds = exitValue + priorOptionProceeds + currentOptionProceeds;
+            const totalShares = currentShareBase + optionCount;
             
-            if (shareValueWithOptions > strikePrice) {
-                // Options would exercise - adjust exit value
-                const targetShareValue = strikePrice * 1.001; // Just above strike
-                exitValue = (targetShareValue * (baseShares + optionCount)) + totalLp - optionProceeds;
-            } else {
+            // Calculate per-share value with all dilution effects
+            const shareValueWithExercise = (totalProceeds - totalLp) / totalShares;
+            
+            if (shareValueWithExercise > strikePrice * 1.001) {
+                // Options would exercise - this is our breakpoint
+                // Fine-tune to find exact indifference point
+                const targetShareValue = strikePrice * 1.0005; // Just above strike
+                exitValue = (targetShareValue * totalShares) + totalLp - priorOptionProceeds - currentOptionProceeds;
+                break;
+            } else if (shareValueWithExercise < strikePrice * 0.999) {
                 // Options wouldn't exercise - increase exit value
-                exitValue = exitValue * 1.1;
+                exitValue = exitValue * 1.05;
+            } else {
+                // Very close to indifference point
+                break;
             }
             
             iterations++;
         }
         
-        this.performanceMetrics.iterationsUsed[`option_${strikePrice}`] = iterations;
+        this.performanceMetrics.iterationsUsed[`sequential_option_${strikePrice}`] = iterations;
         
         if (iterations >= this.MAX_ITERATIONS) {
-            this.auditTrail.push(`WARNING: Option exercise solver did not converge for strike $${strikePrice}`);
+            this.auditTrail.push(`WARNING: Sequential option exercise solver did not converge for strike $${strikePrice}`);
+            return null;
+        }
+        
+        // Final validation: ensure this exit value makes economic sense
+        const finalShareBase = this.getTotalSharesWithoutOptions() + priorExercisedOptions + optionCount;
+        const finalShareValue = (exitValue + priorOptionProceeds + (optionCount * strikePrice) - totalLp) / finalShareBase;
+        
+        if (finalShareValue <= strikePrice) {
+            this.auditTrail.push(`WARNING: Final validation failed for strike $${strikePrice} - share value ${finalShareValue.toFixed(4)} <= strike`);
             return null;
         }
         
@@ -497,8 +531,9 @@ export class BreakpointAnalyzer {
     }
     
     /**
-     * Type 4: Voluntary Conversion Breakpoints using RVPS Method
-     * Sequential analysis considering senior conversion decisions
+     * Type 4: Voluntary Conversion Breakpoints using Enhanced RVPS Method
+     * Handles both non-participating and participating-with-cap preferred shares
+     * Sequential analysis considering senior conversion decisions and participation caps
      */
     private calculateVoluntaryConversionBreakpoints(): {
         breakpoints: BreakpointSpec[];
@@ -507,7 +542,7 @@ export class BreakpointAnalyzer {
         const breakpoints: BreakpointSpec[] = [];
         const criticalValues: CriticalValue[] = [];
         
-        // Get non-participating preferred sorted by seniority (senior to junior)
+        // Process non-participating preferred first (existing logic)
         const nonParticipating = this.shareClasses
             .filter(sc => sc.shareType === 'preferred' && sc.preferenceType === 'non-participating')
             .sort((a, b) => a.seniority - b.seniority);
@@ -515,48 +550,16 @@ export class BreakpointAnalyzer {
         const conversionDecisions = new Map<number, boolean>(); // Track senior conversions
         
         for (const shareClass of nonParticipating) {
-            // Binary search for conversion indifference point
-            const lpValue = new Decimal(shareClass.sharesOutstanding)
-                .mul(shareClass.pricePerShare)
-                .mul(shareClass.lpMultiple);
-            
-            let low = lpValue.toNumber();
-            let high = lpValue.mul(100).toNumber();
-            let conversionPoint: number | null = null;
-            let iterations = 0;
-            
-            while (high - low > this.CONVERGENCE_TOLERANCE && iterations < this.MAX_ITERATIONS) {
-                const mid = (low + high) / 2;
-                
-                // Calculate RVPS with and without conversion
-                const rvpsWithConversion = this.calculateRVPS(
-                    mid, shareClass, true, conversionDecisions
-                );
-                const valueWithoutConversion = this.calculateRVPS(
-                    mid, shareClass, false, conversionDecisions
-                );
-                
-                if (rvpsWithConversion.greaterThan(valueWithoutConversion)) {
-                    conversionPoint = mid;
-                    high = mid;
-                } else {
-                    low = mid;
-                }
-                
-                iterations++;
-            }
-            
-            this.performanceMetrics.iterationsUsed[`conversion_${shareClass.name}`] = iterations;
+            const conversionPoint = this.solveNonParticipatingConversion(shareClass, conversionDecisions);
             
             if (conversionPoint) {
-                // Assume this class converts for junior class calculations
                 conversionDecisions.set(shareClass.id, true);
                 
                 breakpoints.push({
                     breakpointType: BreakpointType.VOLUNTARY_CONVERSION,
                     exitValue: new Decimal(conversionPoint),
                     affectedSecurities: [shareClass.name],
-                    calculationMethod: 'rvps_binary_search',
+                    calculationMethod: 'rvps_binary_search_non_participating',
                     priorityOrder: 3000 + shareClass.seniority * 100,
                     explanation: `${shareClass.name} voluntary conversion becomes optimal`,
                     mathematicalDerivation: `RVPS(convert) > LP at exit = $${conversionPoint.toFixed(2)}`,
@@ -571,12 +574,164 @@ export class BreakpointAnalyzer {
                 });
                 
                 this.auditTrail.push(
-                    `Voluntary Conversion: ${shareClass.name} at $${conversionPoint.toFixed(2)}`
+                    `Voluntary Conversion (Non-Participating): ${shareClass.name} at $${conversionPoint.toFixed(2)}`
+                );
+            }
+        }
+        
+        // NEW: Process participating-with-cap preferred for post-cap conversion
+        const participatingWithCap = this.shareClasses
+            .filter(sc => sc.shareType === 'preferred' && 
+                   sc.preferenceType === 'participating-with-cap' && 
+                   sc.participationCap !== null)
+            .sort((a, b) => a.seniority - b.seniority);
+        
+        for (const shareClass of participatingWithCap) {
+            const conversionPoint = this.solveParticipatingWithCapConversion(shareClass, conversionDecisions);
+            
+            if (conversionPoint) {
+                breakpoints.push({
+                    breakpointType: BreakpointType.VOLUNTARY_CONVERSION,
+                    exitValue: new Decimal(conversionPoint),
+                    affectedSecurities: [shareClass.name],
+                    calculationMethod: 'post_cap_conversion_analysis',
+                    priorityOrder: 3500 + shareClass.seniority * 100,
+                    explanation: `${shareClass.name} post-cap voluntary conversion becomes optimal`,
+                    mathematicalDerivation: `Pro-rata value > capped participation at exit = $${conversionPoint.toFixed(2)}`,
+                    dependencies: [`participation_cap_${shareClass.name}_reached`]
+                });
+                
+                criticalValues.push({
+                    value: new Decimal(conversionPoint),
+                    description: `Post-cap conversion point for ${shareClass.name}`,
+                    affectedSecurities: [shareClass.name],
+                    triggers: [`post_cap_conversion_${shareClass.name}`]
+                });
+                
+                this.auditTrail.push(
+                    `Voluntary Conversion (Post-Cap): ${shareClass.name} at $${conversionPoint.toFixed(2)}`
                 );
             }
         }
         
         return { breakpoints, criticalValues };
+    }
+    
+    /**
+     * Solve non-participating preferred conversion point
+     */
+    private solveNonParticipatingConversion(
+        shareClass: DatabaseShareClass, 
+        conversionDecisions: Map<number, boolean>
+    ): number | null {
+        const lpValue = new Decimal(shareClass.sharesOutstanding)
+            .mul(shareClass.pricePerShare)
+            .mul(shareClass.lpMultiple);
+        
+        let low = lpValue.toNumber();
+        let high = lpValue.mul(100).toNumber();
+        let conversionPoint: number | null = null;
+        let iterations = 0;
+        
+        while (high - low > this.CONVERGENCE_TOLERANCE && iterations < this.MAX_ITERATIONS) {
+            const mid = (low + high) / 2;
+            
+            const rvpsWithConversion = this.calculateRVPS(
+                mid, shareClass, true, conversionDecisions
+            );
+            const valueWithoutConversion = this.calculateRVPS(
+                mid, shareClass, false, conversionDecisions
+            );
+            
+            if (rvpsWithConversion.greaterThan(valueWithoutConversion)) {
+                conversionPoint = mid;
+                high = mid;
+            } else {
+                low = mid;
+            }
+            
+            iterations++;
+        }
+        
+        this.performanceMetrics.iterationsUsed[`conversion_${shareClass.name}`] = iterations;
+        return conversionPoint;
+    }
+    
+    /**
+     * Solve participating-with-cap conversion point (post-cap)
+     * Finds where pro-rata value exceeds capped participation value
+     */
+    private solveParticipatingWithCapConversion(
+        shareClass: DatabaseShareClass,
+        conversionDecisions: Map<number, boolean>
+    ): number | null {
+        if (!shareClass.participationCap) return null;
+        
+        // Calculate the participation cap point first
+        const lp = new Decimal(shareClass.sharesOutstanding)
+            .mul(shareClass.pricePerShare)
+            .mul(shareClass.lpMultiple);
+        const capValue = lp.mul(shareClass.participationCap);
+        
+        // Start search above the participation cap point
+        const totalLp = this.getTotalLiquidationPreference();
+        const totalShares = this.getTotalSharesWithoutOptions();
+        const classShares = new Decimal(shareClass.sharesOutstanding).mul(shareClass.conversionRatio);
+        const proRataShare = classShares.div(totalShares);
+        
+        // Calculate rough exit value where cap is reached
+        const capReachedExitValue = capValue.sub(lp).div(proRataShare).add(totalLp);
+        
+        // Search for conversion point above cap point
+        let low = capReachedExitValue.mul(1.1).toNumber(); // Start 10% above cap point
+        let high = capReachedExitValue.mul(10).toNumber(); // Search up to 10x cap point
+        let conversionPoint: number | null = null;
+        let iterations = 0;
+        
+        while (high - low > this.CONVERGENCE_TOLERANCE && iterations < this.MAX_ITERATIONS) {
+            const mid = (low + high) / 2;
+            
+            // Calculate value if converts to common (pro-rata)
+            const proRataValue = this.calculateProRataValue(
+                mid, shareClass, conversionDecisions
+            );
+            
+            // Calculate capped participation value (fixed at cap)
+            const cappedValue = capValue;
+            
+            if (proRataValue.greaterThan(cappedValue)) {
+                conversionPoint = mid;
+                high = mid;
+            } else {
+                low = mid;
+            }
+            
+            iterations++;
+        }
+        
+        this.performanceMetrics.iterationsUsed[`post_cap_conversion_${shareClass.name}`] = iterations;
+        return conversionPoint;
+    }
+    
+    /**
+     * Calculate pro-rata value for participating preferred considering conversion
+     */
+    private calculateProRataValue(
+        exitValue: number,
+        shareClass: DatabaseShareClass,
+        seniorConversions: Map<number, boolean>
+    ): Decimal {
+        let availableProceeds = new Decimal(exitValue);
+        
+        // Subtract all liquidation preferences
+        const totalLp = this.getTotalLiquidationPreference();
+        availableProceeds = availableProceeds.sub(totalLp);
+        
+        // Calculate total participating shares with conversions
+        const totalShares = this.getTotalSharesWithConversions(seniorConversions, shareClass.id);
+        const convertedShares = new Decimal(shareClass.sharesOutstanding).mul(shareClass.conversionRatio);
+        
+        return availableProceeds.mul(convertedShares).div(totalShares);
     }
     
     /**

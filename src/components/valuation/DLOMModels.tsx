@@ -3,7 +3,7 @@ import { Calculator, TrendingUp, BarChart3, Target, RefreshCw, Settings2 } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable } from '@/components/ui/optimized-data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { DLOMInputs, DLOMResults, ModelWeights } from '@/types';
 

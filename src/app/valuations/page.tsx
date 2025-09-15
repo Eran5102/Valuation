@@ -16,7 +16,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { DataTable } from '@/components/ui/data-table'
+import { OptimizedDataTable as DataTable } from '@/components/ui/optimized-data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import AppLayout from '@/components/layout/AppLayout'
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils'

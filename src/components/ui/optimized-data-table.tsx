@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useReducer, memo, lazy, Suspense } from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -53,7 +53,6 @@ import {
   BookmarkPlus,
   Menu,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 import { Button } from './button';
 import { Input } from './input';
@@ -77,6 +76,26 @@ import {
 import { Badge } from './badge';
 import { cn } from '@/lib/utils';
 
+// Lazy load Excel export functionality
+const ExcelExporter = lazy(() => import('./excel-exporter'));
+
+// Debounce utility
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 // View management types
 interface TableView {
   id: string;
@@ -93,7 +112,98 @@ interface TableView {
   createdAt: string;
 }
 
-interface DataTableProps<TData, TValue> {
+// Consolidated state management with useReducer
+interface TableState {
+  sorting: SortingState;
+  columnFilters: ColumnFiltersState;
+  columnVisibility: VisibilityState;
+  rowSelection: Record<string, boolean>;
+  columnOrder: string[];
+  pinnedColumns: { left: string[]; right: string[] };
+  globalFilter: string;
+  views: TableView[];
+  currentView: TableView | null;
+  showCreateView: boolean;
+  newViewName: string;
+  localEnableSorting: boolean;
+  localEnableFilters: boolean;
+  localEnableReordering: boolean;
+  localEnableRowReordering: boolean;
+  rowOrder: string[];
+}
+
+type TableAction =
+  | { type: 'SET_SORTING'; payload: SortingState }
+  | { type: 'SET_COLUMN_FILTERS'; payload: ColumnFiltersState }
+  | { type: 'SET_COLUMN_VISIBILITY'; payload: VisibilityState }
+  | { type: 'SET_ROW_SELECTION'; payload: Record<string, boolean> }
+  | { type: 'SET_COLUMN_ORDER'; payload: string[] }
+  | { type: 'SET_PINNED_COLUMNS'; payload: { left: string[]; right: string[] } }
+  | { type: 'SET_GLOBAL_FILTER'; payload: string }
+  | { type: 'SET_VIEWS'; payload: TableView[] }
+  | { type: 'SET_CURRENT_VIEW'; payload: TableView | null }
+  | { type: 'SET_SHOW_CREATE_VIEW'; payload: boolean }
+  | { type: 'SET_NEW_VIEW_NAME'; payload: string }
+  | { type: 'SET_LOCAL_ENABLE_SORTING'; payload: boolean }
+  | { type: 'SET_LOCAL_ENABLE_FILTERS'; payload: boolean }
+  | { type: 'SET_LOCAL_ENABLE_REORDERING'; payload: boolean }
+  | { type: 'SET_LOCAL_ENABLE_ROW_REORDERING'; payload: boolean }
+  | { type: 'SET_ROW_ORDER'; payload: string[] }
+  | { type: 'LOAD_VIEW'; payload: TableView }
+  | { type: 'INITIALIZE'; payload: Partial<TableState> };
+
+function tableReducer(state: TableState, action: TableAction): TableState {
+  switch (action.type) {
+    case 'SET_SORTING':
+      return { ...state, sorting: action.payload };
+    case 'SET_COLUMN_FILTERS':
+      return { ...state, columnFilters: action.payload };
+    case 'SET_COLUMN_VISIBILITY':
+      return { ...state, columnVisibility: action.payload };
+    case 'SET_ROW_SELECTION':
+      return { ...state, rowSelection: action.payload };
+    case 'SET_COLUMN_ORDER':
+      return { ...state, columnOrder: action.payload };
+    case 'SET_PINNED_COLUMNS':
+      return { ...state, pinnedColumns: action.payload };
+    case 'SET_GLOBAL_FILTER':
+      return { ...state, globalFilter: action.payload };
+    case 'SET_VIEWS':
+      return { ...state, views: action.payload };
+    case 'SET_CURRENT_VIEW':
+      return { ...state, currentView: action.payload };
+    case 'SET_SHOW_CREATE_VIEW':
+      return { ...state, showCreateView: action.payload };
+    case 'SET_NEW_VIEW_NAME':
+      return { ...state, newViewName: action.payload };
+    case 'SET_LOCAL_ENABLE_SORTING':
+      return { ...state, localEnableSorting: action.payload };
+    case 'SET_LOCAL_ENABLE_FILTERS':
+      return { ...state, localEnableFilters: action.payload };
+    case 'SET_LOCAL_ENABLE_REORDERING':
+      return { ...state, localEnableReordering: action.payload };
+    case 'SET_LOCAL_ENABLE_ROW_REORDERING':
+      return { ...state, localEnableRowReordering: action.payload };
+    case 'SET_ROW_ORDER':
+      return { ...state, rowOrder: action.payload };
+    case 'LOAD_VIEW':
+      return {
+        ...state,
+        columnVisibility: action.payload.config.columnVisibility,
+        columnOrder: action.payload.config.columnOrder,
+        pinnedColumns: action.payload.config.pinnedColumns,
+        sorting: action.payload.config.sorting,
+        columnFilters: action.payload.config.columnFilters,
+        currentView: action.payload,
+      };
+    case 'INITIALIZE':
+      return { ...state, ...action.payload };
+    default:
+      return state;
+  }
+}
+
+interface OptimizedDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchKey?: string;
@@ -110,8 +220,8 @@ interface DataTableProps<TData, TValue> {
   enablePagination?: boolean;
   pageSize?: number;
   className?: string;
-  tableId?: string; // For view persistence
-  onStateChange?: (state: any) => void; // For external state management
+  tableId?: string;
+  onStateChange?: (state: any) => void;
   initialState?: Partial<{
     columnVisibility: VisibilityState;
     columnOrder: string[];
@@ -122,14 +232,14 @@ interface DataTableProps<TData, TValue> {
   }>;
 }
 
-// Draggable header component
-function DraggableColumnHeader({ 
-  column, 
-  children, 
-  isPinned = false 
-}: { 
-  column: any; 
-  children: React.ReactNode; 
+// Memoized draggable header component
+const DraggableColumnHeader = memo(function DraggableColumnHeader({
+  column,
+  children,
+  isPinned = false
+}: {
+  column: any;
+  children: React.ReactNode;
   isPinned?: boolean;
 }) {
   const {
@@ -172,19 +282,19 @@ function DraggableColumnHeader({
       </div>
     </TableHead>
   );
-}
+});
 
-// Draggable row component
-function DraggableTableRow({ 
-  row, 
-  index, 
-  children, 
+// Memoized draggable row component
+const DraggableTableRow = memo(function DraggableTableRow({
+  row,
+  index,
+  children,
   className,
-  ...props 
-}: { 
-  row: any; 
-  index: number; 
-  children: React.ReactNode; 
+  ...props
+}: {
+  row: any;
+  index: number;
+  children: React.ReactNode;
   className?: string;
   [key: string]: any;
 }) {
@@ -224,9 +334,9 @@ function DraggableTableRow({
       {children}
     </TableRow>
   );
-}
+});
 
-export function DataTable<TData, TValue>({
+export function OptimizedDataTable<TData, TValue>({
   columns: initialColumns,
   data,
   searchKey,
@@ -246,100 +356,117 @@ export function DataTable<TData, TValue>({
   tableId = 'default',
   onStateChange,
   initialState,
-}: DataTableProps<TData, TValue>) {
-  // Core table state
-  const [sorting, setSorting] = useState<SortingState>(initialState?.sorting || []);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialState?.columnFilters || []);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialState?.columnVisibility || {});
-  const [rowSelection, setRowSelection] = useState({});
-  const [columnOrder, setColumnOrder] = useState<string[]>(
-    initialState?.columnOrder || initialColumns.map((col) => col.id || '')
-  );
-  const [pinnedColumns, setPinnedColumns] = useState<{
-    left: string[];
-    right: string[];
-  }>(initialState?.pinnedColumns || { left: [], right: [] });
-  const [globalFilter, setGlobalFilter] = useState('');
-  
-  // View management state
-  const [views, setViews] = useState<TableView[]>([]);
-  const [currentView, setCurrentView] = useState<TableView | null>(null);
-  const [showCreateView, setShowCreateView] = useState(false);
-  const [newViewName, setNewViewName] = useState('');
-  
-  // Settings state
-  const [localEnableSorting, setLocalEnableSorting] = useState(enableSorting);
-  const [localEnableFilters, setLocalEnableFilters] = useState(enableColumnFilters);
-  const [localEnableReordering, setLocalEnableReordering] = useState(enableColumnReordering);
-  const [localEnableRowReordering, setLocalEnableRowReordering] = useState(enableRowReordering);
-  
-  // Row reordering state
-  const [rowOrder, setRowOrder] = useState<string[]>([]);
-  
+}: OptimizedDataTableProps<TData, TValue>) {
+
+  // Initialize state with useReducer for better performance
+  const [state, dispatch] = useReducer(tableReducer, {
+    sorting: initialState?.sorting || [],
+    columnFilters: initialState?.columnFilters || [],
+    columnVisibility: initialState?.columnVisibility || {},
+    rowSelection: {},
+    columnOrder: initialState?.columnOrder || initialColumns.map((col) => col.id || ''),
+    pinnedColumns: initialState?.pinnedColumns || { left: [], right: [] },
+    globalFilter: '',
+    views: [],
+    currentView: null,
+    showCreateView: false,
+    newViewName: '',
+    localEnableSorting: enableSorting,
+    localEnableFilters: enableColumnFilters,
+    localEnableReordering: enableColumnReordering,
+    localEnableRowReordering: enableRowReordering,
+    rowOrder: [],
+  });
+
+  // Debounce global filter for better performance
+  const debouncedGlobalFilter = useDebounce(state.globalFilter, 300);
+
   // Initialize row order when data changes
   useEffect(() => {
     if (data.length > 0) {
-      setRowOrder(data.map((_, index) => index.toString()));
+      dispatch({ type: 'SET_ROW_ORDER', payload: data.map((_, index) => index.toString()) });
     }
   }, [data]);
 
-  // Reorder columns based on current order and pinning
-  const orderedColumns = React.useMemo(() => {
-    const pinned = [...pinnedColumns.left, ...pinnedColumns.right];
-    const unpinned = columnOrder.filter((id) => !pinned.includes(id));
-    const finalOrder = [...pinnedColumns.left, ...unpinned, ...pinnedColumns.right];
-    
+  // Memoized column ordering calculation
+  const orderedColumns = useMemo(() => {
+    const pinned = [...state.pinnedColumns.left, ...state.pinnedColumns.right];
+    const unpinned = state.columnOrder.filter((id) => !pinned.includes(id));
+    const finalOrder = [...state.pinnedColumns.left, ...unpinned, ...state.pinnedColumns.right];
+
     return finalOrder
       .map((id) => initialColumns.find((col) => col.id === id))
       .filter(Boolean) as ColumnDef<TData, TValue>[];
-  }, [initialColumns, columnOrder, pinnedColumns]);
+  }, [initialColumns, state.columnOrder, state.pinnedColumns]);
+
+  // Debounced localStorage operations
+  const debouncedSaveToLocalStorage = useCallback(
+    useDebounce((views: TableView[]) => {
+      localStorage.setItem(`table-views-${tableId}`, JSON.stringify(views));
+    }, 500),
+    [tableId]
+  );
 
   // Load views from localStorage on mount
   useEffect(() => {
     const savedViews = localStorage.getItem(`table-views-${tableId}`);
     if (savedViews) {
-      const parsedViews = JSON.parse(savedViews);
-      setViews(parsedViews);
-      const defaultView = parsedViews.find((v: TableView) => v.isDefault);
-      if (defaultView) {
-        loadView(defaultView);
+      try {
+        const parsedViews = JSON.parse(savedViews);
+        dispatch({ type: 'SET_VIEWS', payload: parsedViews });
+        const defaultView = parsedViews.find((v: TableView) => v.isDefault);
+        if (defaultView) {
+          dispatch({ type: 'LOAD_VIEW', payload: defaultView });
+        }
+      } catch (error) {
+        console.warn('Failed to load saved views:', error);
       }
     }
   }, [tableId]);
 
-  // Notify parent of state changes
+  // Notify parent of state changes (debounced)
+  const debouncedStateChange = useCallback(
+    useDebounce((newState: any) => {
+      if (onStateChange) {
+        onStateChange(newState);
+      }
+    }, 300),
+    [onStateChange]
+  );
+
   useEffect(() => {
-    if (onStateChange) {
-      onStateChange({
-        sorting,
-        columnFilters,
-        columnVisibility,
-        columnOrder,
-        pinnedColumns,
+    if (onStateChange && debouncedStateChange) {
+      debouncedStateChange({
+        sorting: state.sorting,
+        columnFilters: state.columnFilters,
+        columnVisibility: state.columnVisibility,
+        columnOrder: state.columnOrder,
+        pinnedColumns: state.pinnedColumns,
         pageSize: table?.getState().pagination.pageSize || pageSize,
       });
     }
-  }, [sorting, columnFilters, columnVisibility, columnOrder, pinnedColumns, onStateChange]);
+  }, [state.sorting, state.columnFilters, state.columnVisibility, state.columnOrder, state.pinnedColumns, onStateChange, debouncedStateChange]);
 
+  // Memoized table instance
   const table = useReactTable({
     data,
     columns: orderedColumns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: useCallback((sorting) => dispatch({ type: 'SET_SORTING', payload: typeof sorting === 'function' ? sorting(state.sorting) : sorting }), [state.sorting]),
+    onColumnFiltersChange: useCallback((filters) => dispatch({ type: 'SET_COLUMN_FILTERS', payload: typeof filters === 'function' ? filters(state.columnFilters) : filters }), [state.columnFilters]),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
-    getSortedRowModel: localEnableSorting ? getSortedRowModel() : undefined,
-    getFilteredRowModel: localEnableFilters ? getFilteredRowModel() : undefined,
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    onGlobalFilterChange: setGlobalFilter,
+    getSortedRowModel: state.localEnableSorting ? getSortedRowModel() : undefined,
+    getFilteredRowModel: state.localEnableFilters ? getFilteredRowModel() : undefined,
+    onColumnVisibilityChange: useCallback((visibility) => dispatch({ type: 'SET_COLUMN_VISIBILITY', payload: typeof visibility === 'function' ? visibility(state.columnVisibility) : visibility }), [state.columnVisibility]),
+    onRowSelectionChange: useCallback((selection) => dispatch({ type: 'SET_ROW_SELECTION', payload: typeof selection === 'function' ? selection(state.rowSelection) : selection }), [state.rowSelection]),
+    onGlobalFilterChange: useCallback((filter) => dispatch({ type: 'SET_GLOBAL_FILTER', payload: typeof filter === 'function' ? filter(state.globalFilter) : filter }), [state.globalFilter]),
     globalFilterFn: 'includesString',
     state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      globalFilter,
+      sorting: state.sorting,
+      columnFilters: state.columnFilters,
+      columnVisibility: state.columnVisibility,
+      rowSelection: state.rowSelection,
+      globalFilter: debouncedGlobalFilter,
     },
     initialState: {
       pagination: {
@@ -348,7 +475,7 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  // DnD sensors
+  // DnD sensors - cannot be memoized as they are hooks
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -357,68 +484,75 @@ export function DataTable<TData, TValue>({
   );
 
   // Handle column reordering
-  const handleColumnDragEnd = (event: DragEndEvent) => {
+  const handleColumnDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setColumnOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over?.id as string);
-        return arrayMove(items, oldIndex, newIndex);
+      dispatch({
+        type: 'SET_COLUMN_ORDER',
+        payload: (items) => {
+          const oldIndex = items.indexOf(active.id as string);
+          const newIndex = items.indexOf(over?.id as string);
+          return arrayMove(items, oldIndex, newIndex);
+        }
       });
     }
-  };
+  }, [dispatch]);
 
   // Handle row reordering
-  const handleRowDragEnd = (event: DragEndEvent) => {
+  const handleRowDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id && onRowReorder) {
       const activeIndex = parseInt(active.id as string);
       const overIndex = parseInt(over?.id as string);
-      
+
       if (!isNaN(activeIndex) && !isNaN(overIndex)) {
-        setRowOrder((items) => {
-          const oldIndex = items.indexOf(activeIndex.toString());
-          const newIndex = items.indexOf(overIndex.toString());
-          return arrayMove(items, oldIndex, newIndex);
+        dispatch({
+          type: 'SET_ROW_ORDER',
+          payload: (items) => {
+            const oldIndex = items.indexOf(activeIndex.toString());
+            const newIndex = items.indexOf(overIndex.toString());
+            return arrayMove(items, oldIndex, newIndex);
+          }
         });
         onRowReorder(activeIndex, overIndex);
       }
     }
-  };
+  }, [dispatch, onRowReorder]);
 
   // Pin/unpin column
-  const toggleColumnPin = (columnId: string, side: 'left' | 'right') => {
-    setPinnedColumns((prev) => {
-      const isCurrentlyPinned = prev.left.includes(columnId) || prev.right.includes(columnId);
-      
-      if (isCurrentlyPinned) {
-        // Unpin
-        return {
-          left: prev.left.filter((id) => id !== columnId),
-          right: prev.right.filter((id) => id !== columnId),
-        };
-      } else {
-        // Pin to specified side
-        if (side === 'left') {
+  const toggleColumnPin = useCallback((columnId: string, side: 'left' | 'right') => {
+    dispatch({
+      type: 'SET_PINNED_COLUMNS',
+      payload: (prev) => {
+        const isCurrentlyPinned = prev.left.includes(columnId) || prev.right.includes(columnId);
+
+        if (isCurrentlyPinned) {
           return {
-            ...prev,
-            left: [...prev.left, columnId],
+            left: prev.left.filter((id) => id !== columnId),
+            right: prev.right.filter((id) => id !== columnId),
           };
         } else {
-          return {
-            ...prev,
-            right: [...prev.right, columnId],
-          };
+          if (side === 'left') {
+            return {
+              ...prev,
+              left: [...prev.left, columnId],
+            };
+          } else {
+            return {
+              ...prev,
+              right: [...prev.right, columnId],
+            };
+          }
         }
       }
     });
-  };
+  }, []);
 
-  const isPinnedColumn = (columnId: string) => {
-    return pinnedColumns.left.includes(columnId) || pinnedColumns.right.includes(columnId);
-  };
+  const isPinnedColumn = useCallback((columnId: string) => {
+    return state.pinnedColumns.left.includes(columnId) || state.pinnedColumns.right.includes(columnId);
+  }, [state.pinnedColumns]);
 
   // View management functions
   const saveCurrentAsView = useCallback((name: string, isDefault = false) => {
@@ -427,84 +561,60 @@ export function DataTable<TData, TValue>({
       name,
       isDefault,
       config: {
-        columnVisibility,
-        columnOrder,
-        pinnedColumns,
-        sorting,
-        columnFilters,
+        columnVisibility: state.columnVisibility,
+        columnOrder: state.columnOrder,
+        pinnedColumns: state.pinnedColumns,
+        sorting: state.sorting,
+        columnFilters: state.columnFilters,
         pageSize: table.getState().pagination.pageSize,
       },
       createdAt: new Date().toISOString(),
     };
 
-    const updatedViews = isDefault 
-      ? [newView, ...views.map(v => ({ ...v, isDefault: false }))]
-      : [...views, newView];
-    
-    setViews(updatedViews);
-    setCurrentView(newView);
-    localStorage.setItem(`table-views-${tableId}`, JSON.stringify(updatedViews));
-  }, [columnVisibility, columnOrder, pinnedColumns, sorting, columnFilters, table, views, tableId]);
+    const updatedViews = isDefault
+      ? [newView, ...state.views.map(v => ({ ...v, isDefault: false }))]
+      : [...state.views, newView];
+
+    dispatch({ type: 'SET_VIEWS', payload: updatedViews });
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: newView });
+    debouncedSaveToLocalStorage(updatedViews);
+  }, [state.columnVisibility, state.columnOrder, state.pinnedColumns, state.sorting, state.columnFilters, table, state.views, debouncedSaveToLocalStorage]);
 
   const loadView = useCallback((view: TableView) => {
-    setColumnVisibility(view.config.columnVisibility);
-    setColumnOrder(view.config.columnOrder);
-    setPinnedColumns(view.config.pinnedColumns);
-    setSorting(view.config.sorting);
-    setColumnFilters(view.config.columnFilters);
+    dispatch({ type: 'LOAD_VIEW', payload: view });
     table.setPageSize(view.config.pageSize);
-    setCurrentView(view);
   }, [table]);
 
   const deleteView = useCallback((viewId: string) => {
-    const updatedViews = views.filter(v => v.id !== viewId);
-    setViews(updatedViews);
-    localStorage.setItem(`table-views-${tableId}`, JSON.stringify(updatedViews));
-    
-    if (currentView?.id === viewId) {
-      setCurrentView(null);
+    const updatedViews = state.views.filter(v => v.id !== viewId);
+    dispatch({ type: 'SET_VIEWS', payload: updatedViews });
+    debouncedSaveToLocalStorage(updatedViews);
+
+    if (state.currentView?.id === viewId) {
+      dispatch({ type: 'SET_CURRENT_VIEW', payload: null });
     }
-  }, [views, currentView, tableId]);
+  }, [state.views, state.currentView, debouncedSaveToLocalStorage]);
 
-  // Export functions
-  const exportToExcel = useCallback(() => {
-    const visibleColumns = table.getVisibleLeafColumns();
-    const rows = table.getRowModel().rows;
-    
-    // Prepare data for export
-    const exportData = rows.map(row => {
-      const rowData: any = {};
-      visibleColumns.forEach(column => {
-        const cell = row.getVisibleCells().find(cell => cell.column.id === column.id);
-        if (cell) {
-          // Get the raw value or rendered content
-          const value = cell.getValue();
-          rowData[column.id] = value;
-        }
-      });
-      return rowData;
-    });
-
-    // Create workbook
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Data');
-    
-    // Generate filename
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `${tableId}-export-${timestamp}.xlsx`;
-    
-    // Save file
-    XLSX.writeFile(wb, filename);
+  // Lazy-loaded export function
+  const exportToExcel = useCallback(async () => {
+    try {
+      const { exportTableToExcel } = await import('./excel-exporter');
+      exportTableToExcel(table, tableId);
+    } catch (error) {
+      console.error('Failed to export to Excel:', error);
+    }
   }, [table, tableId]);
 
   const createNewView = useCallback(() => {
-    if (newViewName.trim()) {
-      saveCurrentAsView(newViewName.trim());
-      setNewViewName('');
-      setShowCreateView(false);
+    if (state.newViewName.trim()) {
+      saveCurrentAsView(state.newViewName.trim());
+      dispatch({ type: 'SET_NEW_VIEW_NAME', payload: '' });
+      dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: false });
     }
-  }, [newViewName, saveCurrentAsView]);
+  }, [state.newViewName, saveCurrentAsView]);
+
+  // Rest of the component remains the same but uses the optimized state and callbacks...
+  // [The render JSX would be identical to the original but using the optimized state and callbacks]
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -514,14 +624,14 @@ export function DataTable<TData, TValue>({
           {/* View Management */}
           <div className="flex items-center space-x-1">
             {/* Current View Indicator */}
-            {currentView && (
+            {state.currentView && (
               <Badge variant="outline" className="gap-1">
                 <BookmarkPlus className="h-3 w-3" />
-                {currentView.name}
-                {currentView.isDefault && ' (Default)'}
+                {state.currentView.name}
+                {state.currentView.isDefault && ' (Default)'}
               </Badge>
             )}
-            
+
             {/* View Selector */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -534,15 +644,15 @@ export function DataTable<TData, TValue>({
               <DropdownMenuContent align="start" className="w-[250px]">
                 <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {views.length > 0 ? (
-                  views.map((view) => (
+                {state.views.length > 0 ? (
+                  state.views.map((view) => (
                     <div key={view.id} className="flex items-center justify-between px-2 py-1">
                       <DropdownMenuItem
                         className="flex-1 cursor-pointer"
                         onClick={() => loadView(view)}
                       >
                         <div className="flex items-center space-x-2">
-                          <span className={currentView?.id === view.id ? 'font-medium' : ''}>
+                          <span className={state.currentView?.id === view.id ? 'font-medium' : ''}>
                             {view.name}
                           </span>
                           {view.isDefault && (
@@ -570,12 +680,12 @@ export function DataTable<TData, TValue>({
                 )}
                 <DropdownMenuSeparator />
                 <div className="p-2">
-                  {showCreateView ? (
+                  {state.showCreateView ? (
                     <div className="space-y-2">
                       <Input
                         placeholder="View name"
-                        value={newViewName}
-                        onChange={(e) => setNewViewName(e.target.value)}
+                        value={state.newViewName}
+                        onChange={(e) => dispatch({ type: 'SET_NEW_VIEW_NAME', payload: e.target.value })}
                         onKeyPress={(e) => e.key === 'Enter' && createNewView()}
                         className="h-8"
                       />
@@ -584,7 +694,7 @@ export function DataTable<TData, TValue>({
                           size="sm"
                           className="h-6 text-xs"
                           onClick={createNewView}
-                          disabled={!newViewName.trim()}
+                          disabled={!state.newViewName.trim()}
                         >
                           Save
                         </Button>
@@ -593,8 +703,8 @@ export function DataTable<TData, TValue>({
                           variant="outline"
                           className="h-6 text-xs"
                           onClick={() => {
-                            setShowCreateView(false);
-                            setNewViewName('');
+                            dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: false });
+                            dispatch({ type: 'SET_NEW_VIEW_NAME', payload: '' });
                           }}
                         >
                           Cancel
@@ -606,7 +716,7 @@ export function DataTable<TData, TValue>({
                       size="sm"
                       variant="outline"
                       className="w-full h-8"
-                      onClick={() => setShowCreateView(true)}
+                      onClick={() => dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: true })}
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       Create View
@@ -618,13 +728,13 @@ export function DataTable<TData, TValue>({
           </div>
 
           {/* Global Search */}
-          {localEnableFilters && (
+          {state.localEnableFilters && (
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={searchPlaceholder}
-                value={globalFilter ?? ''}
-                onChange={(event) => setGlobalFilter(event.target.value)}
+                value={state.globalFilter ?? ''}
+                onChange={(event) => dispatch({ type: 'SET_GLOBAL_FILTER', payload: event.target.value })}
                 className="pl-8 max-w-sm"
               />
             </div>
@@ -686,26 +796,26 @@ export function DataTable<TData, TValue>({
               <DropdownMenuLabel>Table Settings</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
-                checked={localEnableSorting}
-                onCheckedChange={(checked) => setLocalEnableSorting(!!checked)}
+                checked={state.localEnableSorting}
+                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_SORTING', payload: !!checked })}
               >
                 Sorting
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
-                checked={localEnableFilters}
-                onCheckedChange={(checked) => setLocalEnableFilters(!!checked)}
+                checked={state.localEnableFilters}
+                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_FILTERS', payload: !!checked })}
               >
                 Filtering
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
-                checked={localEnableReordering}
-                onCheckedChange={(checked) => setLocalEnableReordering(!!checked)}
+                checked={state.localEnableReordering}
+                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_REORDERING', payload: !!checked })}
               >
                 Column Reordering
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
-                checked={localEnableRowReordering}
-                onCheckedChange={(checked) => setLocalEnableRowReordering(!!checked)}
+                checked={state.localEnableRowReordering}
+                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_ROW_REORDERING', payload: !!checked })}
                 disabled={!onRowReorder}
               >
                 Row Reordering
@@ -721,14 +831,17 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Active Filters */}
-      {columnFilters.length > 0 && (
+      {state.columnFilters.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {columnFilters.map((filter) => (
+          {state.columnFilters.map((filter) => (
             <Badge key={filter.id} variant="secondary" className="gap-1">
               {filter.id}: {filter.value as string}
               <button
                 onClick={() => {
-                  setColumnFilters((prev) => prev.filter((f) => f.id !== filter.id));
+                  dispatch({
+                    type: 'SET_COLUMN_FILTERS',
+                    payload: state.columnFilters.filter((f) => f.id !== filter.id)
+                  });
                 }}
                 className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5"
               >
@@ -745,10 +858,10 @@ export function DataTable<TData, TValue>({
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={(event) => {
-            if (localEnableReordering) {
+            if (state.localEnableReordering) {
               handleColumnDragEnd(event);
             }
-            if (localEnableRowReordering && onRowReorder) {
+            if (state.localEnableRowReordering && onRowReorder) {
               handleRowDragEnd(event);
             }
           }}
@@ -757,12 +870,12 @@ export function DataTable<TData, TValue>({
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                  {localEnableReordering ? (
+                  {state.localEnableReordering ? (
                     <SortableContext
-                      items={columnOrder}
+                      items={state.columnOrder}
                       strategy={horizontalListSortingStrategy}
                     >
-                      {localEnableRowReordering && onRowReorder && (
+                      {state.localEnableRowReordering && onRowReorder && (
                         <TableHead className="w-8 p-2">
                           <div className="w-6 h-6 flex items-center justify-center">
                             {/* Drag handle column header */}
@@ -782,7 +895,7 @@ export function DataTable<TData, TValue>({
                                 <>
                                   {/* Column Header Content */}
                                   <div className="flex-1 min-w-0">
-                                    {localEnableSorting && header.column.getCanSort() ? (
+                                    {state.localEnableSorting && header.column.getCanSort() ? (
                                       <Button
                                         variant="ghost"
                                         size="sm"
@@ -868,7 +981,7 @@ export function DataTable<TData, TValue>({
                     </SortableContext>
                   ) : (
                     <>
-                      {localEnableRowReordering && onRowReorder && (
+                      {state.localEnableRowReordering && onRowReorder && (
                         <TableHead className="w-8 p-2">
                           <div className="w-6 h-6 flex items-center justify-center">
                             {/* Drag handle column header */}
@@ -887,7 +1000,7 @@ export function DataTable<TData, TValue>({
                                 <>
                                   {/* Column Header Content */}
                                   <div className="flex-1 min-w-0">
-                                    {localEnableSorting && header.column.getCanSort() ? (
+                                    {state.localEnableSorting && header.column.getCanSort() ? (
                                       <Button
                                         variant="ghost"
                                         size="sm"
@@ -977,7 +1090,7 @@ export function DataTable<TData, TValue>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                localEnableRowReordering && onRowReorder ? (
+                state.localEnableRowReordering && onRowReorder ? (
                   <SortableContext
                     items={table.getRowModel().rows.map((_, index) => index.toString())}
                     strategy={verticalListSortingStrategy}
@@ -993,7 +1106,7 @@ export function DataTable<TData, TValue>({
                         {row.getVisibleCells().map((cell) => {
                           const isPinned = isPinnedColumn(cell.column.id);
                           return (
-                            <TableCell 
+                            <TableCell
                               key={cell.id}
                               className={isPinned ? 'bg-muted/30' : ''}
                             >
@@ -1011,7 +1124,7 @@ export function DataTable<TData, TValue>({
                       data-state={row.getIsSelected() && "selected"}
                       className="hover:bg-muted/50"
                     >
-                      {localEnableRowReordering && onRowReorder && (
+                      {state.localEnableRowReordering && onRowReorder && (
                         <TableCell className="w-8 p-2">
                           <div className="w-6 h-6 flex items-center justify-center">
                             {/* Placeholder for alignment */}
@@ -1021,7 +1134,7 @@ export function DataTable<TData, TValue>({
                       {row.getVisibleCells().map((cell) => {
                         const isPinned = isPinnedColumn(cell.column.id);
                         return (
-                          <TableCell 
+                          <TableCell
                             key={cell.id}
                             className={isPinned ? 'bg-muted/30' : ''}
                           >
@@ -1034,8 +1147,8 @@ export function DataTable<TData, TValue>({
                 )
               ) : (
                 <TableRow>
-                  <TableCell 
-                    colSpan={orderedColumns.length + (localEnableRowReordering && onRowReorder ? 1 : 0)} 
+                  <TableCell
+                    colSpan={orderedColumns.length + (state.localEnableRowReordering && onRowReorder ? 1 : 0)}
                     className="h-24 text-center"
                   >
                     No results.
@@ -1119,3 +1232,7 @@ export function DataTable<TData, TValue>({
     </div>
   );
 }
+
+// Export alias for backward compatibility
+export { OptimizedDataTable as DataTable };
+export default OptimizedDataTable;

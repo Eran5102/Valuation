@@ -4,34 +4,52 @@ const nextConfig: NextConfig = {
   // Production optimizations
   productionBrowserSourceMaps: false,
   poweredByHeader: false,
-  
+
   // Performance optimizations
   compress: true,
   generateEtags: true,
-  
+
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
   },
-  
+
   // Bundle analyzer (enable when needed)
   // bundleAnalyzer: {
   //   enabled: process.env.ANALYZE === 'true',
   // },
-  
-  // Experimental features for production optimization
+
+  // Experimental features for development performance
   experimental: {
-    optimizeCss: true,
+    // Disabled optimizeCss in development for better performance
+    optimizeCss: process.env.NODE_ENV === 'production',
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-icons',
-      'recharts'
+      'recharts',
+      '@tanstack/react-table',
+      '@dnd-kit/core',
+      '@dnd-kit/sortable'
     ],
   },
-  
-  // Build output optimization
-  output: 'standalone',
+
+  // Remove standalone output for development - causes bundle bloat
+  ...(process.env.NODE_ENV === 'production' && { output: 'standalone' }),
+
+  // Add webpack optimizations for development
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      // Optimize development builds
+      config.optimization = {
+        ...config.optimization,
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        splitChunks: false,
+      }
+    }
+    return config
+  },
   
   // Security headers
   async headers() {

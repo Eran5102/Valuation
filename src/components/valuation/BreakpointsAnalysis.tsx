@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { BarChart3, Calculator, AlertTriangle, Loader2, RefreshCw, Activity, Layers, Target, Zap, RotateCcw } from 'lucide-react';
+import { BarChart3, Calculator, AlertTriangle, Loader2, RefreshCw, Activity, Layers, Target, Zap, RotateCcw, X, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable } from '@/components/ui/optimized-data-table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CapTableConfig } from '@/types';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
@@ -70,6 +72,16 @@ interface ValidationResult {
   expected: any;
   actual: any;
   message: string;
+}
+
+interface RVPSData {
+  securityName: string;
+  sectionRVPS: number;
+  cumulativeRVPS: number;
+  shares: number;
+  percentage: string;
+  sectionValue: number;
+  cumulativeValue: number;
 }
 
 interface BreakpointAnalysisData {
@@ -169,23 +181,259 @@ export default function BreakpointsAnalysis({ valuationId, companyId, capTableCo
     return BREAKPOINT_TYPES.liquidation_preference; // fallback
   };
 
+  // Transform breakpoints into waterfall ranges with proper range calculations
+  const waterfallRanges = analysisData?.sortedBreakpoints ? 
+    analysisData.sortedBreakpoints.map((breakpoint, index, array) => {
+      const rangeStart = index === 0 ? 0 : array[index - 1].exitValue;
+      const rangeEnd = index === array.length - 1 ? null : array[index + 1]?.exitValue;
+      
+      return {
+        ...breakpoint,
+        rangeStart,
+        rangeEnd,
+        isLastRange: index === array.length - 1,
+        participatingShares: calculateParticipatingShares(breakpoint, capTableConfig)
+      };
+    }) : [];
+  
+  // Calculate participating shares and percentages for each range
+  function calculateParticipatingShares(breakpoint: any, capTableConfig: any) {
+    const shareClasses = capTableConfig?.shareClasses || [];
+    const options = capTableConfig?.options || [];
+    const participants: Array<{name: string, shares: number, percentage: string}> = [];
+    
+    switch(breakpoint.breakpointType) {
+      case 'liquidation_preference':
+        // Only the specific preferred class participates in LP
+        const lpClass = shareClasses.find((sc: any) => breakpoint.affectedSecurities.includes(sc.name));
+        if (lpClass) {
+          participants.push({
+            name: lpClass.name,
+            shares: lpClass.sharesOutstanding,
+            percentage: '100.00%'
+          });
+        }
+        break;
+        
+      case 'pro_rata_distribution':
+      case 'option_exercise':
+      case 'participation_cap':
+      case 'voluntary_conversion':
+        // All participating securities share pro-rata
+        let totalShares = 0;
+        
+        // Add common shares (founders)
+        const commonShares = shareClasses
+          .filter((sc: any) => sc.shareType === 'common')
+          .reduce((sum: number, sc: any) => sum + sc.sharesOutstanding, 0);
+        if (commonShares > 0) {
+          totalShares += commonShares;
+          participants.push({
+            name: 'Founders', 
+            shares: commonShares,
+            percentage: '0.00%' // Will calculate below
+          });
+        }
+        
+        // Add participating preferred
+        shareClasses
+          .filter((sc: any) => sc.shareType === 'preferred' && 
+                  (sc.preferenceType === 'participating' || sc.preferenceType === 'participating-with-cap'))
+          .forEach((sc: any) => {
+            const convertedShares = sc.sharesOutstanding * (sc.conversionRatio || 1);
+            totalShares += convertedShares;
+            participants.push({
+              name: sc.name,
+              shares: convertedShares,
+              percentage: '0.00%'
+            });
+          });
+        
+        // Add exercised options (if breakpoint includes them)
+        if (breakpoint.breakpointType === 'option_exercise' || 
+            (breakpoint.exitValue >= 28382344)) { // $1.25 option threshold
+          options.forEach((opt: any) => {
+            const exerciseThreshold = opt.exercisePrice === 1.25 ? 28382344 : 29675728;
+            if (breakpoint.exitValue >= exerciseThreshold) {
+              totalShares += opt.numOptions;
+              participants.push({
+                name: `Options @ $${opt.exercisePrice}`,
+                shares: opt.numOptions,
+                percentage: '0.00%'
+              });
+            }
+          });
+        }
+        
+        // Calculate percentages
+        participants.forEach(p => {
+          p.percentage = totalShares > 0 ? ((p.shares / totalShares) * 100).toFixed(2) + '%' : '0.00%';
+        });
+        break;
+    }
+    
+    return participants;
+  }
+
+  // Calculate RVPS data for a specific range at a given exit value
+  function calculateRVPSData(range: any, exitValue: number, previousRanges: any[]): RVPSData[] {
+    const participants = range.participatingShares || [];
+    const rangeStart = range.rangeStart || 0;
+    const rangeEnd = range.rangeEnd || exitValue;
+    
+    // Calculate the proceeds distributed in this specific range
+    const rangeProceeds = Math.min(exitValue, rangeEnd) - rangeStart;
+    const totalShares = participants.reduce((sum: number, p: any) => sum + p.shares, 0);
+    
+    return participants.map((participant: any) => {
+      // Section RVPS: Value per share for this specific range
+      const sectionRVPS = totalShares > 0 ? rangeProceeds / totalShares : 0;
+      const sectionValue = participant.shares * sectionRVPS;
+      
+      // Cumulative RVPS: Total value per share across all ranges up to this point
+      let cumulativeValue = sectionValue;
+      
+      // Add value from previous ranges where this participant was involved
+      previousRanges.forEach(prevRange => {
+        const prevParticipant = prevRange.participatingShares?.find((p: any) => p.name === participant.name);
+        if (prevParticipant) {
+          const prevRangeProceeds = Math.min(exitValue, prevRange.rangeEnd || exitValue) - (prevRange.rangeStart || 0);
+          const prevTotalShares = prevRange.participatingShares.reduce((sum: number, p: any) => sum + p.shares, 0);
+          const prevSectionRVPS = prevTotalShares > 0 ? prevRangeProceeds / prevTotalShares : 0;
+          cumulativeValue += prevParticipant.shares * prevSectionRVPS;
+        }
+      });
+      
+      const cumulativeRVPS = participant.shares > 0 ? cumulativeValue / participant.shares : 0;
+      
+      return {
+        securityName: participant.name,
+        sectionRVPS,
+        cumulativeRVPS,
+        shares: participant.shares,
+        percentage: participant.percentage,
+        sectionValue,
+        cumulativeValue
+      };
+    });
+  }
+
+  // RVPS Modal Component
+  const RVPSModal = ({ range, type, rangeIndex }: { range: any, type: 'section' | 'cumulative', rangeIndex: number }) => {
+    const previousRanges = waterfallRanges.slice(0, rangeIndex);
+    const rvpsData = calculateRVPSData(range, currentExitValue, previousRanges);
+    
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="link" size="sm" className="text-primary hover:text-primary/80 p-0">
+            View Details
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              {type === 'section' ? 'Section RVPS' : 'Cumulative RVPS'} - Range #{rangeIndex + 1}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              <p>Range: {formatCurrency(range.rangeStart)} to {range.isLastRange ? '∞' : formatCurrency(range.rangeEnd)}</p>
+              <p>Exit Value: {formatCurrency(currentExitValue)}</p>
+            </div>
+            
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr className="text-sm">
+                    <th className="text-left p-3 font-medium">Security</th>
+                    <th className="text-right p-3 font-medium">Shares</th>
+                    <th className="text-right p-3 font-medium">% Participation</th>
+                    <th className="text-right p-3 font-medium">
+                      {type === 'section' ? 'Section RVPS' : 'Cumulative RVPS'}
+                    </th>
+                    <th className="text-right p-3 font-medium">
+                      {type === 'section' ? 'Section Value' : 'Cumulative Value'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rvpsData.map((data, idx) => (
+                    <tr key={idx} className="border-t text-sm">
+                      <td className="p-3 font-medium">{data.securityName}</td>
+                      <td className="p-3 text-right font-mono">{formatNumber(data.shares)}</td>
+                      <td className="p-3 text-right">{data.percentage}</td>
+                      <td className="p-3 text-right font-mono">
+                        {formatCurrency(type === 'section' ? data.sectionRVPS : data.cumulativeRVPS)}
+                      </td>
+                      <td className="p-3 text-right font-mono">
+                        {formatCurrency(type === 'section' ? data.sectionValue : data.cumulativeValue)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-muted/30 border-t">
+                  <tr className="text-sm font-medium">
+                    <td className="p-3">Total</td>
+                    <td className="p-3 text-right font-mono">
+                      {formatNumber(rvpsData.reduce((sum, d) => sum + d.shares, 0))}
+                    </td>
+                    <td className="p-3 text-right">100.00%</td>
+                    <td className="p-3 text-right">-</td>
+                    <td className="p-3 text-right font-mono">
+                      {formatCurrency(rvpsData.reduce((sum, d) => 
+                        sum + (type === 'section' ? d.sectionValue : d.cumulativeValue), 0
+                      ))}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p><strong>Section RVPS:</strong> Residual Value Per Share attributed to this specific exit value range</p>
+              <p><strong>Cumulative RVPS:</strong> Total Residual Value Per Share accumulated across all ranges up to this exit value</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   // Define columns for DataTable
-  const breakpointColumns: ColumnDef<Breakpoint>[] = [
+  const breakpointColumns: ColumnDef<typeof waterfallRanges[0]>[] = [
     {
-      id: 'id',
-      header: 'ID',
+      id: 'rangeId',
+      header: 'Range',
       accessorFn: (_, index) => index + 1,
       cell: ({ getValue }) => (
-        <span className="font-medium text-muted-foreground">{getValue() as number}</span>
+        <span className="font-medium text-muted-foreground">#{getValue() as number}</span>
       ),
     },
     {
-      id: 'breakpointType',
-      header: 'Breakpoint',
+      id: 'fromValue',
+      header: 'From ($)',
+      accessorKey: 'rangeStart',
+      cell: ({ getValue }) => (
+        <span className="font-mono text-foreground">{formatCurrency(getValue() as number)}</span>
+      ),
+    },
+    {
+      id: 'toValue',
+      header: 'To ($)',
+      accessorFn: (range) => range.isLastRange ? '∞' : formatCurrency(range.rangeEnd),
+      cell: ({ getValue }) => (
+        <span className="font-mono text-foreground">{getValue() as string}</span>
+      ),
+    },
+    {
+      id: 'eventType',
+      header: 'Range Event',
       accessorKey: 'breakpointType',
       cell: ({ row }) => {
-        const breakpoint = row.original;
-        const config = getBreakpointTypeConfig(breakpoint.breakpointType);
+        const range = row.original;
+        const config = getBreakpointTypeConfig(range.breakpointType);
         const IconComponent = config.icon;
         
         return (
@@ -195,10 +443,10 @@ export default function BreakpointsAnalysis({ valuationId, companyId, capTableCo
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-foreground">
-                {breakpoint.breakpointType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                {range.breakpointType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </span>
-              <span className="text-xs text-muted-foreground truncate max-w-48" title={breakpoint.explanation}>
-                {breakpoint.explanation}
+              <span className="text-xs text-muted-foreground truncate max-w-48" title={range.explanation}>
+                {range.explanation}
               </span>
             </div>
           </div>
@@ -206,58 +454,21 @@ export default function BreakpointsAnalysis({ valuationId, companyId, capTableCo
       },
     },
     {
-      id: 'type',
-      header: 'Type',
-      accessorKey: 'breakpointType',
-      cell: ({ row }) => {
-        const config = getBreakpointTypeConfig(row.original.breakpointType);
-        return (
-          <Badge variant="outline" className={`${config.borderColor} ${config.bgColor} ${config.color}`}>
-            {config.label}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: 'fromValue',
-      header: 'From ($)',
-      accessorFn: (breakpoint, index, data) => {
-        return index === 0 ? 0 : (data && data[index - 1]?.exitValue) || 0;
-      },
-      cell: ({ getValue }) => (
-        <span className="font-mono text-foreground">{formatCurrency(getValue() as number)}</span>
-      ),
-    },
-    {
-      id: 'exitValue',
-      header: 'To ($)',
-      accessorKey: 'exitValue',
-      cell: ({ getValue }) => (
-        <span className="font-mono text-foreground">{formatCurrency(getValue() as number)}</span>
-      ),
-    },
-    {
       id: 'participatingSecurities',
       header: 'Participating Securities',
-      accessorKey: 'affectedSecurities',
-      cell: ({ getValue }) => {
-        const securities = getValue() as string[];
-        const mockPercentages: { [key: string]: string } = {
-          'Series A': '100.00%',
-          'Series B': '100.00%', 
-          'Founders': '63.16%',
-          'Options @ $1.25': '13.64%',
-          'Options @ $1.36': '24.14%'
-        };
+      accessorKey: 'participatingShares',
+      cell: ({ row }) => {
+        const range = row.original;
+        const participatingShares = range.participatingShares || [];
         
         return (
           <div className="space-y-1">
-            {securities.map((security, index) => (
+            {participatingShares.map((participant, index) => (
               <div key={index} className="flex items-center gap-2 text-sm">
                 <div className="w-2 h-2 bg-primary rounded-full"></div>
-                <span className="text-foreground">{security}</span>
+                <span className="text-foreground">{participant.name}</span>
                 <span className="text-muted-foreground">
-                  ({mockPercentages[security] || '0.00%'})
+                  ({participant.percentage})
                 </span>
               </div>
             ))}
@@ -267,8 +478,11 @@ export default function BreakpointsAnalysis({ valuationId, companyId, capTableCo
     },
     {
       id: 'shares',
-      header: 'Shares',
-      accessorFn: (_, index) => 200000 + (index * 150000), // Mock data
+      header: 'Total Participating Shares',
+      accessorFn: (range) => {
+        const participatingShares = range.participatingShares || [];
+        return participatingShares.reduce((total, participant) => total + participant.shares, 0);
+      },
       cell: ({ getValue }) => (
         <span className="font-mono text-foreground">{formatNumber(getValue() as number)}</span>
       ),
@@ -276,25 +490,26 @@ export default function BreakpointsAnalysis({ valuationId, companyId, capTableCo
     {
       id: 'sectionRVPS',
       header: 'Section RVPS',
-      cell: () => (
-        <Button variant="link" size="sm" className="text-primary hover:text-primary/80 p-0">
-          View Details
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const range = row.original;
+        const rangeIndex = waterfallRanges.findIndex(r => r === range);
+        return <RVPSModal range={range} type="section" rangeIndex={rangeIndex} />;
+      },
     },
     {
       id: 'cumulativeRVPS',
       header: 'Cumulative RVPS',
-      cell: () => (
-        <Button variant="link" size="sm" className="text-primary hover:text-primary/80 p-0">
-          View Details
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const range = row.original;
+        const rangeIndex = waterfallRanges.findIndex(r => r === range);
+        return <RVPSModal range={range} type="cumulative" rangeIndex={rangeIndex} />;
+      },
     },
   ];
 
   return (
-    <Card className="bg-card border-primary/20">
+    <TooltipProvider>
+      <Card className="bg-card border-primary/20">
       <CardHeader className="bg-primary/5 border-b border-primary/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -319,17 +534,17 @@ export default function BreakpointsAnalysis({ valuationId, companyId, capTableCo
       <CardContent className="p-0">
         {analysisComplete && analysisData ? (
           <DataTable
-            key="breakpoints-table"
-            tableId="breakpoints-table"
+            key="waterfall-ranges-table"
+            tableId="waterfall-ranges-table"
             columns={breakpointColumns}
-            data={analysisData.sortedBreakpoints || []}
+            data={waterfallRanges}
             enableColumnReordering={true}
             enableColumnVisibility={true}
             enableSorting={true}
             enablePagination={false}
             enableColumnFilters={true}
             enableColumnPinning={true}
-            searchPlaceholder="Search breakpoints..."
+            searchPlaceholder="Search waterfall ranges..."
             className="border-0"
           />
         ) : (
@@ -365,5 +580,6 @@ export default function BreakpointsAnalysis({ valuationId, companyId, capTableCo
         )}
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 }

@@ -11,7 +11,7 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { DataTable } from '@/components/ui/data-table'
+import { OptimizedDataTable as DataTable } from '@/components/ui/optimized-data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import AppLayout from '@/components/layout/AppLayout'
 import { getStatusColor, formatDate } from '@/lib/utils'

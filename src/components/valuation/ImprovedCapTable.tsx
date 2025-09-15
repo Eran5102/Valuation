@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { ShareClass, OptionsWarrants, OptionsType } from '@/types';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable } from '@/components/ui/optimized-data-table';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
