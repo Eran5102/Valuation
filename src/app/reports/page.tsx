@@ -1,17 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import Link from 'next/link'
 import { 
   FileText, 
-  Plus,
-  Download,
-  Eye,
-  Edit,
-  Trash2
+  Plus
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
@@ -75,7 +69,7 @@ export default function ReportsPage() {
       ]
       setReports(mockReports)
     } catch (error) {
-      console.error('Failed to fetch reports:', error)
+      // Error handled with empty data
     } finally {
       setLoading(false)
     }
@@ -233,10 +227,10 @@ export default function ReportsPage() {
           return (
             <TableActionButtons 
               itemId={report.id}
-              onView={() => console.log('View report:', report.id)}
-              onEdit={() => console.log('Edit report:', report.id)}
-              onDownload={() => console.log('Download report:', report.id)}
-              onDelete={() => console.log('Delete report:', report.id)}
+              onView={() => {/* TODO: Implement view functionality */}}
+              onEdit={() => {/* TODO: Implement edit functionality */}}
+              onDownload={() => {/* TODO: Implement download functionality */}}
+              onDelete={() => {/* TODO: Implement delete functionality */}}
               showDownload={true}
             />
           )
@@ -287,7 +281,7 @@ export default function ReportsPage() {
               enableColumnReordering
               enableRowReordering
               onRowReorder={(fromIndex, toIndex) => {
-                console.log(`Reorder row from ${fromIndex} to ${toIndex}`);
+                // TODO: Implement actual row reordering logic
                 // Handle row reordering logic here
               }}
             />

@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft,
   Building2,
-  Mail,
-  Phone,
   MapPin,
   User
 } from 'lucide-react'
@@ -44,7 +42,7 @@ export default function NewClientPage() {
 
     try {
       // In a real app, this would save to Supabase
-      console.log('Saving client:', formData)
+      // TODO: Implement actual API call to save client
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -52,7 +50,7 @@ export default function NewClientPage() {
       // Redirect back to clients page
       router.push('/clients')
     } catch (error) {
-      console.error('Failed to save client:', error)
+      // TODO: Implement user notification for failed save
     } finally {
       setLoading(false)
     }

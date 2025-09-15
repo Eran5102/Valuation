@@ -1,13 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import Link from 'next/link'
 import { 
   Building2, 
   Plus, 
-  Eye,
-  Edit,
-  Trash2,
   Calculator,
   Users as UsersIcon,
   MapPin,
@@ -15,8 +11,6 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import AppLayout from '@/components/layout/AppLayout'
@@ -123,7 +117,7 @@ export default function ClientsPage() {
         setClients(mockClients);
       }
     } catch (error) {
-      console.error('Failed to fetch clients:', error);
+      // Error handled by displaying mock data
       // Set mock data on error
       const mockClients: Client[] = [
         {
@@ -164,7 +158,7 @@ export default function ClientsPage() {
         });
         fetchClients(); // Refresh the list
       } catch (error) {
-        console.error('Failed to delete client:', error);
+        // TODO: Implement user notification for failed deletion
       }
     }
   }, [fetchClients])
@@ -190,7 +184,7 @@ export default function ClientsPage() {
         throw new Error('Failed to update status')
       }
     } catch (error) {
-      console.error('Error updating client status:', error)
+      // TODO: Implement user notification for failed status update
       throw error
     }
   }, [])
@@ -409,7 +403,7 @@ export default function ClientsPage() {
               enableColumnReordering
               enableRowReordering
               onRowReorder={(fromIndex, toIndex) => {
-                console.log(`Reorder row from ${fromIndex} to ${toIndex}`);
+                // TODO: Implement actual row reordering logic
                 // Handle row reordering logic here
               }}
             />

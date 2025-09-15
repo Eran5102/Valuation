@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>409A Valuation Report</title>
+    <style>
+        /* Print-friendly CSS for PDF generation */
+        @page {
+            size: A4;
+            margin: 1in;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #333;
+            background: #fff;
+        }
+
+        .container {
+            max-width: 8.5in;
+            margin: 0 auto;
+            background: white;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 2em;
+            padding: 2em 0;
+            border-bottom: 3px solid #2563eb;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            color: #2563eb;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 0.5em;
+        }
+
+        .header .subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 2em;
+            line-height: 1.6;
+        }
+
+        .value8-logo {
+            font-size: 24px;
+            color: #2563eb;
+            font-weight: bold;
+            margin-top: 2em;
+        }
+
+        /* Section Styles */
+        .section {
+            margin-bottom: 3em;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #2563eb;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 1em;
+            padding-bottom: 0.5em;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .section-number {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 60px;
+            margin-right: 1em;
+            float: left;
+            margin-top: -10px;
+        }
+
+        .section-content {
+            margin-left: 80px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 10px;
+        }
+
+        table.data-table {
+            border: 1px solid #ccc;
+        }
+
+        table.data-table th {
+            background-color: #2563eb;
+            color: white;
+            font-weight: bold;
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #2563eb;
+        }
+
+        table.data-table td {
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        table.data-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: flex;
+            justify-content: space-between;
+            gap: 2em;
+            margin: 2em 0;
+        }
+
+        .summary-card {
+            flex: 1;
+            text-align: center;
+            padding: 2em;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .summary-card-icon {
+            font-size: 48px;
+            color: #2563eb;
+            margin-bottom: 1em;
+        }
+
+        .summary-card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 1em;
+        }
+
+        .summary-card-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2563eb;
+            padding: 10px;
+            background: #f1f5f9;
+            border-radius: 5px;
+        }
+
+        /* Company Overview Grid */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2em;
+            margin: 2em 0;
+        }
+
+        .overview-card {
+            padding: 1.5em;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .overview-card h3 {
+            color: #2563eb;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 1em;
+            display: flex;
+            align-items: center;
+        }
+
+        .overview-card-icon {
+            margin-right: 0.5em;
+            font-size: 16px;
+        }
+
+        /* List Styles */
+        ul {
+            margin: 1em 0;
+            padding-left: 1.5em;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+        }
+
+        /* Page Break Styles */
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* Footer Styles */
+        .footer {
+            margin-top: 3em;
+            padding-top: 2em;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+
+        /* Navigation Dots */
+        .nav-dots {
+            text-align: center;
+            margin: 2em 0;
+        }
+
+        .nav-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            margin: 0 5px;
+        }
+
+        .nav-dot.active {
+            background: #2563eb;
+        }
+
+        /* Methodology Tables */
+        .methodology-table {
+            margin: 2em 0;
+        }
+
+        .methodology-table th {
+            background: #1e40af !important;
+        }
+
+        .weight-column {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .selected {
+            background: #dcfce7 !important;
+        }
+
+        .not-selected {
+            background: #fef2f2 !important;
+            opacity: 0.7;
+        }
+
+        /* Breakpoint Analysis */
+        .breakpoint-table {
+            font-size: 9px;
+        }
+
+        .breakpoint-table th,
+        .breakpoint-table td {
+            padding: 4px 6px;
+        }
+
+        /* Print Optimizations */
+        @media print {
+            .page-break {
+                page-break-before: always;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            table {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Template Variable Highlighting (for editor) */
+        .template-var {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Cover Page -->
+        <div class="header">
+            <h1>409A VALUATION</h1>
+            <div class="subtitle">
+                Per share Fair Value of <span class="template-var">{{SECURITY}}</span> of<br>
+                <span class="template-var">{{COMPANY_NAME}}</span> in connection with the requirements<br>
+                of Internal Revenue Code Section 409A as of<br>
+                <span class="template-var">{{VALUATION_DATE}}</span>
+            </div>
+            <div class="value8-logo">VALUE8.AI</div>
+            <div style="margin-top: 2em;">
+                <strong><span class="template-var">{{REPORT_DATE}}</span></strong><br>
+                <span class="template-var">{{COMPANY_NAME}}</span> PREPARED BY DATE
+            </div>
+        </div>
+
+        <!-- Letter Page -->
+        <div class="page-break"></div>
+        <div class="section">
+            <p style="margin-bottom: 2em;">
+                <span class="template-var">{{DESIGNEE_FIRST_NAME}} {{DESIGNEE_LAST_NAME}}</span><br>
+                <span class="template-var">{{DESIGNEE_TITLE}}</span><br>
+                <span class="template-var">{{COMPANY_NAME}}</span>
+            </p>
+
+            <p style="margin-bottom: 1em;">Dear <span class="template-var">{{DESIGNEE_PREFIX}} {{DESIGNEE_LAST_NAME}}</span>,</p>
+
+            <p style="margin-bottom: 1em;">
+                At the request of <span class="template-var">{{COMPANY_NAME}}</span> ("Company"), Value8 ("Value8") estimated the fair value of the Company's <span class="template-var">{{SECURITY}}</span> (the "Subject Security"), as of <span class="template-var">{{VALUATION_DATE}}</span> ("Valuation Date") on a non-controlling, non-marketable basis ("Engagement"). Our analysis was prepared solely for the information and use of Company's management ("Management"). Our engagement is limited solely to performing this valuation, in accordance with our terms and conditions in Exhibit A of our letter of engagement dated <span class="template-var">{{ENGAGEMENT_LETTER_DATE}}</span>. While Management may use the results of this valuation for financial and/or tax reporting purposes including Internal Revenue Code Section 409A ("IRC 409A") and FASB Accounting Standards Codification Topic 718 – Stock Compensation ("ASC 718"), Value8 does not assume any liability in furnishing this estimation and opinion.
+            </p>
+
+            <h3 style="color: #2563eb; margin: 1.5em 0 0.5em 0;">DEFINITION OF VALUE</h3>
+            <p style="margin-bottom: 1em;">
+                The standard of value we applied in this opinion is fair value. The term "fair value" is defined per Accounting Standards Codification Topic 820, Fair Value Measurements:
+            </p>
+            <p style="font-style: italic; margin-bottom: 1em;">
+                …the price that would be received to sell an asset or paid to transfer a liability in an orderly transaction between market participants at the measurement date.
+            </p>
+
+            <h3 style="color: #2563eb; margin: 1.5em 0 0.5em 0;">CONCLUSION</h3>
+            <p style="margin-bottom: 2em;">
+                Based on the assumptions and limiting conditions as described in this report, as well as the facts and circumstances as of the Valuation Date, Value8 estimated the fair market value of the Company's Ordinary Shares to be approximately <span class="template-var">{{FMV}}</span> per share as of the Valuation Date, on a non-marketable, minority-interest basis.
+            </p>
+
+            <p>Sincerely,<br><br>Value8</p>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="page-break"></div>
+        <div class="section">
+            <h2 class="section-title">TABLE OF CONTENTS</h2>
+
+            <table style="border: none; margin-top: 2em;">
+                <tr>
+                    <td style="border: none; padding: 1em;">
+                        <div class="section-number">01</div>
+                        <div class="section-content">
+                            <h3 style="color: #2563eb; margin-bottom: 0.5em;">INTRODUCTION</h3>
+                            <p>Sources of Information &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4</p>
+                            <p>Statement of Limiting Conditions &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 5</p>
+                            <p>Appraisal Certification &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6</p>
+                            <p>Valuation Summary &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 7</p>
+                        </div>
+                    </td>
+                    <td style="border: none; padding: 1em;">
+                        <div class="section-number">04</div>
+                        <div class="section-content">
+                            <h3 style="color: #2563eb; margin-bottom: 0.5em;">VALUATION ANALYSIS</h3>
+                            <p>Selected Valuation Methodologies &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 17</p>
+                            <p>Weighting of valuation Methodologies &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 18</p>
+                            <p>Application of Market Approach &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 19</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: none; padding: 1em;">
+                        <div class="section-number">02</div>
+                        <div class="section-content">
+                            <h3 style="color: #2563eb; margin-bottom: 0.5em;">COMPANY OVERVIEW</h3>
+                            <p>Company Overview &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 9</p>
+                            <p>Capital Structure and Financing History &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10</p>
+                        </div>
+                    </td>
+                    <td style="border: none; padding: 1em;">
+                        <div class="section-number">05</div>
+                        <div class="section-content">
+                            <h3 style="color: #2563eb; margin-bottom: 0.5em;">ALLOCATION OF VALUE</h3>
+                            <p>Weighing of Allocation Methodologies &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 21</p>
+                            <p>OPM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 22</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: none; padding: 1em;">
+                        <div class="section-number">03</div>
+                        <div class="section-content">
+                            <h3 style="color: #2563eb; margin-bottom: 0.5em;">VALUATION FRAMEWORK</h3>
+                            <p>Valuation Methodology &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 12-13</p>
+                            <p>Allocation of Value &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 14-15</p>
+                        </div>
+                    </td>
+                    <td style="border: none; padding: 1em;">
+                        <div class="section-number">06</div>
+                        <div class="section-content">
+                            <h3 style="color: #2563eb; margin-bottom: 0.5em;">EXHIBITS</h3>
+                            <p>Adjustments for Lack of Marketability &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 24-25</p>
+                            <p>OPM Breakpoint Analysis &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 26</p>
+                            <p>Appraiser Bio & Credentials &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Summary Valuation Results -->
+        <div class="page-break"></div>
+        <div class="section">
+            <h2 class="section-title">SUMMARY VALUATION RESULTS</h2>
+
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-card-icon">$</div>
+                    <div class="summary-card-title"><span class="template-var">{{SECURITY}}</span> VALUE</div>
+                    <div class="summary-card-value"><span class="template-var">{{FMV}}</span></div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-card-icon">📅</div>
+                    <div class="summary-card-title">VALUATION DATE</div>
+                    <div class="summary-card-value"><span class="template-var">{{VALUATION_DATE}}</span></div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-card-icon">⏭</div>
+                    <div class="summary-card-title">EXPIRATION DATE</div>
+                    <div class="summary-card-value"><span class="template-var">{{EXPIRATION_DATE}}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Overview -->
+        <div class="page-break"></div>
+        <div class="section">
+            <div class="section-number">02</div>
+            <div class="section-content">
+                <h2 class="section-title">COMPANY OVERVIEW</h2>
+
+                <div class="overview-grid">
+                    <div class="overview-card">
+                        <h3><span class="overview-card-icon">📋</span>BUSINESS DESCRIPTION</h3>
+                        <p><strong>About:</strong> <span class="template-var">{{BUSINESS_DESCRIPTION}}</span></p>
+                        <p><strong>Founded:</strong> The company was founded in <span class="template-var">{{INCORPORATION_YEAR}}</span></p>
+                        <p><strong>Headquarters:</strong> <span class="template-var">{{HEADQUARTERS}}</span></p>
+                        <p><strong>Business model:</strong> <span class="template-var">{{BUSINESS_MODEL_DESCRIPTION}}</span></p>
+                    </div>
+
+                    <div class="overview-card">
+                        <h3><span class="overview-card-icon">🎯</span>MARKET FOCUS</h3>
+                        <p><span class="template-var">{{MARKET_DESCRIPTION}}</span></p>
+                    </div>
+
+                    <div class="overview-card">
+                        <h3><span class="overview-card-icon">📈</span>STAGE OF DEVELOPMENT</h3>
+                        <p>The American Institute of Certified Public Accountants (AICPA) defines six stages of enterprise development. In this hierarchy, Value8 categorizes the Company as a <span class="template-var">{{STAGE_OF_DEVELOPMENT}}</span> company.</p>
+                        <p><span class="template-var">{{STAGE_OF_DEVELOPMENT_DESCRIPTION}}</span></p>
+                    </div>
+                </div>
+
+                <div class="overview-grid">
+                    <div class="overview-card">
+                        <h3><span class="overview-card-icon">🚀</span>PRODUCTS</h3>
+                        <p><span class="template-var">{{PRODUCTS}}</span></p>
+                    </div>
+
+                    <div class="overview-card">
+                        <h3><span class="overview-card-icon">👥</span>MANAGEMENT TEAM</h3>
+                        <ul style="font-size: 10px;">
+                            <li><span class="template-var">{{MGMT_TEAM_NAME_1}}</span>, <span class="template-var">{{MGMT_TEAM_TITLE_1}}</span></li>
+                            <li><span class="template-var">{{MGMT_TEAM_NAME_2}}</span>, <span class="template-var">{{MGMT_TEAM_TITLE_2}}</span></li>
+                            <li><span class="template-var">{{MGMT_TEAM_NAME_3}}</span>, <span class="template-var">{{MGMT_TEAM_TITLE_3}}</span></li>
+                            <li><span class="template-var">{{MGMT_TEAM_NAME_4}}</span>, <span class="template-var">{{MGMT_TEAM_TITLE_4}}</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="overview-card">
+                        <h3><span class="overview-card-icon">💰</span>LEADING INVESTORS</h3>
+                        <ul style="font-size: 10px;">
+                            <li><span class="template-var">{{INVESTOR_1}}</span></li>
+                            <li><span class="template-var">{{INVESTOR_2}}</span></li>
+                            <li><span class="template-var">{{INVESTOR_3}}</span></li>
+                            <li><span class="template-var">{{INVESTOR_4}}</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capital Structure -->
+        <div class="page-break"></div>
+        <div class="section">
+            <h2 class="section-title">CAPITAL STRUCTURE AND FINANCING HISTORY</h2>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>SHARES AND ROUND INFORMATION</th>
+                        <th>SHARES</th>
+                        <th>OPTIONS</th>
+                        <th>WARRANTS</th>
+                        <th>TOTAL OUTSTANDING</th>
+                        <th>TOTAL FULLY DILUTED</th>
+                        <th>% FD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Series D Shares</td>
+                        <td>1,000,000</td>
+                        <td></td>
+                        <td>5,000</td>
+                        <td>1,000,000</td>
+                        <td>1,050,000</td>
+                        <td>33.25%</td>
+                    </tr>
+                    <tr>
+                        <td>Series C Shares</td>
+                        <td>1,000,000</td>
+                        <td></td>
+                        <td></td>
+                        <td>1,000,000</td>
+                        <td>0</td>
+                        <td>33.25%</td>
+                    </tr>
+                    <tr>
+                        <td>Series B Shares</td>
+                        <td>1,000,000</td>
+                        <td></td>
+                        <td></td>
+                        <td>1,000,000</td>
+                        <td>1,000,000</td>
+                        <td>33.25%</td>
+                    </tr>
+                    <tr>
+                        <td>Series A Shares</td>
+                        <td>1,000,000</td>
+                        <td></td>
+                        <td></td>
+                        <td>1,000,000</td>
+                        <td>1,000,000</td>
+                        <td>33.25%</td>
+                    </tr>
+                    <tr>
+                        <td>Ordinary Shares</td>
+                        <td>1,000,000</td>
+                        <td>500,000</td>
+                        <td></td>
+                        <td>1,000,000</td>
+                        <td>1,500,000</td>
+                        <td>33.25%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Rights and Preferences -->
+        <div class="section">
+            <h2 class="section-title">RIGHTS AND PREFERENCES</h2>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>RIGHTS AND PREFERENCES</th>
+                        <th>OIP</th>
+                        <th>TYPE</th>
+                        <th>MULTIPLIER</th>
+                        <th>CAP</th>
+                        <th>CONVERSION RATIO</th>
+                        <th>LIQUIDATION RANK</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Series D Shares</td>
+                        <td>$1.55</td>
+                        <td>Participating</td>
+                        <td>1x</td>
+                        <td>3x</td>
+                        <td>1x</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Series C Shares</td>
+                        <td>$1.55</td>
+                        <td>Non-Participating</td>
+                        <td>1x</td>
+                        <td>N/A</td>
+                        <td>1x</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>Series B Shares</td>
+                        <td>$1.55</td>
+                        <td>Non-Participating</td>
+                        <td>1x</td>
+                        <td>N/A</td>
+                        <td>1x</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>Series A Shares</td>
+                        <td>$1.55</td>
+                        <td>Non-Participating</td>
+                        <td>1x</td>
+                        <td>N/A</td>
+                        <td>1x</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>Ordinary Shares</td>
+                        <td>-</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>4</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Selected Valuation Methodologies -->
+        <div class="page-break"></div>
+        <div class="section">
+            <div class="section-number">04</div>
+            <div class="section-content">
+                <h2 class="section-title">SELECTED VALUATION METHODOLOGIES</h2>
+
+                <table class="data-table methodology-table">
+                    <thead>
+                        <tr>
+                            <th>METHOD</th>
+                            <th style="width: 60%;">DESCRIPTION</th>
+                            <th>DECISION & WEIGHT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="selected">
+                            <td><strong>Market Approach – OPM Backsolve</strong></td>
+                            <td>According to the AICPA guidelines, recent securities transactions should be considered as a relevant input for computing the enterprise valuation. The primary advantage of this method is that it establishes a value for equity compensation based on the support of the latest round of financing or transaction. Given that the most recent financing round was very recently (<span class="template-var">{{LAST_ROUND_DATE}}</span>), we chose to utilize the backsolve method. After consideration a weight of 100% was selected.</td>
+                            <td class="weight-column">✓ 100%</td>
+                        </tr>
+                        <tr class="not-selected">
+                            <td><strong>Market Approach – Public Comparables</strong></td>
+                            <td>The basic premise of the comparables approach is that an equity's value should bear some resemblance to other equities in a similar class. In the case of the Company, it has a very unique product in a very new industry which makes it particularly difficult to establish an appropriate peer group. Due to substantial difference (relative to peer group) in size and stage of development of the Company, this methodology was considered and not used, as it does not accurately represent the going concern value of the subject Company.</td>
+                            <td class="weight-column">✗ 0%</td>
+                        </tr>
+                        <tr class="not-selected">
+                            <td><strong>Income Approach</strong></td>
+                            <td>DCF method allows us to consider explicitly the potential growth prospects and future cash flow streams. The Income Approach is the most informative valuation methodology, however it is not always suitable for early-stage companies where revenue projections have no historical basis, are often too speculative or otherwise unreliable to be relied upon for this valuation methodology. Based on the Company's stage of development, lack of operating history, and the great level of variability surrounding its innovative product and therefore long-term forecast, we did not consider the Income Approach in this analysis for the Company.</td>
+                            <td class="weight-column">✗ 0%</td>
+                        </tr>
+                        <tr class="not-selected">
+                            <td><strong>Asset Approach</strong></td>
+                            <td>The Company is not a capital-intensive business. We therefore concluded that other valuation approaches would better capture the fair market value than would the Asset Approach. Consequently, this methodology was considered and not used, as it does not accurately represent the going concern value of the subject Company.</td>
+                            <td class="weight-column">✗ 0%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Weighting of Valuation Methodologies -->
+        <div class="page-break"></div>
+        <div class="section">
+            <h2 class="section-title">WEIGHTING OF VALUATION METHODOLOGIES</h2>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>VALUATION APPROACH</th>
+                        <th>DECISION</th>
+                        <th>ENTERPRISE VALUE</th>
+                        <th>WEIGHTING</th>
+                        <th>WEIGHTED VALUE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #f0f9ff;">
+                        <td colspan="5" style="font-weight: bold; color: #2563eb;">MARKET APPROACH</td>
+                    </tr>
+                    <tr>
+                        <td>Subject Company Transaction (OPM Backsolve)</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td><span class="template-var">{{BACKSOLVE_EQUITY_VALUE}}</span></td>
+                        <td><span class="template-var">{{BACKSOLVE_WEIGHT}}</span></td>
+                        <td><span class="template-var">{{BACKSOLVE_EQUITY_VALUE}}x{{BACKSOLVE_WEIGHT}}</span></td>
+                    </tr>
+                    <tr>
+                        <td>Guideline Public Comparables</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td></td>
+                        <td><span class="template-var">{{PUBLIC_COMPS_WEIGHT}}</span></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Guideline Precedent Acquisitions</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td></td>
+                        <td><span class="template-var">{{PREAQUS_WEIGHT}}</span></td>
+                        <td></td>
+                    </tr>
+                    <tr style="background: #f0f9ff;">
+                        <td colspan="5" style="font-weight: bold; color: #2563eb;">INCOME APPROACH</td>
+                    </tr>
+                    <tr>
+                        <td>Discounted Cash Flow</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td></td>
+                        <td><span class="template-var">{{DCF_WEIGHT}}</span></td>
+                        <td></td>
+                    </tr>
+                    <tr style="background: #f0f9ff;">
+                        <td colspan="5" style="font-weight: bold; color: #2563eb;">ASSET APPROACH</td>
+                    </tr>
+                    <tr>
+                        <td>Cost to Recreate</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td></td>
+                        <td><span class="template-var">{{CTR_WEIGHT}}</span></td>
+                        <td></td>
+                    </tr>
+                    <tr style="background: #e5e7eb; font-weight: bold;">
+                        <td>WEIGHTED ENTERPRISE VALUE</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>LESS: NET DEBT</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td><span class="template-var">{{NET_DEBT}}</span></td>
+                    </tr>
+                    <tr style="background: #2563eb; color: white; font-weight: bold;">
+                        <td>WEIGHTED EQUITY VALUE</td>
+                        <td></td>
+                        <td></td>
+                        <td><span class="template-var">{{VALUATION_WEIGHTING_TOTAL}}</span></td>
+                        <td><span class="template-var">{{WEIGHTED_EQUITY_VALUE}}</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- OPM Backsolve Analysis -->
+        <div class="page-break"></div>
+        <div class="section">
+            <div class="section-number">05</div>
+            <div class="section-content">
+                <h2 class="section-title">APPLICATION OF THE OPM BACKSOLVE APPROACH</h2>
+
+                <h3 style="color: #2563eb; margin: 1.5em 0 1em 0;">EQUITY VALUE CALCULATION METHODOLOGY</h3>
+                <p style="margin-bottom: 2em;">
+                    As noted above, this analysis considers the <span class="template-var">{{LAST_ROUND_SECURITY}}</span> transaction closed on (<span class="template-var">{{LAST_ROUND_DATE}}</span>, specifically the price per share paid in exchange for each share of <span class="template-var">{{LAST_ROUND_SECURITY}}</span>. To determine the implied equity value from the transacted price, we used the Black Scholes OPM to allocate value to the various share classes such that the probability weighted <span class="template-var">{{LAST_ROUND_SECURITY}}</span> per share value equals its Original Issued Price.
+                </p>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>SUMMARY BACKSOLVE INPUTS</th>
+                            <th style="width: 60%;">DESCRIPTION</th>
+                            <th>VALUE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Equity value (spot price)</td>
+                            <td>Total consideration of the most recent transaction – we backsolved to an equity value that results in a value per share for the <span class="template-var">{{LAST_ROUND_SECURITY}}</span> of $<span class="template-var">{{LAST_ROUND_PPS}}</span></td>
+                            <td><span class="template-var">{{BACKSOLVE_EQUITY_VALUE}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Volatility</td>
+                            <td>Volatility - expected volatility, over the estimated terms, was estimated based upon an analysis of the historical volatility of guideline public companies in the <span class="template-var">{{VOLATILITY_INDUSTRY}}</span> in <span class="template-var">{{VOLATILITY_GEOGRAPHY}}</span>, as performed by <span class="template-var">{{VOLATILITY_SOURCE}}</span></td>
+                            <td><span class="template-var">{{VOLATILITY}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Time to Liquidity Event (Years)</td>
+                            <td>An estimate for when liquidity will be achieved, either through dissolution, strategic sale, or IPO, reasonably estimated by reference to the subject Company's life cycle stage, funding needs, and strategic outlook</td>
+                            <td><span class="template-var">{{OPM_TIME_TO_LIQUIDITY}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Risk Free Interest Rate</td>
+                            <td>A risk-free rate was applied which represents the US Treasury rate as of the Valuation Date. The risk free rate used is the constant maturity US Treasury rate corresponding to the applicable time to liquidity</td>
+                            <td><span class="template-var">{{OPM_RISK_FREE_RATE}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Equity breakpoint value (strike price)</td>
+                            <td>The rights and preferences of the various classes were used to calculate breakpoints. A breakpoint is the point at which each class of equity reaches in-the-money status. The value in excess of any given breakpoint is equal to a call option on the total equity value of the Company</td>
+                            <td>See page 12</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Weighting of Allocation Methodologies -->
+        <div class="page-break"></div>
+        <div class="section">
+            <h2 class="section-title">WEIGHTING OF ALLOCATION METHODOLOGIES</h2>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>VALUATION APPROACH</th>
+                        <th>DECISION</th>
+                        <th>WEIGHTING</th>
+                        <th><span class="template-var">{{SECURITY}}</span> VALUE PER SHARE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>OPM</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td><span class="template-var">{{OPM_WEIGHT}}</span></td>
+                        <td><span class="template-var">{{FMV}}</span></td>
+                    </tr>
+                    <tr>
+                        <td>PWERM</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td><span class="template-var">{{PWERM_WEIGHT}}</span></td>
+                        <td>NA</td>
+                    </tr>
+                    <tr>
+                        <td>CVM</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td><span class="template-var">{{CVM_WEIGHT}}</span></td>
+                        <td>NA</td>
+                    </tr>
+                    <tr>
+                        <td>Hybrid</td>
+                        <td><span class="template-var">{{DECISION}}</span></td>
+                        <td><span class="template-var">{{HYBRID_WEIGHT}}</span></td>
+                        <td>NA</td>
+                    </tr>
+                    <tr style="background: #2563eb; color: white; font-weight: bold;">
+                        <td>IMPLIED <span class="template-var">{{SECURITY}}</span> SHARE VALUE</td>
+                        <td></td>
+                        <td><span class="template-var">{{ALLOCATION_WEIGHTING_TOTAL}}</span></td>
+                        <td><span class="template-var">{{FMV}}</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="background: #2563eb; color: white; padding: 1em; margin: 2em 0; border-radius: 5px;">
+                <strong>Conclusion:</strong> Our recommended Fair Value, as of the Valuation Date, per share of Ordinary Shares on a non-marketable basis is $<span class="template-var">{{FMV}}</span>
+            </div>
+        </div>
+
+        <!-- DLOM Analysis -->
+        <div class="page-break"></div>
+        <div class="section">
+            <div class="section-number">06</div>
+            <div class="section-content">
+                <h2 class="section-title">DISCOUNT FOR LACK OF MARKETABILITY (QUANTITATIVE)</h2>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2" style="background: #1e40af;">DLOM INPUTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Equity Value (Spot Price)</td>
+                            <td><span class="template-var">{{WEIGHTED_EQUITY_VALUE}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Strike Price</td>
+                            <td><span class="template-var">{{WEIGHTED_EQUITY_VALUE}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Risk Free Rate</td>
+                            <td><span class="template-var">{{OPM_RISK_FREE_RATE}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Volatility</td>
+                            <td><span class="template-var">{{VOLATILITY}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Time to Liquidity (Years)</td>
+                            <td><span class="template-var">{{OPM_TIME_TO_LIQUIDITY}}</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table class="data-table" style="margin-top: 2em;">
+                    <thead>
+                        <tr>
+                            <th>DLOM METHODOLOGY</th>
+                            <th>WEIGHT</th>
+                            <th>DLOM ARRIVED</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>The Chaffe Protective Put Model</td>
+                            <td><span class="template-var">{{CHAFFE_WEIGHT}}</span></td>
+                            <td><span class="template-var">{{CHAFFE_DLOM}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Finnerty Average Strike 2012 Model</td>
+                            <td><span class="template-var">{{FINNERTY_WEIGHT}}</span></td>
+                            <td><span class="template-var">{{FINNERTY_DLOM}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Ghaidarov Average Strike Model</td>
+                            <td><span class="template-var">{{GHAIDAROV_WEIGHT}}</span></td>
+                            <td><span class="template-var">{{GHAIDAROV_DLOM}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Longstaff Lookback Put Option</td>
+                            <td><span class="template-var">{{LONGSTAFF_WEIGHT}}</span></td>
+                            <td><span class="template-var">{{LONGSTAFF_DLOM}}</span></td>
+                        </tr>
+                        <tr>
+                            <td>DLOM - FMV Restricted Stock Studies</td>
+                            <td><span class="template-var">{{MARKET_STUDIES_WEIGHT}}</span></td>
+                            <td><span class="template-var">{{MARKET_STUDIES_DLOM}}</span></td>
+                        </tr>
+                        <tr style="background: #2563eb; color: white; font-weight: bold;">
+                            <td>CONCLUDED DLOM</td>
+                            <td></td>
+                            <td><span class="template-var">{{CONCLUDED_DLOM}}</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Appraiser Bio -->
+        <div class="page-break"></div>
+        <div class="section">
+            <h2 class="section-title">APPRAISER BIO AND CREDENTIALS</h2>
+
+            <div style="padding: 2em; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc;">
+                <p><span class="template-var">{{APPRAISER_BIO}}</span></p>
+
+                <div style="margin-top: 2em;">
+                    <p><strong>Appraiser:</strong></p>
+                    <p><span class="template-var">{{APPRAISER_FIRST_NAME}} {{APPRAISER_LAST_NAME}}</span>; <span class="template-var">{{APPRAISER_TITLE}}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>409A Valuation for <span class="template-var">{{COMPANY_NAME}}</span> | Generated with Value8.AI</p>
+            <p>Date: <span class="template-var">{{REPORT_DATE}}</span></p>
+        </div>
+    </div>
+</body>
+</html>

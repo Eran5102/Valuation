@@ -14,7 +14,7 @@ export class CircularReferenceResolver {
     ): CircularResolutionResult {
         
         let current_price_per_share = new Decimal(1.0);
-        let exercised_options: { [key: string]: Decimal } = {};
+        const exercised_options: { [key: string]: Decimal } = {};
         let iteration_count = 0;
         let convergence_achieved = false;
         

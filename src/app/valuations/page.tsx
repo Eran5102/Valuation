@@ -99,7 +99,7 @@ export default function ValuationsPage() {
       ]
       setValuations(mockValuations)
     } catch (error) {
-      console.error('Failed to fetch valuations:', error)
+      // Error handled with mock data
     } finally {
       setLoading(false)
     }
@@ -265,7 +265,7 @@ export default function ValuationsPage() {
               itemId={valuation.id}
               viewHref={`/valuations/${valuation.id}`}
               editHref={`/valuations/${valuation.id}/edit`}
-              onDelete={() => console.log('Delete valuation:', valuation.id)}
+              onDelete={() => {/* TODO: Implement delete functionality */}}
             />
           )
         },
@@ -317,7 +317,7 @@ export default function ValuationsPage() {
               enableColumnReordering
               enableRowReordering
               onRowReorder={(fromIndex, toIndex) => {
-                console.log(`Reorder row from ${fromIndex} to ${toIndex}`);
+                // TODO: Implement actual row reordering logic
                 // Handle row reordering logic here
               }}
             />

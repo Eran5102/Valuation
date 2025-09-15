@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { BarChart3, Calculator, TrendingUp, Target, AlertTriangle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { BarChart3, Calculator, AlertTriangle, Loader2, RefreshCw, Activity, Layers, Target, Zap, RotateCcw } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { DataTable } from '@/components/ui/data-table';
 import { CapTableConfig } from '@/types';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 
@@ -12,236 +14,356 @@ interface BreakpointsAnalysisProps {
   capTableConfig: CapTableConfig;
 }
 
+// Breakpoint type configurations with icons and colors
+const BREAKPOINT_TYPES = {
+  liquidation_preference: {
+    label: 'Liquidation Preference',
+    icon: Target,
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-red-200'
+  },
+  pro_rata_distribution: {
+    label: 'Pro-rata Distribution',
+    icon: Layers,
+    color: 'text-green-600',
+    bgColor: 'bg-green-50',
+    borderColor: 'border-green-200'
+  },
+  option_exercise: {
+    label: 'Option Exercise',
+    icon: Activity,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200'
+  },
+  participation_cap: {
+    label: 'Participation Cap',
+    icon: Zap,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200'
+  },
+  voluntary_conversion: {
+    label: 'Conversion',
+    icon: RotateCcw,
+    color: 'text-pink-600',
+    bgColor: 'bg-pink-50',
+    borderColor: 'border-pink-200'
+  }
+};
+
+interface Breakpoint {
+  breakpointType: string;
+  exitValue: number;
+  affectedSecurities: string[];
+  calculationMethod: string;
+  priorityOrder: number;
+  explanation: string;
+  mathematicalDerivation: string;
+  dependencies: string[];
+}
+
+interface ValidationResult {
+  testName: string;
+  passed: boolean;
+  expected: any;
+  actual: any;
+  message: string;
+}
+
+interface BreakpointAnalysisData {
+  totalBreakpoints: number;
+  breakpointsByType: Record<string, number>;
+  sortedBreakpoints: Breakpoint[];
+  criticalValues: Array<{
+    value: number;
+    description: string;
+    affectedSecurities: string[];
+    triggers: string[];
+  }>;
+  auditSummary: string;
+  validationResults: ValidationResult[];
+  performanceMetrics: {
+    analysisTimeMs: number;
+    iterationsUsed: Record<string, number>;
+    cacheHits: number;
+  };
+}
+
 export default function BreakpointsAnalysis({ valuationId, companyId, capTableConfig }: BreakpointsAnalysisProps) {
   const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [analysisData, setAnalysisData] = useState<BreakpointAnalysisData | null>(null);
+  const [currentExitValue] = useState(10000000); // Default to $10M exit value
 
-  const mockBreakpoints = [
-    {
-      id: 1,
-      name: "Series A Liquidation Preference",
-      type: "Liquidation Preference",
-      from: 0,
-      to: 3000000,
-      participatingSecurities: ["Series A Preferred"],
-      shares: 300000,
-      sectionRVPS: 10.00,
-      cumulativeRVPS: 10.00
-    },
-    {
-      id: 2,
-      name: "Series B Liquidation Preference", 
-      type: "Liquidation Preference",
-      from: 3000000,
-      to: 5000000,
-      participatingSecurities: ["Series B Preferred"],
-      shares: 128571,
-      sectionRVPS: 15.56,
-      cumulativeRVPS: 12.50
-    },
-    {
-      id: 3,
-      name: "Pro Rata Distribution",
-      type: "Pro Rata",
-      from: 5000000,
-      to: 10000000,
-      participatingSecurities: ["Common Stock", "Series A Preferred", "Series B Preferred"],
-      shares: 1428571,
-      sectionRVPS: 3.50,
-      cumulativeRVPS: 7.00
-    },
-    {
-      id: 4,
-      name: "Series A Participation Cap",
-      type: "Cap Reached",
-      from: 10000000,
-      to: 15000000,
-      participatingSecurities: ["Common Stock", "Series B Preferred"],
-      shares: 1128571,
-      sectionRVPS: 4.43,
-      cumulativeRVPS: 9.06
+
+  const runBreakpointAnalysis = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/valuations/${valuationId}/breakpoints`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          includeOptions: true,
+          analysisType: 'comprehensive'
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setAnalysisData(result.data);
+        setAnalysisComplete(true);
+        console.log('Breakpoint analysis completed:', result.data);
+      } else {
+        throw new Error(result.error || 'Analysis failed');
+      }
+    } catch (err) {
+      console.error('Error running breakpoint analysis:', err);
+      setError(err instanceof Error ? err.message : 'Failed to run analysis');
+      setAnalysisComplete(false);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+  
+  // Load existing analysis on component mount
+  useEffect(() => {
+    const loadExistingAnalysis = async () => {
+      try {
+        const response = await fetch(`/api/valuations/${valuationId}/breakpoints`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setAnalysisData(result.data);
+            setAnalysisComplete(true);
+          }
+        }
+      } catch (err) {
+        console.log('No existing analysis found');
+      }
+    };
+    
+    if (valuationId) {
+      loadExistingAnalysis();
+    }
+  }, [valuationId]);
 
-
-  const runBreakpointAnalysis = () => {
-    setAnalysisComplete(true);
-    console.log('Running breakpoint analysis with cap table config:', capTableConfig);
+  // Helper function to get breakpoint type configuration
+  const getBreakpointTypeConfig = (breakpointType: string) => {
+    if (breakpointType.includes('liquidation')) return BREAKPOINT_TYPES.liquidation_preference;
+    if (breakpointType.includes('pro_rata')) return BREAKPOINT_TYPES.pro_rata_distribution;
+    if (breakpointType.includes('option')) return BREAKPOINT_TYPES.option_exercise;
+    if (breakpointType.includes('participation')) return BREAKPOINT_TYPES.participation_cap;
+    if (breakpointType.includes('conversion')) return BREAKPOINT_TYPES.voluntary_conversion;
+    return BREAKPOINT_TYPES.liquidation_preference; // fallback
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Breakpoints Analysis</h2>
-          <p className="text-muted-foreground">Analyzing participation thresholds and value breakpoints</p>
-        </div>
-        <Button onClick={runBreakpointAnalysis}>
-          <Calculator className="h-4 w-4 mr-2" />
-          Run Analysis
+  // Define columns for DataTable
+  const breakpointColumns: ColumnDef<Breakpoint>[] = [
+    {
+      id: 'id',
+      header: 'ID',
+      accessorFn: (_, index) => index + 1,
+      cell: ({ getValue }) => (
+        <span className="font-medium text-muted-foreground">{getValue() as number}</span>
+      ),
+    },
+    {
+      id: 'breakpointType',
+      header: 'Breakpoint',
+      accessorKey: 'breakpointType',
+      cell: ({ row }) => {
+        const breakpoint = row.original;
+        const config = getBreakpointTypeConfig(breakpoint.breakpointType);
+        const IconComponent = config.icon;
+        
+        return (
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${config.bgColor}`}>
+              <IconComponent className={`h-4 w-4 ${config.color}`} />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-medium text-foreground">
+                {breakpoint.breakpointType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </span>
+              <span className="text-xs text-muted-foreground truncate max-w-48" title={breakpoint.explanation}>
+                {breakpoint.explanation}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'type',
+      header: 'Type',
+      accessorKey: 'breakpointType',
+      cell: ({ row }) => {
+        const config = getBreakpointTypeConfig(row.original.breakpointType);
+        return (
+          <Badge variant="outline" className={`${config.borderColor} ${config.bgColor} ${config.color}`}>
+            {config.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: 'fromValue',
+      header: 'From ($)',
+      accessorFn: (breakpoint, index, data) => {
+        return index === 0 ? 0 : (data && data[index - 1]?.exitValue) || 0;
+      },
+      cell: ({ getValue }) => (
+        <span className="font-mono text-foreground">{formatCurrency(getValue() as number)}</span>
+      ),
+    },
+    {
+      id: 'exitValue',
+      header: 'To ($)',
+      accessorKey: 'exitValue',
+      cell: ({ getValue }) => (
+        <span className="font-mono text-foreground">{formatCurrency(getValue() as number)}</span>
+      ),
+    },
+    {
+      id: 'participatingSecurities',
+      header: 'Participating Securities',
+      accessorKey: 'affectedSecurities',
+      cell: ({ getValue }) => {
+        const securities = getValue() as string[];
+        const mockPercentages: { [key: string]: string } = {
+          'Series A': '100.00%',
+          'Series B': '100.00%', 
+          'Founders': '63.16%',
+          'Options @ $1.25': '13.64%',
+          'Options @ $1.36': '24.14%'
+        };
+        
+        return (
+          <div className="space-y-1">
+            {securities.map((security, index) => (
+              <div key={index} className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <span className="text-foreground">{security}</span>
+                <span className="text-muted-foreground">
+                  ({mockPercentages[security] || '0.00%'})
+                </span>
+              </div>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'shares',
+      header: 'Shares',
+      accessorFn: (_, index) => 200000 + (index * 150000), // Mock data
+      cell: ({ getValue }) => (
+        <span className="font-mono text-foreground">{formatNumber(getValue() as number)}</span>
+      ),
+    },
+    {
+      id: 'sectionRVPS',
+      header: 'Section RVPS',
+      cell: () => (
+        <Button variant="link" size="sm" className="text-primary hover:text-primary/80 p-0">
+          View Details
         </Button>
-      </div>
+      ),
+    },
+    {
+      id: 'cumulativeRVPS',
+      header: 'Cumulative RVPS',
+      cell: () => (
+        <Button variant="link" size="sm" className="text-primary hover:text-primary/80 p-0">
+          View Details
+        </Button>
+      ),
+    },
+  ];
 
-      {/* Analysis Status */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center space-x-3">
-            {analysisComplete ? (
-              <>
-                <div className="p-2 bg-green-100 rounded-full">
-                  <Target className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-green-700">Analysis Complete</p>
-                  <p className="text-sm text-muted-foreground">Found {mockBreakpoints.length} breakpoints</p>
-                </div>
-              </>
+  return (
+    <Card className="bg-card border-primary/20">
+      <CardHeader className="bg-primary/5 border-b border-primary/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-6 w-6 text-primary" />
+            <div>
+              <CardTitle className="text-xl font-semibold text-foreground">Breakpoints Analysis</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Current Exit Value: <span className="font-semibold text-foreground">{formatCurrency(currentExitValue)}</span>
+              </p>
+            </div>
+          </div>
+          <Button onClick={runBreakpointAnalysis} disabled={loading} variant="outline" size="sm">
+            {loading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <>
-                <div className="p-2 bg-yellow-100 rounded-full">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-yellow-700">Analysis Pending</p>
-                  <p className="text-sm text-muted-foreground">Click "Run Analysis" to calculate breakpoints</p>
-                </div>
-              </>
+              <RefreshCw className="h-4 w-4 mr-2" />
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cap Table Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cap Table Summary</CardTitle>
-          <CardDescription>Current capitalization structure for analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {capTableConfig.shareClasses?.length || 0}
-              </div>
-              <div className="text-sm text-muted-foreground">Share Classes</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {formatNumber(capTableConfig.shareClasses?.reduce((sum, sc) => sum + (sc.shares || 0), 0) || 0)}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Shares</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {formatNumber(capTableConfig.options?.reduce((sum, opt) => sum + opt.numOptions, 0) || 0)}
-              </div>
-              <div className="text-sm text-muted-foreground">Options Outstanding</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Breakpoints Table */}
-      {analysisComplete && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              Breakpoint Analysis Results
-            </CardTitle>
-            <CardDescription>Value ranges and participating securities at each breakpoint</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Breakpoint</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">From</TableHead>
-                  <TableHead className="text-right">To</TableHead>
-                  <TableHead>Participating Securities</TableHead>
-                  <TableHead className="text-right">Total Shares</TableHead>
-                  <TableHead className="text-right">Section RVPS</TableHead>
-                  <TableHead className="text-right">Cumulative RVPS</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockBreakpoints.map((breakpoint) => (
-                  <TableRow key={breakpoint.id}>
-                    <TableCell className="font-medium">{breakpoint.name}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        breakpoint.type === 'Liquidation Preference' ? 'bg-red-100 text-red-700' :
-                        breakpoint.type === 'Pro Rata' ? 'bg-blue-100 text-blue-700' :
-                        breakpoint.type === 'Cap Reached' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {breakpoint.type}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">{formatCurrency(breakpoint.from)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(breakpoint.to)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {breakpoint.participatingSecurities.map((security, index) => (
-                          <span key={index} className="px-2 py-1 text-xs bg-muted rounded">
-                            {security}
-                          </span>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{formatNumber(breakpoint.shares)}</TableCell>
-                    <TableCell className="text-right">${breakpoint.sectionRVPS.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-medium">${breakpoint.cumulativeRVPS.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Analysis Insights */}
-      {analysisComplete && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2" />
-              Key Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                <h4 className="font-medium text-blue-900">Liquidation Preferences</h4>
-                <p className="text-sm text-blue-700 mt-1">
-                  Series A and B preferred shares have liquidation preferences totaling $5M that must be satisfied before common stockholders receive distributions.
-                </p>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
-                <h4 className="font-medium text-green-900">Pro Rata Participation</h4>
-                <p className="text-sm text-green-700 mt-1">
-                  Above $5M in company value, all securities participate pro rata in distributions, benefiting common stockholders.
-                </p>
-              </div>
-              <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
-                <h4 className="font-medium text-yellow-900">Participation Caps</h4>
-                <p className="text-sm text-yellow-700 mt-1">
-                  Series A participation cap is reached at $10M company value, after which they no longer participate in upside.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {!analysisComplete && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">
-            Configure your cap table and run the analysis to see detailed breakpoint calculations and insights.
-          </p>
+            {loading ? 'Refreshing...' : 'Refresh Analysis'}
+          </Button>
         </div>
-      )}
-    </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {analysisComplete && analysisData ? (
+          <DataTable
+            key="breakpoints-table"
+            tableId="breakpoints-table"
+            columns={breakpointColumns}
+            data={analysisData.sortedBreakpoints || []}
+            enableColumnReordering={true}
+            enableColumnVisibility={true}
+            enableSorting={true}
+            enablePagination={false}
+            enableColumnFilters={true}
+            enableColumnPinning={true}
+            searchPlaceholder="Search breakpoints..."
+            className="border-0"
+          />
+        ) : (
+          <div className="p-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              {loading ? (
+                <>
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium text-foreground">Running Analysis...</p>
+                    <p className="text-muted-foreground">Calculating breakpoints and RVPS values</p>
+                  </div>
+                </>
+              ) : error ? (
+                <>
+                  <AlertTriangle className="h-12 w-12 text-destructive" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium text-destructive">Analysis Error</p>
+                    <p className="text-muted-foreground">{error}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Calculator className="h-12 w-12 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium text-foreground">Ready to Analyze</p>
+                    <p className="text-muted-foreground">Click "Refresh Analysis" to calculate breakpoints</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
