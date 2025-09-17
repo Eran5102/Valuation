@@ -155,8 +155,8 @@ export default function ValuationAssumptions({
       if (cat.id === categoryId) {
         return {
           ...cat,
-          assumptions: cat.assumptions.map(assumption => 
-            assumption.id === assumptionId 
+          assumptions: cat.assumptions.map(assumption =>
+            assumption.id === assumptionId
               ? { ...assumption, value }
               : assumption
           )
@@ -164,13 +164,23 @@ export default function ValuationAssumptions({
       }
       return cat;
     });
-    
+
     setCategories(updatedCategories);
-    
+
     // Auto-save changes to parent component
     if (onSave) {
       onSave(updatedCategories);
     }
+  };
+
+  const getAssumptionValue = (assumptionId: string): string | number => {
+    for (const category of categories) {
+      const assumption = category.assumptions.find(a => a.id === assumptionId);
+      if (assumption) {
+        return assumption.value;
+      }
+    }
+    return '';
   };
 
 
@@ -205,6 +215,7 @@ export default function ValuationAssumptions({
               isExpanded={isExpanded}
               onToggle={toggleCategory}
               onAssumptionChange={handleAssumptionChange}
+              onGetAssumptionValue={getAssumptionValue}
             />
           );
         })}

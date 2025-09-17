@@ -1,15 +1,29 @@
 import React from 'react'
 import { Percent } from 'lucide-react'
 import { Assumption } from './ValuationAssumptions'
+import { RiskFreeRateInput } from './RiskFreeRateInput'
 
 interface AssumptionInputProps {
   assumption: Assumption
   categoryId: string
   onChange: (categoryId: string, assumptionId: string, value: string | number) => void
+  onGetAssumptionValue?: (assumptionId: string) => string | number
 }
 
-export function AssumptionInput({ assumption, categoryId, onChange }: AssumptionInputProps) {
+export function AssumptionInput({ assumption, categoryId, onChange, onGetAssumptionValue }: AssumptionInputProps) {
   const baseClasses = "w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+
+  // Special case for risk-free rate - use the specialized Treasury integration component
+  if (assumption.id === 'risk_free_rate') {
+    return (
+      <RiskFreeRateInput
+        assumption={assumption}
+        categoryId={categoryId}
+        onChange={onChange}
+        onGetAssumptionValue={onGetAssumptionValue}
+      />
+    )
+  }
 
   switch (assumption.type) {
     case 'select':

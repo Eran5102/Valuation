@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense, lazy, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft,
@@ -13,18 +13,27 @@ import {
   Percent,
   Download,
   Info,
-  X
+  X,
+  FileText,
+  Plus,
+  Edit,
+  Eye,
+  Clock,
+  CheckCircle
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TabButton } from '@/components/ui/tab-button'
+import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/layout/AppLayout'
-import ValuationAssumptions from '@/components/valuation/ValuationAssumptions'
-import ImprovedCapTable from '@/components/valuation/ImprovedCapTable'
-import DLOMModels from '@/components/valuation/DLOMModels'
-import BreakpointsAnalysis from '@/components/valuation/BreakpointsAnalysis'
-import ComprehensiveWaterfall from '@/components/valuation/ComprehensiveWaterfall'
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils'
+
+// Lazy load heavy components to improve initial page load performance
+const ValuationAssumptions = lazy(() => import('@/components/valuation/ValuationAssumptions'))
+const ImprovedCapTable = lazy(() => import('@/components/valuation/ImprovedCapTable'))
+const DLOMModels = lazy(() => import('@/components/valuation/DLOMModels'))
+const BreakpointsAnalysis = lazy(() => import('@/components/valuation/BreakpointsAnalysis'))
+const ComprehensiveWaterfall = lazy(() => import('@/components/valuation/ComprehensiveWaterfall'))
 
 interface ValuationProject {
   id: string;
@@ -69,6 +78,10 @@ export default function ValuationDetail() {
     totalInvested: 5000000,
     totalOptions: 500000
   })
+
+  // Reports data
+  const [valuationReports, setValuationReports] = useState<any[]>([])
+  const [loadingReports, setLoadingReports] = useState(false)
 
   // Store the actual cap table configuration for breakpoint calculations
   const [currentCapTableConfig, setCurrentCapTableConfig] = useState<{
@@ -184,13 +197,13 @@ export default function ValuationDetail() {
     }
   }
 
-  // Save assumptions data to the database
-  const saveAssumptionsData = async (categories: any[]) => {
+  // Save assumptions data to the database - memoized callback
+  const saveAssumptionsData = useCallback(async (categories: any[]) => {
     if (!id) return
-    
+
     try {
       console.log('Saving assumptions data to database:', categories)
-      
+
       // Convert categories array to flat object structure expected by DLOM component
       const flatAssumptions: any = {}
       categories.forEach(category => {
@@ -200,9 +213,9 @@ export default function ValuationDetail() {
         })
         flatAssumptions[category.id] = categoryData
       })
-      
+
       console.log('Converted flat assumptions:', flatAssumptions)
-      
+
       const response = await fetch(`/api/valuations/${id}`, {
         method: 'PUT',
         headers: {
@@ -210,13 +223,11 @@ export default function ValuationDetail() {
         },
         body: JSON.stringify({ assumptions: flatAssumptions })
       })
-      
+
       if (response.ok) {
         const result = await response.json()
         console.log('Assumptions saved successfully:', result)
-        // Update local state to reflect the saved data structure
         setAssumptionCategories(categories)
-        // Update the project data to reflect the new assumptions for DLOM component
         setProject(prevProject => prevProject ? { ...prevProject, assumptions: flatAssumptions } : prevProject)
       } else {
         console.error('Failed to save assumptions data')
@@ -224,12 +235,19 @@ export default function ValuationDetail() {
     } catch (error) {
       console.error('Error saving assumptions data:', error)
     }
-  }
+  }, [id])
 
-  // Save cap table data to the database
-  const saveCapTableData = async (data: { shareClasses: any[]; options: any[] }) => {
+  // Handle assumptions save - memoized callback
+  const handleAssumptionsSave = useCallback(async (categories: any[]) => {
+    console.log('Saving assumption categories:', categories);
+    setAssumptionCategories(categories);
+    await saveAssumptionsData(categories);
+  }, [saveAssumptionsData])
+
+  // Save cap table data to the database - memoized callback
+  const saveCapTableData = useCallback(async (data: { shareClasses: any[]; options: any[] }) => {
     if (!id) return
-    
+
     try {
       console.log('Saving cap table data to database:', data)
       const response = await fetch(`/api/valuations/${id}/cap-table`, {
@@ -239,7 +257,7 @@ export default function ValuationDetail() {
         },
         body: JSON.stringify(data)
       })
-      
+
       if (response.ok) {
         const result = await response.json()
         console.log('Cap table saved successfully:', result)
@@ -249,6 +267,45 @@ export default function ValuationDetail() {
     } catch (error) {
       console.error('Error saving cap table data:', error)
     }
+  }, [id])
+
+  // Load reports for this valuation
+  const loadValuationReports = async () => {
+    if (!id) return
+
+    setLoadingReports(true)
+    try {
+      // For now, use mock data since we don't have a reports API yet
+      // In the future, this would fetch from /api/valuations/${id}/reports
+      const mockReports = [
+        {
+          id: '1',
+          name: '409A Valuation Report - Draft',
+          status: 'draft',
+          lastModified: '2024-12-15',
+          templateId: 'template-409a',
+          valuationId: id
+        },
+        {
+          id: '2',
+          name: 'Board Presentation Summary',
+          status: 'published',
+          lastModified: '2024-12-10',
+          templateId: 'template-board-summary',
+          valuationId: id
+        }
+      ]
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      setValuationReports(mockReports)
+    } catch (error) {
+      console.error('Error loading valuation reports:', error)
+      setValuationReports([])
+    } finally {
+      setLoadingReports(false)
+    }
   }
 
   useEffect(() => {
@@ -256,6 +313,34 @@ export default function ValuationDetail() {
       fetchValuation()
     }
   }, [id])
+
+  // Load reports when reports tab becomes active
+  useEffect(() => {
+    if (activeTab === 'reports' && id) {
+      loadValuationReports()
+    }
+  }, [activeTab, id])
+
+  // Memoized calculations to avoid unnecessary re-renders
+  const capTableSummary = useMemo(() => {
+    if (!currentCapTableConfig.shareClasses.length) return capTableData
+
+    const totalShares = currentCapTableConfig.shareClasses.reduce((sum, sc) => sum + sc.sharesOutstanding, 0)
+    const totalInvested = currentCapTableConfig.shareClasses.reduce((sum, sc) => sum + (sc.amountInvested || 0), 0)
+    const totalOptions = currentCapTableConfig.options.reduce((sum, option) => sum + option.numOptions, 0)
+
+    return {
+      totalShareClasses: currentCapTableConfig.shareClasses.length,
+      totalShares,
+      totalInvested,
+      totalOptions
+    }
+  }, [currentCapTableConfig])
+
+  // Memoized project status styling
+  const statusStyling = useMemo(() => {
+    return project ? getStatusColor(project.status) : ''
+  }, [project?.status])
 
   useEffect(() => {
     // Initialize mock data for assumptions
@@ -353,7 +438,7 @@ export default function ValuationDetail() {
                     <Calendar className="h-3 w-3 mr-1" />
                     {formatDate(project.valuationDate)}
                   </span>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(project.status)}`}>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full border ${statusStyling}`}>
                     {project.status.replace('_', ' ')}
                   </span>
                 </div>
@@ -434,6 +519,13 @@ export default function ValuationDetail() {
           >
             Waterfall
           </TabButton>
+          <TabButton
+            active={activeTab === 'reports'}
+            onClick={() => setActiveTab('reports')}
+            icon={FileText}
+          >
+            Reports
+          </TabButton>
         </div>
 
         {/* Tab Content */}
@@ -480,46 +572,45 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'assumptions' && (
-            <ValuationAssumptions 
-              valuationId={id!}
-              initialCategories={assumptionCategories.length > 0 ? assumptionCategories : undefined}
-              onSave={async (categories) => {
-                console.log('Saving assumption categories:', categories);
-                // Store categories for use in DLOM tab
-                setAssumptionCategories(categories);
-                // Save to database
-                await saveAssumptionsData(categories);
-              }}
-            />
+            <Suspense fallback={
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span>Loading valuation assumptions...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            }>
+              <ValuationAssumptions
+                valuationId={id!}
+                initialCategories={assumptionCategories.length > 0 ? assumptionCategories : undefined}
+                onSave={handleAssumptionsSave}
+              />
+            </Suspense>
           )}
 
           {activeTab === 'captable' && (
-            <ImprovedCapTable 
-              valuationId={id!}
-              onSave={async (data) => {
-                console.log('Saving cap table data:', data);
-                
-                // Store the full cap table configuration for breakpoint calculations
-                setCurrentCapTableConfig(data);
-                
-                // Save to database
-                await saveCapTableData(data);
-                
-                // Update overview statistics based on cap table data
-                const totalShares = data.shareClasses.reduce((sum, sc) => sum + sc.sharesOutstanding, 0);
-                const totalInvested = data.shareClasses.reduce((sum, sc) => sum + (sc.amountInvested || 0), 0);
-                const totalOptions = data.options.reduce((sum, option) => sum + option.numOptions, 0);
-                
-                setCapTableData({
-                  totalShareClasses: data.shareClasses.length,
-                  totalShares,
-                  totalInvested,
-                  totalOptions
-                });
-                
-                console.log(`Total shares: ${totalShares}, Total invested: $${totalInvested}, Total options: ${totalOptions}`);
-              }}
-            />
+            <Suspense fallback={
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span>Loading cap table...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            }>
+              <ImprovedCapTable
+                valuationId={id!}
+                onSave={useCallback(async (data) => {
+                  console.log('Saving cap table data:', data);
+                  setCurrentCapTableConfig(data);
+                  await saveCapTableData(data);
+                  console.log('Cap table data saved and configuration updated');
+                }, [saveCapTableData])}
+              />
+            </Suspense>
           )}
 
           {activeTab === 'financial' && (
@@ -551,15 +642,37 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'dlom' && (
-            <DLOMModels assumptions={(project as any)?.assumptions || assumptionCategories} />
+            <Suspense fallback={
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span>Loading DLOM models...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            }>
+              <DLOMModels assumptions={(project as any)?.assumptions || assumptionCategories} />
+            </Suspense>
           )}
 
           {activeTab === 'breakpoints' && (
-            <BreakpointsAnalysis 
-              valuationId={id!}
-              companyId={project?.companyId}
-              capTableConfig={currentCapTableConfig}
-            />
+            <Suspense fallback={
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span>Loading breakpoints analysis...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            }>
+              <BreakpointsAnalysis
+                valuationId={id!}
+                companyId={project?.companyId}
+                capTableConfig={currentCapTableConfig}
+              />
+            </Suspense>
           )}
 
           {activeTab === 'analysis' && (
@@ -591,10 +704,160 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'waterfall' && (
-            <ComprehensiveWaterfall 
-              companyId={parseInt(project?.companyId || '0')}
-              capTableConfig={currentCapTableConfig}
-            />
+            <Suspense fallback={
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span>Loading waterfall analysis...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            }>
+              <ComprehensiveWaterfall
+                companyId={parseInt(project?.companyId || '0')}
+                capTableConfig={currentCapTableConfig}
+              />
+            </Suspense>
+          )}
+
+          {activeTab === 'reports' && (
+            <div className="space-y-6">
+              {/* Reports Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Valuation Reports</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Create and manage reports for this valuation project
+                  </p>
+                </div>
+                <Button
+                  onClick={() => router.push(`/reports/template-library?valuationId=${id}`)}
+                  className="flex items-center space-x-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Create New Report</span>
+                </Button>
+              </div>
+
+              {/* Existing Reports */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Report Documents
+                  </CardTitle>
+                  <CardDescription>
+                    All reports generated for this valuation project
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingReports ? (
+                    <div className="text-center py-8">
+                      <div className="text-muted-foreground">Loading reports...</div>
+                    </div>
+                  ) : valuationReports.length > 0 ? (
+                    <div className="space-y-3">
+                      {valuationReports.map((report) => (
+                        <div key={report.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                              <FileText className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-foreground">{report.name}</h4>
+                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                <span className="flex items-center">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {formatDate(report.lastModified)}
+                                </span>
+                                <Badge variant={report.status === 'published' ? 'default' : 'secondary'}>
+                                  {report.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4 mr-2" />
+                              Preview
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Download className="h-4 w-4 mr-2" />
+                              Export
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                          <FileText className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <div className="text-center">
+                          <h3 className="text-lg font-medium text-foreground">No reports yet</h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Create your first report from a template to get started
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => router.push(`/reports/template-library?valuationId=${id}`)}
+                          className="flex items-center space-x-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Create First Report</span>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/reports/template-library?valuationId=${id}`)}>
+                  <CardContent className="p-6 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 mx-auto mb-4">
+                      <FileText className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h3 className="font-medium text-foreground mb-2">From Template</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Choose from pre-built templates
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/reports/generator?valuationId=${id}`)}>
+                  <CardContent className="p-6 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 mx-auto mb-4">
+                      <Calculator className="h-6 w-6 text-green-600" />
+                    </div>
+                    <h3 className="font-medium text-foreground mb-2">Custom Report</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Build from scratch with data blocks
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/reports/field-mapping?valuationId=${id}`)}>
+                  <CardContent className="p-6 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 mx-auto mb-4">
+                      <BarChart3 className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <h3 className="font-medium text-foreground mb-2">Data Mapping</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Configure data field mappings
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           )}
         </div>
       </div>

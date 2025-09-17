@@ -8,13 +8,15 @@ interface AssumptionCategoryProps {
   isExpanded: boolean
   onToggle: (categoryId: string) => void
   onAssumptionChange: (categoryId: string, assumptionId: string, value: string | number) => void
+  onGetAssumptionValue?: (assumptionId: string) => string | number
 }
 
-export function AssumptionCategory({ 
-  category, 
-  isExpanded, 
-  onToggle, 
-  onAssumptionChange 
+export function AssumptionCategory({
+  category,
+  isExpanded,
+  onToggle,
+  onAssumptionChange,
+  onGetAssumptionValue
 }: AssumptionCategoryProps) {
   const Icon = category.icon || (() => null)
 
@@ -60,6 +62,7 @@ export function AssumptionCategory({
                   assumption={assumption}
                   categoryId={category.id}
                   onChange={onAssumptionChange}
+                  onGetAssumptionValue={onGetAssumptionValue}
                 />
                 {assumption.description && (
                   <p className="text-xs text-muted-foreground">{assumption.description}</p>
