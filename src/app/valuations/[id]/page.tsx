@@ -269,6 +269,14 @@ export default function ValuationDetail() {
     }
   }, [id])
 
+  // Handle cap table save - memoized callback
+  const handleCapTableSave = useCallback(async (data: { shareClasses: any[]; options: any[] }) => {
+    console.log('Saving cap table data:', data);
+    setCurrentCapTableConfig(data);
+    await saveCapTableData(data);
+    console.log('Cap table data saved and configuration updated');
+  }, [])
+
   // Load reports for this valuation
   const loadValuationReports = async () => {
     if (!id) return
@@ -603,12 +611,7 @@ export default function ValuationDetail() {
             }>
               <ImprovedCapTable
                 valuationId={id!}
-                onSave={useCallback(async (data) => {
-                  console.log('Saving cap table data:', data);
-                  setCurrentCapTableConfig(data);
-                  await saveCapTableData(data);
-                  console.log('Cap table data saved and configuration updated');
-                }, [saveCapTableData])}
+                onSave={handleCapTableSave}
               />
             </Suspense>
           )}

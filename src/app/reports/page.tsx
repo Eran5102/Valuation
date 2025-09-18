@@ -1,35 +1,54 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { 
-  FileText, 
-  Plus
+import {
+  FileText,
+  Plus,
+  Edit,
+  Download,
+  Copy,
+  Trash2,
+  Eye,
+  ArrowLeft
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { OptimizedDataTable as DataTable } from '@/components/ui/optimized-data-table'
+import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
+
+const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.OptimizedDataTable })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>,
+  ssr: false
+})
 import AppLayout from '@/components/layout/AppLayout'
 import { getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'
 import { PageHeader } from '@/components/ui/page-header'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
+import { Button } from '@/components/ui/button'
+import draftService, { SavedDraft } from '@/services/draftService'
+import { useRouter } from 'next/navigation'
+import { EnhancedReportGenerator } from '@/components/reports/EnhancedReportGenerator'
 
 interface Report {
-  id: number
+  id: string
   title: string
   clientName: string
-  type: 'Valuation Report' | 'Summary Report' | 'Board Report'
+  type: 'Valuation Report' | 'Summary Report' | 'Board Report' | '409A Template'
   status: 'draft' | 'final' | 'delivered'
   createdDate: string
   deliveredDate?: string
   fileSize: string
+  isDraft?: boolean
+  draftData?: SavedDraft
 }
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm] = useState('')
+  const [showCreateFlow, setShowCreateFlow] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     fetchReports()
@@ -37,9 +56,10 @@ export default function ReportsPage() {
 
   const fetchReports = async () => {
     try {
+      // Load mock reports
       const mockReports: Report[] = [
         {
-          id: 1,
+          id: 'mock_1',
           title: '409A Valuation Report - Q4 2023',
           clientName: 'TechStart Inc.',
           type: 'Valuation Report',
@@ -49,29 +69,102 @@ export default function ReportsPage() {
           fileSize: '2.3 MB'
         },
         {
-          id: 2,
+          id: 'mock_2',
           title: 'Board Presentation - Series A',
           clientName: 'InnovateCorp',
           type: 'Board Report',
           status: 'final',
           createdDate: '2024-01-08',
           fileSize: '1.8 MB'
-        },
-        {
-          id: 3,
-          title: 'Valuation Summary',
-          clientName: 'StartupXYZ',
-          type: 'Summary Report',
-          status: 'draft',
-          createdDate: '2024-01-05',
-          fileSize: '0.9 MB'
         }
       ]
-      setReports(mockReports)
+
+      // Load saved drafts from localStorage
+      const savedDrafts = draftService.getAllDrafts()
+      const draftReports: Report[] = savedDrafts.map(draft => ({
+        id: draft.id,
+        title: draft.name,
+        clientName: draft.clientName || 'Unknown Client',
+        type: '409A Template',
+        status: draft.status,
+        createdDate: draft.createdAt.split('T')[0],
+        fileSize: calculateDraftSize(draft),
+        isDraft: true,
+        draftData: draft
+      }))
+
+      // Combine and sort by date (newest first)
+      const allReports = [...draftReports, ...mockReports].sort((a, b) =>
+        new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+      )
+
+      setReports(allReports)
     } catch (error) {
-      // Error handled with empty data
+      console.error('Error loading reports:', error)
+      setReports([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const calculateDraftSize = (draft: SavedDraft): string => {
+    const sizeInBytes = JSON.stringify(draft).length
+    if (sizeInBytes < 1024) return `${sizeInBytes} B`
+    if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`
+    return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const handleContinueEditing = (report: Report) => {
+    if (report.isDraft && report.draftData) {
+      router.push(`/reports/${report.id}`)
+    }
+  }
+
+  const handleViewReport = (report: Report) => {
+    router.push(`/reports/${report.id}`)
+  }
+
+  const handleCreateNewReport = () => {
+    setShowCreateFlow(true)
+  }
+
+  const handleCreateFromValuation = (valuationId: number) => {
+    // Navigate to template selection for this valuation
+    router.push(`/reports/template-library?valuationId=${valuationId}`)
+  }
+
+  const handleDuplicateDraft = (report: Report) => {
+    if (report.isDraft && report.draftData) {
+      const duplicated = draftService.duplicateDraft(report.id)
+      if (duplicated) {
+        fetchReports() // Refresh the list
+      }
+    }
+  }
+
+  const handleDeleteDraft = (report: Report) => {
+    if (report.isDraft && confirm(`Are you sure you want to delete "${report.title}"?`)) {
+      const deleted = draftService.deleteDraft(report.id)
+      if (deleted) {
+        fetchReports() // Refresh the list
+      }
+    }
+  }
+
+  const handleExportDraft = (report: Report) => {
+    if (report.isDraft && report.draftData) {
+      const exportData = draftService.exportDraft(report.id)
+      if (exportData) {
+        const blob = new Blob([exportData], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${report.title.replace(/\s+/g, '_')}.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
     }
   }
 
@@ -130,17 +223,31 @@ export default function ReportsPage() {
           return (
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-primary" />
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                  report.isDraft ? 'bg-orange-100 text-orange-600' : 'bg-primary/10 text-primary'
+                }`}>
+                  <FileText className="h-4 w-4" />
                 </div>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-foreground truncate">
-                  {report.title}
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium text-foreground truncate">
+                    {report.title}
+                  </div>
+                  {report.isDraft && (
+                    <Badge variant="outline" className="text-xs">
+                      Draft
+                    </Badge>
+                  )}
                 </div>
                 {report.deliveredDate && (
                   <div className="text-sm text-muted-foreground">
                     Delivered: {formatDate(report.deliveredDate)}
+                  </div>
+                )}
+                {report.isDraft && report.draftData && (
+                  <div className="text-sm text-muted-foreground">
+                    Last saved: {formatDate(report.draftData.updatedAt.split('T')[0])}
                   </div>
                 )}
               </div>
@@ -224,16 +331,61 @@ export default function ReportsPage() {
         enableSorting: false,
         cell: ({ row }) => {
           const report = row.original
-          return (
-            <TableActionButtons 
-              itemId={report.id}
-              onView={() => {/* TODO: Implement view functionality */}}
-              onEdit={() => {/* TODO: Implement edit functionality */}}
-              onDownload={() => {/* TODO: Implement download functionality */}}
-              onDelete={() => {/* TODO: Implement delete functionality */}}
-              showDownload={true}
-            />
-          )
+
+          if (report.isDraft) {
+            // Draft-specific actions
+            return (
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleContinueEditing(report)}
+                  className="h-8 px-2"
+                >
+                  <Edit className="w-3 h-3 mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDuplicateDraft(report)}
+                  className="h-8 px-2"
+                >
+                  <Copy className="w-3 h-3 mr-1" />
+                  Copy
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleExportDraft(report)}
+                  className="h-8 px-2"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Export
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDeleteDraft(report)}
+                  className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            )
+          } else {
+            // Regular report actions
+            return (
+              <TableActionButtons
+                itemId={report.id}
+                onView={() => handleViewReport(report)}
+                onEdit={() => handleViewReport(report)}
+                onDownload={() => handleViewReport(report)}
+                onDelete={() => {/* TODO: Implement delete functionality */}}
+                showDownload={true}
+              />
+            )
+          }
         },
       },
     ],
@@ -254,39 +406,69 @@ export default function ReportsPage() {
     <AppLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <PageHeader 
-          title="Reports"
-          description="Generate and manage valuation reports and documentation"
-          actionButton={{
-            href: "/reports/new",
-            icon: Plus,
-            text: "Generate Report"
-          }}
-        />
+        {!showCreateFlow && (
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Reports</h1>
+              <p className="text-muted-foreground mt-1">
+                Generate and manage valuation reports and documentation
+              </p>
+            </div>
+            <Button onClick={handleCreateNewReport}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Report
+            </Button>
+          </div>
+        )}
 
-        {/* Summary Cards */}
-        <SummaryCardsGrid cards={summaryCards} />
+        {showCreateFlow ? (
+          /* Create New Report Flow */
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Select Valuation Project</h1>
+              <p className="text-muted-foreground mt-1">
+                Choose a valuation project to generate a report for
+              </p>
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateFlow(false)}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Reports
+                </Button>
+              </div>
+            </div>
 
-        {/* DataTable */}
-        <Card>
-          <CardContent className="p-6">
-            <DataTable
-              columns={columns}
-              data={filteredReports}
-              searchPlaceholder="Search reports..."
-              tableId="reports-table"
-              enableColumnFilters
-              enableSorting
-              enableColumnVisibility
-              enableColumnReordering
-              enableRowReordering
-              onRowReorder={(fromIndex, toIndex) => {
-                // TODO: Implement actual row reordering logic
-                // Handle row reordering logic here
-              }}
-            />
-          </CardContent>
-        </Card>
+            <EnhancedReportGenerator />
+          </div>
+        ) : (
+          <>
+            {/* Summary Cards */}
+            <SummaryCardsGrid cards={summaryCards} />
+
+            {/* DataTable */}
+            <Card>
+              <CardContent className="p-6">
+                <DataTable
+                  columns={columns}
+                  data={filteredReports}
+                  searchPlaceholder="Search reports..."
+                  tableId="reports-table"
+                  enableColumnFilters
+                  enableSorting
+                  enableColumnVisibility
+                  enableColumnReordering
+                  enableRowReordering
+                  onRowReorder={(fromIndex, toIndex) => {
+                    // TODO: Implement actual row reordering logic
+                    // Handle row reordering logic here
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </AppLayout>
   )

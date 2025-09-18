@@ -4,7 +4,12 @@ import { BarChart3, Calculator, AlertTriangle, Loader2, RefreshCw, Activity, Lay
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DataTable } from '@/components/ui/optimized-data-table';
+import dynamic from 'next/dynamic';
+
+const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.DataTable })), {
+  loading: () => <div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>,
+  ssr: false
+});
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CapTableConfig } from '@/types';

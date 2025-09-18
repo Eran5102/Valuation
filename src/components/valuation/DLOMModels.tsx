@@ -3,7 +3,12 @@ import { Calculator, TrendingUp, BarChart3, Target, RefreshCw, Settings2 } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DataTable } from '@/components/ui/optimized-data-table';
+import dynamic from 'next/dynamic';
+
+const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.DataTable })), {
+  loading: () => <div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>,
+  ssr: false
+});
 import { ColumnDef } from '@tanstack/react-table';
 import { DLOMInputs, DLOMResults, ModelWeights } from '@/types';
 

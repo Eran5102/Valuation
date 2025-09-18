@@ -16,8 +16,13 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { OptimizedDataTable as DataTable } from '@/components/ui/optimized-data-table'
+import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
+
+const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.OptimizedDataTable })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>,
+  ssr: false
+})
 import AppLayout from '@/components/layout/AppLayout'
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'

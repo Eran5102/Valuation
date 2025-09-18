@@ -402,24 +402,28 @@ export function OptimizedDataTable<TData, TValue>({
   // Debounced localStorage operations
   const debouncedSaveToLocalStorage = useCallback(
     useDebounce((views: TableView[]) => {
-      localStorage.setItem(`table-views-${tableId}`, JSON.stringify(views));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`table-views-${tableId}`, JSON.stringify(views));
+      }
     }, 500),
     [tableId]
   );
 
   // Load views from localStorage on mount
   useEffect(() => {
-    const savedViews = localStorage.getItem(`table-views-${tableId}`);
-    if (savedViews) {
-      try {
-        const parsedViews = JSON.parse(savedViews);
-        dispatch({ type: 'SET_VIEWS', payload: parsedViews });
-        const defaultView = parsedViews.find((v: TableView) => v.isDefault);
-        if (defaultView) {
-          dispatch({ type: 'LOAD_VIEW', payload: defaultView });
+    if (typeof window !== 'undefined') {
+      const savedViews = localStorage.getItem(`table-views-${tableId}`);
+      if (savedViews) {
+        try {
+          const parsedViews = JSON.parse(savedViews);
+          dispatch({ type: 'SET_VIEWS', payload: parsedViews });
+          const defaultView = parsedViews.find((v: TableView) => v.isDefault);
+          if (defaultView) {
+            dispatch({ type: 'LOAD_VIEW', payload: defaultView });
+          }
+        } catch (error) {
+          console.warn('Failed to load saved views:', error);
         }
-      } catch (error) {
-        console.warn('Failed to load saved views:', error);
       }
     }
   }, [tableId]);

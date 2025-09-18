@@ -3,23 +3,36 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  TrendingUp, 
-  Menu, 
-  X, 
+import {
+  TrendingUp,
+  Menu,
+  X,
   Home,
   Users,
   Calculator,
   FileText,
   BarChart3,
-  LogOut
+  LogOut,
+  Palette,
+  ChevronDown,
+  ChevronRight,
+  Library
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Valuations', href: '/valuations', icon: Calculator },
-  { name: 'Reports', href: '/reports', icon: FileText },
+  {
+    name: 'Reports',
+    href: '/reports',
+    icon: FileText,
+    submenu: [
+      { name: 'All Reports', href: '/reports', icon: FileText },
+      { name: 'Template Library', href: '/reports/template-library', icon: Library },
+      { name: 'Field Mapping', href: '/reports/field-mapping', icon: Calculator }
+    ]
+  },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
 
@@ -29,7 +42,16 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['Reports'])
   const pathname = usePathname()
+
+  const toggleSubmenu = (itemName: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(itemName)
+        ? prev.filter(name => name !== itemName)
+        : [...prev, itemName]
+    )
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -67,22 +89,77 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {navigation.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
-            
+            const hasSubmenu = 'submenu' in item && item.submenu
+            const isExpanded = expandedMenus.includes(item.name)
+            const isSubmenuActive = hasSubmenu && item.submenu?.some(subItem => pathname === subItem.href)
+
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`
-                  flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
-                  ${isActive 
-                    ? 'bg-primary text-primary-foreground shadow-md' 
-                    : 'text-sidebar-foreground hover:bg-accent/10 hover:text-accent'
-                  }
-                `}
-              >
-                <Icon className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
-                {isSidebarOpen && <span>{item.name}</span>}
-              </Link>
+              <div key={item.name}>
+                {hasSubmenu ? (
+                  <button
+                    onClick={() => toggleSubmenu(item.name)}
+                    className={`
+                      flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
+                      ${isActive || isSubmenuActive
+                        ? 'bg-primary text-primary-foreground shadow-md'
+                        : 'text-sidebar-foreground hover:bg-accent/10 hover:text-accent'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center">
+                      <Icon className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
+                      {isSidebarOpen && <span>{item.name}</span>}
+                    </div>
+                    {isSidebarOpen && (
+                      isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={`
+                      flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
+                      ${isActive
+                        ? 'bg-primary text-primary-foreground shadow-md'
+                        : 'text-sidebar-foreground hover:bg-accent/10 hover:text-accent'
+                      }
+                    `}
+                  >
+                    <Icon className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
+                    {isSidebarOpen && <span>{item.name}</span>}
+                  </Link>
+                )}
+
+                {hasSubmenu && isExpanded && isSidebarOpen && (
+                  <div className="ml-6 mt-1 space-y-1">
+                    {item.submenu?.map((subItem) => {
+                      const SubIcon = subItem.icon
+                      const isSubActive = pathname === subItem.href
+
+                      return (
+                        <Link
+                          key={subItem.name}
+                          href={subItem.href}
+                          className={`
+                            flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
+                            ${isSubActive
+                              ? 'bg-primary/20 text-primary border-l-2 border-primary'
+                              : 'text-muted-foreground hover:bg-accent/10 hover:text-accent'
+                            }
+                          `}
+                        >
+                          <SubIcon className="h-4 w-4 mr-3" />
+                          <span>{subItem.name}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             )
           })}
         </nav>
