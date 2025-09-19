@@ -11,10 +11,15 @@ export function calculateAmountInvested(shareClass: ShareClass): number {
 /**
  * Calculates the total liquidation preference
  * Formula: amountInvested * lpMultiple
+ * Note: Common shares don't have liquidation preference
  */
 export function calculateTotalLP(shareClass: ShareClass): number {
+  // Common shares don't have liquidation preference
+  if (shareClass.shareType === 'common') {
+    return 0;
+  }
   const amountInvested = calculateAmountInvested(shareClass);
-  return amountInvested * shareClass.lpMultiple;
+  return amountInvested * (shareClass.lpMultiple || 1);
 }
 
 /**
@@ -105,34 +110,35 @@ export function formatPercentage(rate: number): string {
  */
 export function validateShareClass(shareClass: Partial<ShareClass>): string[] {
   const errors: string[] = [];
-  
+
   if (!shareClass.name) {
     errors.push('Class name is required');
   }
-  
+
   if (!shareClass.sharesOutstanding || shareClass.sharesOutstanding <= 0) {
     errors.push('Shares outstanding must be greater than 0');
   }
-  
+
   if (shareClass.pricePerShare === undefined || shareClass.pricePerShare < 0) {
     errors.push('Price per share must be 0 or greater');
   }
-  
-  if (!shareClass.lpMultiple || shareClass.lpMultiple <= 0) {
-    errors.push('LP Multiple must be greater than 0');
+
+  // Only validate LP Multiple for preferred shares
+  if (shareClass.shareType === 'preferred' && (!shareClass.lpMultiple || shareClass.lpMultiple <= 0)) {
+    errors.push('LP Multiple must be greater than 0 for preferred shares');
   }
-  
+
   if (shareClass.preferenceType === 'participating-with-cap' && (!shareClass.participationCap || shareClass.participationCap <= 0)) {
     errors.push('Participation cap is required for participating-with-cap preference type');
   }
-  
+
   if (shareClass.dividendsDeclared && !shareClass.dividendsRate) {
     errors.push('Dividends rate is required when dividends are declared');
   }
-  
+
   if (shareClass.dividendsDeclared && !shareClass.dividendsType) {
     errors.push('Dividends type is required when dividends are declared');
   }
-  
+
   return errors;
 }

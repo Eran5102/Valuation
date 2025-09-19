@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/database/jsonDb';
+import { createClient } from '@/lib/supabase/server';
 
 // GET /api/valuations/[id]/assumptions - Get valuation assumptions
 export async function GET(
@@ -8,19 +8,24 @@ export async function GET(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
-        const valuation = db.getValuationById(id);
-        
-        if (!valuation) {
+        const supabase = await createClient();
+
+        const { data: valuation, error } = await supabase
+            .from('valuations')
+            .select('assumptions, updated_at')
+            .eq('id', idParam)
+            .single();
+
+        if (error || !valuation) {
             return NextResponse.json(
                 { error: 'Valuation not found' },
                 { status: 404 }
             );
         }
-        
+
         // Return assumptions if they exist, otherwise return empty object
         const assumptions = valuation.assumptions || {};
-        
+
         return NextResponse.json({
             assumptions,
             updated_at: valuation.updated_at
@@ -41,10 +46,9 @@ export async function PUT(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
         const body = await request.json();
         const { assumptions } = body;
-        
+
         // Validate the assumptions data
         if (!assumptions || typeof assumptions !== 'object') {
             return NextResponse.json(
@@ -52,23 +56,29 @@ export async function PUT(
                 { status: 400 }
             );
         }
-        
+
+        const supabase = await createClient();
+
         // Update the valuation with assumptions data
-        const assumptionsData = {
-            assumptions: assumptions,
-            updated_at: new Date().toISOString()
-        };
-        
-        const valuation = db.updateValuation(id, assumptionsData);
-        if (!valuation) {
+        const { data: valuation, error } = await supabase
+            .from('valuations')
+            .update({
+                assumptions: assumptions,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', idParam)
+            .select('assumptions, updated_at')
+            .single();
+
+        if (error || !valuation) {
             return NextResponse.json(
-                { error: 'Valuation not found' },
+                { error: 'Valuation not found or update failed' },
                 { status: 404 }
             );
         }
-        
-        console.log(`Assumptions updated for valuation ${id}`);
-        
+
+        console.log(`Assumptions updated for valuation ${idParam}`);
+
         return NextResponse.json({
             success: true,
             message: 'Assumptions saved successfully',

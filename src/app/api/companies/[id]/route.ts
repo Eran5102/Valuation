@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/database/jsonDb';
+import { createClient } from '@/lib/supabase/server';
 
 // GET /api/companies/[id] - Get company by ID
 export async function GET(
@@ -8,16 +8,21 @@ export async function GET(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
-        const company = db.getCompanyById(id);
-        
-        if (!company) {
+        const supabase = await createClient();
+
+        const { data: company, error } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', idParam)
+            .single();
+
+        if (error || !company) {
             return NextResponse.json(
                 { error: 'Company not found' },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json(company);
     } catch (error) {
         console.error('Error fetching company:', error);
@@ -35,27 +40,28 @@ export async function PATCH(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
         const body = await request.json();
-        
-        // Validate status if provided
-        if (body.status && !['active', 'inactive', 'prospect'].includes(body.status)) {
+        const supabase = await createClient();
+
+        // Update with all provided fields
+        const { data: company, error } = await supabase
+            .from('companies')
+            .update({
+                ...body,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', idParam)
+            .select()
+            .single();
+
+        if (error || !company) {
             return NextResponse.json(
-                { error: 'Invalid status. Must be one of: active, inactive, prospect' },
-                { status: 400 }
-            );
-        }
-        
-        const updatedCompany = db.updateCompany(id, body);
-        
-        if (!updatedCompany) {
-            return NextResponse.json(
-                { error: 'Company not found' },
+                { error: 'Company not found or update failed' },
                 { status: 404 }
             );
         }
-        
-        return NextResponse.json(updatedCompany);
+
+        return NextResponse.json(company);
     } catch (error) {
         console.error('Error updating company:', error);
         return NextResponse.json(
@@ -72,17 +78,20 @@ export async function DELETE(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
-        
-        const deleted = db.deleteCompany(id);
-        
-        if (!deleted) {
+        const supabase = await createClient();
+
+        const { error } = await supabase
+            .from('companies')
+            .delete()
+            .eq('id', idParam);
+
+        if (error) {
             return NextResponse.json(
-                { error: 'Company not found' },
+                { error: 'Company not found or delete failed' },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json({ message: 'Company deleted successfully' });
     } catch (error) {
         console.error('Error deleting company:', error);

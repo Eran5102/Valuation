@@ -189,11 +189,11 @@ function tableReducer(state: TableState, action: TableAction): TableState {
     case 'LOAD_VIEW':
       return {
         ...state,
-        columnVisibility: action.payload.config.columnVisibility,
-        columnOrder: action.payload.config.columnOrder,
-        pinnedColumns: action.payload.config.pinnedColumns,
-        sorting: action.payload.config.sorting,
-        columnFilters: action.payload.config.columnFilters,
+        columnVisibility: action.payload.config.columnVisibility || {},
+        columnOrder: action.payload.config.columnOrder || state.columnOrder || [],
+        pinnedColumns: action.payload.config.pinnedColumns || { left: [], right: [] },
+        sorting: action.payload.config.sorting || [],
+        columnFilters: action.payload.config.columnFilters || [],
         currentView: action.payload,
       };
     case 'INITIALIZE':
@@ -337,7 +337,7 @@ const DraggableTableRow = memo(function DraggableTableRow({
 });
 
 export function OptimizedDataTable<TData, TValue>({
-  columns: initialColumns,
+  columns,
   data,
   searchKey,
   searchPlaceholder = "Search...",
@@ -364,7 +364,7 @@ export function OptimizedDataTable<TData, TValue>({
     columnFilters: initialState?.columnFilters || [],
     columnVisibility: initialState?.columnVisibility || {},
     rowSelection: {},
-    columnOrder: initialState?.columnOrder || initialColumns.map((col) => col.id || ''),
+    columnOrder: initialState?.columnOrder || columns.map((col) => col.id || ''),
     pinnedColumns: initialState?.pinnedColumns || { left: [], right: [] },
     globalFilter: '',
     views: [],
@@ -390,14 +390,17 @@ export function OptimizedDataTable<TData, TValue>({
 
   // Memoized column ordering calculation
   const orderedColumns = useMemo(() => {
-    const pinned = [...state.pinnedColumns.left, ...state.pinnedColumns.right];
-    const unpinned = state.columnOrder.filter((id) => !pinned.includes(id));
-    const finalOrder = [...state.pinnedColumns.left, ...unpinned, ...state.pinnedColumns.right];
+    const columnOrderArray = Array.isArray(state.columnOrder) ? state.columnOrder : columns.map((col) => col.id || '');
+    const leftPinned = state.pinnedColumns?.left || [];
+    const rightPinned = state.pinnedColumns?.right || [];
+    const pinned = [...leftPinned, ...rightPinned];
+    const unpinned = columnOrderArray.filter((id) => !pinned.includes(id));
+    const finalOrder = [...leftPinned, ...unpinned, ...rightPinned];
 
     return finalOrder
-      .map((id) => initialColumns.find((col) => col.id === id))
+      .map((id) => columns.find((col) => col.id === id))
       .filter(Boolean) as ColumnDef<TData, TValue>[];
-  }, [initialColumns, state.columnOrder, state.pinnedColumns]);
+  }, [columns, state.columnOrder, state.pinnedColumns]);
 
   // Debounced localStorage operations
   const debouncedSaveToLocalStorage = useCallback(
@@ -555,7 +558,9 @@ export function OptimizedDataTable<TData, TValue>({
   }, []);
 
   const isPinnedColumn = useCallback((columnId: string) => {
-    return state.pinnedColumns.left.includes(columnId) || state.pinnedColumns.right.includes(columnId);
+    const leftPinned = state.pinnedColumns?.left || [];
+    const rightPinned = state.pinnedColumns?.right || [];
+    return leftPinned.includes(columnId) || rightPinned.includes(columnId);
   }, [state.pinnedColumns]);
 
   // View management functions
@@ -1237,6 +1242,4 @@ export function OptimizedDataTable<TData, TValue>({
   );
 }
 
-// Export alias for backward compatibility
-export { OptimizedDataTable as DataTable };
 export default OptimizedDataTable;

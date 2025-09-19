@@ -131,14 +131,18 @@ export function ShareClassRow({
           </Select>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-          <Input
-            type="number"
-            step="0.1"
-            value={getValue('lpMultiple') as number}
-            onChange={(e) => handleFieldChange('lpMultiple', parseFloat(e.target.value) || 1)}
-            className="w-full"
-            placeholder="1.0"
-          />
+          {getValue('shareType') === 'preferred' ? (
+            <Input
+              type="number"
+              step="0.1"
+              value={getValue('lpMultiple') as number}
+              onChange={(e) => handleFieldChange('lpMultiple', parseFloat(e.target.value) || 1)}
+              className="w-full"
+              placeholder="1.0"
+            />
+          ) : (
+            <span className="text-gray-400">N/A</span>
+          )}
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <Input
@@ -212,7 +216,7 @@ export function ShareClassRow({
         {shareClass.preferenceType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {shareClass.lpMultiple}x
+        {shareClass.shareType === 'preferred' ? `${shareClass.lpMultiple}x` : <span className="text-gray-400">N/A</span>}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {shareClass.seniority}

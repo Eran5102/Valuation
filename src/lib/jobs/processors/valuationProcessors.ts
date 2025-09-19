@@ -1,5 +1,5 @@
 import JobQueue from '../jobQueue';
-import db from '@/lib/database/optimized-jsonDb';
+import { createClient } from '@/lib/supabase/server';
 
 interface ValuationCalculationData {
   valuationId: number;
@@ -425,15 +425,67 @@ async function generateWordReport(data: any, template: any): Promise<Buffer> {
 }
 
 async function exportCompaniesData(filters: any, dateRange: any): Promise<any[]> {
-  return await db.optimizedQuery('companies', { filter: filters || {} });
+  const supabase = await createClient();
+  let query = supabase.from('companies').select('*');
+
+  if (dateRange?.from) {
+    query = query.gte('created_at', dateRange.from);
+  }
+  if (dateRange?.to) {
+    query = query.lte('created_at', dateRange.to);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
 }
 
 async function exportValuationsData(filters: any, dateRange: any): Promise<any[]> {
-  return await db.optimizedQuery('valuations', { filter: filters || {} });
+  const supabase = await createClient();
+  let query = supabase.from('valuations').select('*');
+
+  if (dateRange?.from) {
+    query = query.gte('created_at', dateRange.from);
+  }
+  if (dateRange?.to) {
+    query = query.lte('created_at', dateRange.to);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
 }
 
 async function exportCapTableData(filters: any, dateRange: any): Promise<any[]> {
-  return await db.optimizedQuery('shareClasses', { filter: filters || {} });
+  const supabase = await createClient();
+  // Get valuations with cap table data
+  let query = supabase.from('valuations').select('id, company_id, cap_table');
+
+  if (dateRange?.from) {
+    query = query.gte('created_at', dateRange.from);
+  }
+  if (dateRange?.to) {
+    query = query.lte('created_at', dateRange.to);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  // Extract share classes from cap tables
+  const shareClasses: any[] = [];
+  data?.forEach(val => {
+    if (val.cap_table?.shareClasses) {
+      val.cap_table.shareClasses.forEach((sc: any) => {
+        shareClasses.push({
+          ...sc,
+          valuation_id: val.id,
+          company_id: val.company_id
+        });
+      });
+    }
+  });
+
+  return shareClasses;
 }
 
 async function generateCSV(data: any[]): Promise<Buffer> {

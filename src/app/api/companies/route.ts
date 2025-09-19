@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/database/optimized-jsonDb';
+import { createClient } from '@/lib/supabase/server';
 import ApiHandler from '@/lib/middleware/apiHandler';
 import {
   CreateCompanySchema,
@@ -17,43 +17,50 @@ export const GET = ApiHandler.handle(
     const companyId = searchParams.get('company_id');
     const dateFrom = searchParams.get('date_from');
     const dateTo = searchParams.get('date_to');
+    const offset = (page - 1) * limit;
 
-    // Build filter for optimized query
-    const dbFilter: Record<string, any> = {};
+    const supabase = await createClient();
 
+    // Build query
+    let query = supabase
+      .from('companies')
+      .select('*', { count: 'exact' });
+
+    // Apply filters
     if (companyId) {
-      dbFilter.id = parseInt(companyId);
+      query = query.eq('id', companyId);
     }
 
-    // Use optimized query with pagination and filtering
-    const companies = await db.optimizedQuery('companies', {
-      filter: dbFilter,
-      sort: { field: 'created_at', direction: 'desc' },
-      limit: limit,
-      offset: (page - 1) * limit,
-      cache: true
-    });
-
-    // Apply date filters in memory for complex conditions
-    let filteredCompanies = companies;
-    if (dateFrom || dateTo) {
-      filteredCompanies = companies.filter(c => {
-        const createdAt = new Date(c.created_at);
-        if (dateFrom && createdAt < new Date(dateFrom)) return false;
-        if (dateTo && createdAt > new Date(dateTo)) return false;
-        return true;
-      });
+    if (dateFrom) {
+      query = query.gte('created_at', dateFrom);
     }
 
-    const total = filteredCompanies.length;
+    if (dateTo) {
+      query = query.lte('created_at', dateTo);
+    }
+
+    // Apply sorting and pagination
+    query = query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    const { data: companies, error, count } = await query;
+
+    if (error) {
+      console.error('Error fetching companies:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch companies' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
-      data: filteredCompanies,
+      data: companies || [],
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit)
       }
     });
   },
@@ -79,18 +86,23 @@ export const GET = ApiHandler.handle(
 export const POST = ApiHandler.handle(
   async (request: NextRequest) => {
     const companyData = await request.json();
+    const supabase = await createClient();
 
-    // Business logic validation using optimized query
-    const existingCompanies = await db.optimizedQuery('companies', {
-      filter: {},
-      cache: false // Don't cache for validation checks
-    });
+    // Check if company name already exists
+    const { data: existingCompanies, error: checkError } = await supabase
+      .from('companies')
+      .select('name')
+      .ilike('name', companyData.name);
 
-    const nameExists = existingCompanies.some(
-      company => company.name.toLowerCase() === companyData.name.toLowerCase()
-    );
+    if (checkError) {
+      console.error('Error checking company name:', checkError);
+      return NextResponse.json(
+        { error: 'Failed to validate company name' },
+        { status: 500 }
+      );
+    }
 
-    if (nameExists) {
+    if (existingCompanies && existingCompanies.length > 0) {
       return NextResponse.json(
         {
           error: 'Validation Error',
@@ -101,8 +113,23 @@ export const POST = ApiHandler.handle(
       );
     }
 
-    // Create company using optimized insert
-    const company = await db.optimizedInsert('companies', companyData);
+    // Create the company with all available fields
+    const { data: company, error: createError } = await supabase
+      .from('companies')
+      .insert({
+        ...companyData,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error creating company:', createError);
+      return NextResponse.json(
+        { error: 'Failed to create company' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       data: company,

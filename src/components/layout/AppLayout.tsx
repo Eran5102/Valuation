@@ -16,7 +16,12 @@ import {
   Palette,
   ChevronDown,
   ChevronRight,
-  Library
+  Library,
+  HelpCircle,
+  Settings,
+  Database,
+  Calendar,
+  Activity
 } from 'lucide-react'
 
 const navigation = [
@@ -30,10 +35,21 @@ const navigation = [
     submenu: [
       { name: 'All Reports', href: '/reports', icon: FileText },
       { name: 'Template Library', href: '/reports/template-library', icon: Library },
-      { name: 'Field Mapping', href: '/reports/field-mapping', icon: Calculator }
+      { name: 'Template Editor', href: '/reports/template-editor', icon: Settings },
+      { name: 'Field Mapping', href: '/reports/field-mapping', icon: Database }
     ]
   },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Activity', href: '/activity', icon: Activity },
+  {
+    name: 'Help & Admin',
+    href: '/help',
+    icon: HelpCircle,
+    submenu: [
+      { name: 'Field Mapping Help', href: '/help/field-mapping', icon: HelpCircle },
+      { name: 'Field Mappings Admin', href: '/admin/field-mappings', icon: Settings }
+    ]
+  },
 ]
 
 interface AppLayoutProps {

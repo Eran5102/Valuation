@@ -7,10 +7,15 @@ interface AssumptionsSummaryProps {
 }
 
 export function AssumptionsSummary({ categories }: AssumptionsSummaryProps) {
+  // Handle undefined or empty categories
+  if (!categories || categories.length === 0) {
+    return null;
+  }
+
   const totalFilled = categories.reduce((sum, cat) => sum + cat.assumptions.filter(a => a.value).length, 0)
   const totalAssumptions = categories.reduce((sum, cat) => sum + cat.assumptions.length, 0)
   const requiredMissing = categories.reduce((sum, cat) => sum + cat.assumptions.filter(a => a.required && !a.value).length, 0)
-  const completionPercentage = Math.round((totalFilled / totalAssumptions) * 100)
+  const completionPercentage = totalAssumptions > 0 ? Math.round((totalFilled / totalAssumptions) * 100) : 0
 
   return (
     <Card>

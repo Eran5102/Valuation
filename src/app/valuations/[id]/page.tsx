@@ -105,24 +105,27 @@ export default function ValuationDetail() {
         const valuationData = await response.json()
         console.log('Valuation data received:', valuationData)
         
-        // Get client name
-        const clientResponse = await fetch(`/api/companies/${valuationData.companyId}`)
-        const clientData = clientResponse.ok ? await clientResponse.json() : null
+        // Get client name - handle both snake_case and camelCase field names
+        const companyId = valuationData.company_id || valuationData.companyId
+        const clientResponse = companyId ? await fetch(`/api/companies/${companyId}`) : null
+        const clientData = clientResponse && clientResponse.ok ? await clientResponse.json() : null
         console.log('Client data:', clientData)
-        
+
         const projectData = {
           id: valuationData.id.toString(),
-          companyId: valuationData.companyId.toString(),
-          title: valuationData.title,
-          clientName: clientData?.name || 'Unknown Client',
-          valuationDate: valuationData.valuationDate,
-          projectType: valuationData.valuationType,
+          companyId: companyId ? companyId.toString() : '1',
+          title: valuationData.title || 'Untitled Valuation',
+          clientName: valuationData.client_name || clientData?.name || 'Unknown Client',
+          valuationDate: valuationData.valuation_date || valuationData.valuationDate || new Date().toISOString().split('T')[0],
+          projectType: valuationData.valuation_type || valuationData.valuationType || '409a',
           status: valuationData.status || 'draft',
           currency: valuationData.currency || 'USD',
           maxProjectedYears: valuationData.maxProjectedYears || 5,
           discountingConvention: valuationData.discountingConvention || 'mid_year',
           taxRate: valuationData.taxRate || 21,
-          description: valuationData.description || ''
+          description: valuationData.description || '',
+          purpose: valuationData.purpose,
+          reportDate: valuationData.report_date || valuationData.reportDate
         }
         
         console.log('Setting project with data:', projectData)

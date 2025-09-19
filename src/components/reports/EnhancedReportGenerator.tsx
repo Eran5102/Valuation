@@ -37,6 +37,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import type { ReportTemplate } from '@/lib/templates/types';
 import { getStatusColor, formatDate } from '@/lib/utils';
 import { TemplatePreview } from '@/components/templates/TemplatePreview';
+import PDFGenerator from '@/lib/services/pdfGenerator';
 
 interface Valuation {
   id: number;
@@ -416,16 +417,20 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
 
     setIsGenerating(true);
     try {
-      // Simulate PDF generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Create a blob with sample content for download
+      // Create HTML content with actual template data and proper styling
       const htmlContent = `
         <html>
           <head>
             <title>${reportName}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 40px; }
+              body {
+                font-family: 'Times New Roman', serif;
+                margin: 0;
+                padding: 40px;
+                line-height: 1.6;
+                color: #333;
+                background: white;
+              }
               .watermark {
                 position: fixed;
                 top: 50%;
@@ -434,45 +439,145 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
                 font-size: 72px;
                 color: rgba(0,0,0,0.1);
                 z-index: -1;
+                pointer-events: none;
                 ${withWatermark ? '' : 'display: none;'}
               }
-              h1 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
-              .section { margin: 20px 0; }
+              .header {
+                text-align: center;
+                border-bottom: 3px solid #1e40af;
+                padding-bottom: 20px;
+                margin-bottom: 30px;
+              }
+              h1 {
+                color: #1e40af;
+                font-size: 24px;
+                margin: 0;
+                font-weight: bold;
+              }
+              h2 {
+                color: #1e40af;
+                font-size: 18px;
+                border-bottom: 1px solid #e5e7eb;
+                padding-bottom: 5px;
+                margin-top: 30px;
+              }
+              .section {
+                margin: 25px 0;
+                page-break-inside: avoid;
+              }
+              .company-info {
+                background: #f8fafc;
+                padding: 20px;
+                border-left: 4px solid #1e40af;
+                margin: 20px 0;
+              }
+              .valuation-summary {
+                border: 2px solid #1e40af;
+                padding: 20px;
+                margin: 20px 0;
+                background: #f0f7ff;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+              }
+              th, td {
+                border: 1px solid #d1d5db;
+                padding: 10px;
+                text-align: left;
+              }
+              th {
+                background: #f3f4f6;
+                font-weight: bold;
+              }
+              .footer {
+                margin-top: 50px;
+                padding-top: 20px;
+                border-top: 1px solid #e5e7eb;
+                font-size: 12px;
+                color: #6b7280;
+              }
+              @media print {
+                body { margin: 0; padding: 20mm; }
+                .watermark { position: fixed; }
+              }
             </style>
           </head>
           <body>
-            <div class="watermark">DRAFT</div>
-            <h1>409A Valuation Report</h1>
-            <div class="section">
-              <h2>Company Information</h2>
-              <p><strong>Company:</strong> ${selectedValuation.company_name}</p>
-              <p><strong>Valuation Date:</strong> ${new Date(selectedValuation.valuation_date).toLocaleDateString()}</p>
-              <p><strong>Fair Market Value:</strong> $${selectedValuation.fair_market_value_per_share.toFixed(2)} per share</p>
+            ${withWatermark ? '<div class="watermark">DRAFT</div>' : ''}
+
+            <div class="header">
+              <h1>409A Valuation Report</h1>
+              <p>Fair Market Value Analysis</p>
             </div>
+
+            <div class="company-info">
+              <h2>Company Information</h2>
+              <table>
+                <tr><td><strong>Company Name:</strong></td><td>${selectedValuation.company_name}</td></tr>
+                <tr><td><strong>Valuation Date:</strong></td><td>${new Date(selectedValuation.valuation_date).toLocaleDateString()}</td></tr>
+                <tr><td><strong>Report Date:</strong></td><td>${new Date().toLocaleDateString()}</td></tr>
+                <tr><td><strong>Valuation Status:</strong></td><td>${selectedValuation.status}</td></tr>
+              </table>
+            </div>
+
+            <div class="valuation-summary">
+              <h2>Valuation Summary</h2>
+              <table>
+                <tr><td><strong>Fair Market Value per Share:</strong></td><td>$${selectedValuation.fair_market_value_per_share.toFixed(2)}</td></tr>
+                <tr><td><strong>Template Used:</strong></td><td>${customizedTemplate.name}</td></tr>
+                <tr><td><strong>Version:</strong></td><td>${customizedTemplate.version || '1.0.0'}</td></tr>
+                <tr><td><strong>Report Status:</strong></td><td>${reportStatus.toUpperCase()}</td></tr>
+              </table>
+            </div>
+
             <div class="section">
-              <h2>Report Details</h2>
-              <p><strong>Template:</strong> ${customizedTemplate.name}</p>
-              <p><strong>Status:</strong> ${reportStatus}</p>
-              <p><strong>Generated:</strong> ${new Date().toLocaleDateString()}</p>
-              ${reportNotes ? `<p><strong>Notes:</strong> ${reportNotes}</p>` : ''}
+              <h2>Valuation Methodology</h2>
+              <p>This 409A valuation has been prepared in accordance with the requirements of Section 409A
+              of the Internal Revenue Code and applicable Treasury Regulations. The valuation considers
+              multiple approaches including the income approach, market approach, and asset approach as applicable.</p>
+            </div>
+
+            ${reportNotes ? `
+            <div class="section">
+              <h2>Additional Notes</h2>
+              <p>${reportNotes}</p>
+            </div>
+            ` : ''}
+
+            <div class="footer">
+              <p>This report was generated on ${new Date().toLocaleDateString()} using the Value8 AI platform.</p>
+              <p>Report ID: ${customizedTemplate.id} | Status: ${withWatermark ? 'DRAFT' : 'FINAL'}</p>
             </div>
           </body>
         </html>
       `;
 
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${reportName.replace(/\s+/g, '_')}_${withWatermark ? 'DRAFT' : 'FINAL'}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Generate filename
+      const filename = PDFGenerator.generateFilename(
+        customizedTemplate.name,
+        selectedValuation.company_name
+      );
+
+      // Use our PDF generator service
+      const result = await PDFGenerator.generateFromHTML(htmlContent, {
+        orientation: 'portrait',
+        format: 'letter',
+        quality: 2,
+        filename: filename
+      });
+
+      if (result.success) {
+        // Show success message
+        alert(`PDF generated successfully: ${result.filename}`);
+      } else {
+        throw new Error(result.error || 'PDF generation failed');
+      }
 
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      alert(`Error generating PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }

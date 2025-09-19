@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/database/jsonDb';
+import { createClient } from '@/lib/supabase/server';
 
 // GET /api/valuations/[id] - Get single valuation
 export async function GET(
@@ -8,16 +8,21 @@ export async function GET(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
-        const valuation = db.getValuationById(id);
-        
-        if (!valuation) {
+        const supabase = await createClient();
+
+        const { data: valuation, error } = await supabase
+            .from('valuations')
+            .select('*')
+            .eq('id', idParam)
+            .single();
+
+        if (error || !valuation) {
             return NextResponse.json(
                 { error: 'Valuation not found' },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json(valuation);
     } catch (error) {
         console.error('Error fetching valuation:', error);
@@ -35,9 +40,9 @@ export async function PATCH(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
         const body = await request.json();
-        
+        const supabase = await createClient();
+
         // Validate status if provided
         if (body.status && !['draft', 'in_progress', 'completed', 'review'].includes(body.status)) {
             return NextResponse.json(
@@ -45,16 +50,21 @@ export async function PATCH(
                 { status: 400 }
             );
         }
-        
-        const valuation = db.updateValuation(id, body);
-        
-        if (!valuation) {
+
+        const { data: valuation, error } = await supabase
+            .from('valuations')
+            .update(body)
+            .eq('id', idParam)
+            .select()
+            .single();
+
+        if (error || !valuation) {
             return NextResponse.json(
                 { error: 'Valuation not found' },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json(valuation);
     } catch (error) {
         console.error('Error updating valuation:', error);
@@ -72,17 +82,23 @@ export async function PUT(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
         const body = await request.json();
-        const valuation = db.updateValuation(id, body);
-        
-        if (!valuation) {
+        const supabase = await createClient();
+
+        const { data: valuation, error } = await supabase
+            .from('valuations')
+            .update(body)
+            .eq('id', idParam)
+            .select()
+            .single();
+
+        if (error || !valuation) {
             return NextResponse.json(
                 { error: 'Valuation not found' },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json(valuation);
     } catch (error) {
         console.error('Error updating valuation:', error);
@@ -100,16 +116,20 @@ export async function DELETE(
 ) {
     try {
         const { id: idParam } = await params;
-        const id = parseInt(idParam);
-        const deleted = db.deleteValuation(id);
-        
-        if (!deleted) {
+        const supabase = await createClient();
+
+        const { error } = await supabase
+            .from('valuations')
+            .delete()
+            .eq('id', idParam);
+
+        if (error) {
             return NextResponse.json(
-                { error: 'Valuation not found' },
+                { error: 'Valuation not found or delete failed' },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json({ message: 'Valuation deleted successfully' });
     } catch (error) {
         console.error('Error deleting valuation:', error);

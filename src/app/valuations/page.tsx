@@ -266,10 +266,10 @@ export default function ValuationsPage() {
         cell: ({ row }) => {
           const valuation = row.original
           return (
-            <TableActionButtons 
+            <TableActionButtons
               itemId={valuation.id}
               viewHref={`/valuations/${valuation.id}`}
-              editHref={`/valuations/${valuation.id}/edit`}
+              showEdit={false}
               onDelete={() => {/* TODO: Implement delete functionality */}}
             />
           )
