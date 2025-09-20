@@ -1,81 +1,81 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect } from 'react';
-import { FileText, Eye, Download, Plus, Edit, Save } from 'lucide-react';
-import { useTemplateEngine } from '@/hooks/useTemplateEngine';
-import { TemplateEditor } from '@/components/templates';
-import draftService from '@/services/draftService';
-import { useSearchParams } from 'next/navigation';
-import type { ReportTemplate } from '@/lib/templates/types';
+import React, { useState, useEffect } from 'react'
+import { FileText, Eye, Download, Plus, Edit, Save } from 'lucide-react'
+import { useTemplateEngine } from '@/hooks/useTemplateEngine'
+import { TemplateEditor } from '@/components/templates'
+import draftService from '@/services/draftService'
+import { useSearchParams } from 'next/navigation'
+import type { ReportTemplate } from '@/lib/templates/types'
 
 interface ReportGeneratorAppProps {
-  valuationId?: number;
+  valuationId?: number
 }
 
 export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
-  const [activeTab, setActiveTab] = useState<'templates' | 'editor' | 'preview'>('templates');
-  const [showSaveDraftDialog, setShowSaveDraftDialog] = useState(false);
-  const [draftName, setDraftName] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'templates' | 'editor' | 'preview'>('templates')
+  const [showSaveDraftDialog, setShowSaveDraftDialog] = useState(false)
+  const [draftName, setDraftName] = useState('')
+  const [clientName, setClientName] = useState('')
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null)
 
-  const searchParams = useSearchParams();
-  const draftIdParam = searchParams.get('draft');
+  const searchParams = useSearchParams()
+  const draftIdParam = searchParams.get('draft')
 
-  const {
-    generateReport,
-    validateData,
-    getTemplate,
-    getSampleData,
-    isProcessing,
-    error
-  } = useTemplateEngine();
+  const { generateReport, validateData, getTemplate, getSampleData, isProcessing, error } =
+    useTemplateEngine()
 
-  const template = getTemplate();
-  const [currentTemplate, setCurrentTemplate] = useState<ReportTemplate | null>(template);
-  const [generatedHTML, setGeneratedHTML] = useState<string>('');
-  const [currentData, setCurrentData] = useState(getSampleData());
+  const template = getTemplate()
+  const [currentTemplate, setCurrentTemplate] = useState<ReportTemplate | null>(template)
+  const [generatedHTML, setGeneratedHTML] = useState<string>('')
+  const [currentData, setCurrentData] = useState(getSampleData())
 
   const handleGeneratePreview = async () => {
-    if (!currentTemplate) return;
+    if (!currentTemplate) return
 
     try {
-      const sampleData = getSampleData();
-      const report = await generateReport(currentTemplate, sampleData, { status: 'draft', watermark: true });
-      setGeneratedHTML(report.html);
-      setActiveTab('preview');
+      const sampleData = getSampleData()
+      const report = await generateReport(currentTemplate, sampleData, {
+        status: 'draft',
+        watermark: true,
+      })
+      setGeneratedHTML(report.html)
+      setActiveTab('preview')
     } catch (err) {
-      console.error('Error generating preview:', err);
+      console.error('Error generating preview:', err)
     }
-  };
+  }
 
   const handleSelectTemplate = (template: ReportTemplate) => {
-    setCurrentTemplate(template);
-    setActiveTab('editor');
-  };
+    setCurrentTemplate(template)
+    setActiveTab('editor')
+  }
 
   const handleExportPDF = async () => {
-    if (!currentTemplate) return;
+    if (!currentTemplate) return
 
     try {
-      const report = await generateReport(currentTemplate, currentData, { status: 'final', watermark: false });
+      const report = await generateReport(currentTemplate, currentData, {
+        status: 'final',
+        watermark: false,
+      })
 
       // Create a new window with the HTML content for printing
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open('', '_blank')
       if (printWindow) {
-        printWindow.document.write(report.html);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
+        printWindow.document.write(report.html)
+        printWindow.document.close()
+        printWindow.focus()
+        printWindow.print()
       }
     } catch (error) {
-      console.error('Error exporting report:', error);
-      alert('Error generating PDF. Please try again.');
+      console.error('Error exporting report:', error)
+      alert('Error generating PDF. Please try again.')
     }
-  };
+  }
 
   const handleSaveDraft = async () => {
-    if (!currentTemplate || !draftName.trim()) return;
+    if (!currentTemplate || !draftName.trim()) return
 
     try {
       const savedDraft = draftService.saveDraft({
@@ -85,47 +85,45 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
         data: currentData,
         generatedHTML,
         status: 'draft',
-        clientName: clientName || undefined
-      });
+        clientName: clientName || undefined,
+      })
 
-      setCurrentDraftId(savedDraft.id);
-      setShowSaveDraftDialog(false);
-      alert('Draft saved successfully!');
+      setCurrentDraftId(savedDraft.id)
+      setShowSaveDraftDialog(false)
+      alert('Draft saved successfully!')
     } catch (error) {
-      console.error('Error saving draft:', error);
-      alert('Error saving draft. Please try again.');
+      console.error('Error saving draft:', error)
+      alert('Error saving draft. Please try again.')
     }
-  };
+  }
 
   // Load draft if draft ID is provided in URL
   useEffect(() => {
     if (draftIdParam) {
-      const draft = draftService.getDraft(draftIdParam);
+      const draft = draftService.getDraft(draftIdParam)
       if (draft) {
-        setCurrentTemplate(draft.template);
-        setCurrentData(draft.data);
-        setGeneratedHTML(draft.generatedHTML || '');
-        setCurrentDraftId(draft.id);
-        setDraftName(draft.name);
-        setClientName(draft.clientName || '');
-        setActiveTab('editor');
+        setCurrentTemplate(draft.template)
+        setCurrentData(draft.data)
+        setGeneratedHTML(draft.generatedHTML || '')
+        setCurrentDraftId(draft.id)
+        setDraftName(draft.name)
+        setClientName(draft.clientName || '')
+        setActiveTab('editor')
       }
     }
-  }, [draftIdParam]);
+  }, [draftIdParam])
 
   // Update current data when sample data changes
   useEffect(() => {
     if (!currentDraftId) {
-      setCurrentData(getSampleData());
+      setCurrentData(getSampleData())
     }
-  }, [currentDraftId, getSampleData]);
-
-
+  }, [currentDraftId, getSampleData])
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="flex h-screen flex-col bg-background">
       {/* Header */}
-      <div className="bg-card border-b border-border px-6 py-4">
+      <div className="border-b border-border bg-card px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-card-foreground">Report Generator</h1>
@@ -137,25 +135,25 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
               <>
                 <button
                   onClick={() => setShowSaveDraftDialog(true)}
-                  className="flex items-center gap-2 px-4 py-2 border border-border rounded hover:bg-accent/10 transition-colors"
+                  className="flex items-center gap-2 rounded border border-border px-4 py-2 transition-colors hover:bg-accent/10"
                 >
-                  <Save className="w-4 h-4" />
+                  <Save className="h-4 w-4" />
                   {currentDraftId ? 'Update Draft' : 'Save Draft'}
                 </button>
                 <button
                   onClick={handleGeneratePreview}
                   disabled={isProcessing}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 rounded bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="h-4 w-4" />
                   {isProcessing ? 'Generating...' : 'Generate Preview'}
                 </button>
                 <button
                   onClick={handleExportPDF}
                   disabled={isProcessing}
-                  className="flex items-center gap-2 px-4 py-2 border border-border rounded hover:bg-accent/10 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 rounded border border-border px-4 py-2 transition-colors hover:bg-accent/10 disabled:opacity-50"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="h-4 w-4" />
                   Export PDF
                 </button>
               </>
@@ -164,16 +162,16 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 mt-4">
+        <div className="mt-4 flex items-center gap-1">
           <button
             onClick={() => setActiveTab('templates')}
-            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+            className={`rounded px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === 'templates'
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <FileText className="w-4 h-4 inline mr-2" />
+            <FileText className="mr-2 inline h-4 w-4" />
             Template
           </button>
 
@@ -181,26 +179,26 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
             <>
               <button
                 onClick={() => setActiveTab('editor')}
-                className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                className={`rounded px-4 py-2 text-sm font-medium transition-colors ${
                   activeTab === 'editor'
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Edit className="w-4 h-4 inline mr-2" />
+                <Edit className="mr-2 inline h-4 w-4" />
                 Edit Template
               </button>
 
               {generatedHTML && (
                 <button
                   onClick={() => setActiveTab('preview')}
-                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                  className={`rounded px-4 py-2 text-sm font-medium transition-colors ${
                     activeTab === 'preview'
                       ? 'bg-primary/10 text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Eye className="w-4 h-4 inline mr-2" />
+                  <Eye className="mr-2 inline h-4 w-4" />
                   Preview
                 </button>
               )}
@@ -212,13 +210,13 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {isProcessing && (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex h-full items-center justify-center">
             <div className="text-muted-foreground">Processing template...</div>
           </div>
         )}
 
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive">
+          <div className="border border-destructive/20 bg-destructive/10 p-4 text-destructive">
             {error}
           </div>
         )}
@@ -226,17 +224,15 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
         {/* Template Info Tab */}
         {activeTab === 'templates' && (
           <div className="p-6">
-            <div className="max-w-4xl mx-auto">
+            <div className="mx-auto max-w-4xl">
               {currentTemplate ? (
-                <div className="bg-card border border-border rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-6">
+                <div className="rounded-lg border border-border bg-card p-6">
+                  <div className="mb-6 flex items-start justify-between">
                     <div>
-                      <h3 className="text-2xl font-semibold text-card-foreground mb-2">
+                      <h3 className="mb-2 text-2xl font-semibold text-card-foreground">
                         {currentTemplate.name}
                       </h3>
-                      <p className="text-muted-foreground mb-4">
-                        {currentTemplate.description}
-                      </p>
+                      <p className="mb-4 text-muted-foreground">{currentTemplate.description}</p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>Category: {currentTemplate.category}</span>
                         <span>Version: {currentTemplate.version}</span>
@@ -246,54 +242,61 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div>
-                      <h4 className="text-lg font-semibold mb-3">Template Sections</h4>
+                      <h4 className="mb-3 text-lg font-semibold">Template Sections</h4>
                       <div className="space-y-2">
                         {currentTemplate.sections.map((section, index) => (
-                          <div key={section.id} className="flex items-center justify-between p-3 bg-background rounded border">
+                          <div
+                            key={section.id}
+                            className="flex items-center justify-between rounded border bg-background p-3"
+                          >
                             <div>
                               <div className="font-medium">{section.title}</div>
                               <div className="text-sm text-muted-foreground">
                                 {section.blocks.length} blocks
                               </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              Section {index + 1}
-                            </div>
+                            <div className="text-xs text-muted-foreground">Section {index + 1}</div>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="text-lg font-semibold mb-3">Required Variables</h4>
-                      <div className="max-h-96 overflow-y-auto space-y-2">
-                        {currentTemplate.variables.filter(v => v.required).map(variable => (
-                          <div key={variable.id} className="p-3 bg-background rounded border">
-                            <div className="font-medium">{variable.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              Type: {variable.type} | ID: {variable.id}
-                            </div>
-                            {variable.description && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {variable.description}
+                      <h4 className="mb-3 text-lg font-semibold">Required Variables</h4>
+                      <div className="max-h-96 space-y-2 overflow-y-auto">
+                        {currentTemplate.variables
+                          .filter((v) => v.required)
+                          .map((variable) => (
+                            <div key={variable.id} className="rounded border bg-background p-3">
+                              <div className="font-medium">{variable.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Type: {variable.type} | ID: {variable.id}
                               </div>
-                            )}
-                          </div>
-                        ))}
+                              {variable.description && (
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  {variable.description}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <FileText className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-card-foreground mb-2">No Template Selected</h3>
-                  <p className="text-muted-foreground mb-4">The 409A template is available for preview and generation.</p>
+                <div className="py-12 text-center">
+                  <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+                  <h3 className="mb-2 text-lg font-semibold text-card-foreground">
+                    No Template Selected
+                  </h3>
+                  <p className="mb-4 text-muted-foreground">
+                    The 409A template is available for preview and generation.
+                  </p>
                   <button
                     onClick={() => setCurrentTemplate(template)}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                    className="rounded bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     Load 409A Template
                   </button>
@@ -309,13 +312,13 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
             <TemplateEditor
               template={currentTemplate}
               onSave={(updatedTemplate) => {
-                setCurrentTemplate(updatedTemplate);
+                setCurrentTemplate(updatedTemplate)
                 // In a real app, this would save to backend
-                console.log('Template saved:', updatedTemplate);
+                console.log('Template saved:', updatedTemplate)
               }}
               onPreview={(template) => {
-                setCurrentTemplate(template);
-                handleGeneratePreview();
+                setCurrentTemplate(template)
+                handleGeneratePreview()
               }}
               className="h-full"
             />
@@ -325,15 +328,15 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
         {/* Preview Tab */}
         {activeTab === 'preview' && generatedHTML && (
           <div className="p-6">
-            <div className="max-w-6xl mx-auto">
-              <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded">
-                <p className="text-primary text-sm">
-                  <strong>Preview Mode:</strong> This shows how your 409A report will look with sample data.
-                  Click "Export PDF" to generate a printable version.
+            <div className="mx-auto max-w-6xl">
+              <div className="mb-4 rounded border border-primary/20 bg-primary/10 p-3">
+                <p className="text-sm text-primary">
+                  <strong>Preview Mode:</strong> This shows how your 409A report will look with
+                  sample data. Click "Export PDF" to generate a printable version.
                 </p>
               </div>
 
-              <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
                 <div
                   className="report-preview"
                   dangerouslySetInnerHTML={{ __html: generatedHTML }}
@@ -341,7 +344,7 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '12px',
                     lineHeight: '1.5',
-                    color: '#1f2937'
+                    color: '#1f2937',
                   }}
                 />
               </div>
@@ -352,65 +355,65 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
 
       {/* Save Draft Dialog */}
       {showSaveDraftDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 w-full max-w-md border border-border">
-            <h2 className="text-lg font-semibold text-card-foreground mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 text-lg font-semibold text-card-foreground">
               {currentDraftId ? 'Update Draft' : 'Save Draft'}
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-1">
+                <label className="mb-1 block text-sm font-medium text-card-foreground">
                   Draft Name *
                 </label>
                 <input
                   type="text"
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
-                  className="w-full p-2 border border-border rounded bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                  className="w-full rounded border border-border bg-background p-2 text-foreground transition-colors focus:border-primary focus:ring-2 focus:ring-primary"
                   placeholder="Enter draft name..."
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-1">
+                <label className="mb-1 block text-sm font-medium text-card-foreground">
                   Client Name (Optional)
                 </label>
                 <input
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full p-2 border border-border rounded bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                  className="w-full rounded border border-border bg-background p-2 text-foreground transition-colors focus:border-primary focus:ring-2 focus:ring-primary"
                   placeholder="Enter client name..."
                 />
               </div>
 
               {currentDraftId && (
-                <div className="text-sm text-muted-foreground p-2 bg-muted rounded">
+                <div className="rounded bg-muted p-2 text-sm text-muted-foreground">
                   <strong>Note:</strong> This will update the existing draft.
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-2 mt-6">
+            <div className="mt-6 flex items-center gap-2">
               <button
                 onClick={handleSaveDraft}
                 disabled={!draftName.trim()}
-                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                className="flex-1 rounded bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
-                <Save className="w-4 h-4 inline mr-2" />
+                <Save className="mr-2 inline h-4 w-4" />
                 {currentDraftId ? 'Update' : 'Save'} Draft
               </button>
               <button
                 onClick={() => {
-                  setShowSaveDraftDialog(false);
+                  setShowSaveDraftDialog(false)
                   if (!currentDraftId) {
-                    setDraftName('');
-                    setClientName('');
+                    setDraftName('')
+                    setClientName('')
                   }
                 }}
-                className="px-4 py-2 border border-border rounded hover:bg-accent/10 transition-colors"
+                className="rounded border border-border px-4 py-2 transition-colors hover:bg-accent/10"
               >
                 Cancel
               </button>
@@ -419,5 +422,5 @@ export function ReportGeneratorApp({ valuationId }: ReportGeneratorAppProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

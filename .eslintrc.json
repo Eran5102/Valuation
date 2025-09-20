@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "next/core-web-vitals",
-    "@typescript-eslint/recommended"
-  ],
+  "extends": ["next/core-web-vitals", "@typescript-eslint/recommended", "prettier"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
@@ -20,11 +17,5 @@
     "prefer-const": "error",
     "no-var": "error"
   },
-  "ignorePatterns": [
-    ".next/**",
-    "node_modules/**",
-    "dist/**",
-    "build/**",
-    "data/**"
-  ]
+  "ignorePatterns": [".next/**", "node_modules/**", "dist/**", "build/**", "data/**"]
 }

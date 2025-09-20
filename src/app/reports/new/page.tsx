@@ -8,9 +8,9 @@ import AppLayout from '@/components/layout/AppLayout'
 export default function NewReportPage() {
   return (
     <AppLayout>
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
         <div className="flex items-center space-x-4">
-          <Link href="/reports" className="p-2 hover:bg-muted rounded-md transition-colors">
+          <Link href="/reports" className="rounded-md p-2 transition-colors hover:bg-muted">
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Link>
           <div>
@@ -18,12 +18,14 @@ export default function NewReportPage() {
             <p className="mt-1 text-muted-foreground">Create professional valuation reports</p>
           </div>
         </div>
-        
-        <div className="bg-card shadow rounded-lg border border-border p-6">
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-card-foreground mb-2">Report Generation</h3>
-            <p className="text-muted-foreground">Report generation functionality will be implemented here.</p>
+
+        <div className="rounded-lg border border-border bg-card p-6 shadow">
+          <div className="py-12 text-center">
+            <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-medium text-card-foreground">Report Generation</h3>
+            <p className="text-muted-foreground">
+              Report generation functionality will be implemented here.
+            </p>
           </div>
         </div>
       </div>

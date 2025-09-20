@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { 
-  Calculator, 
+import {
+  Calculator,
   Plus,
   Clock,
   CheckCircle,
@@ -11,18 +11,22 @@ import {
   DollarSign,
   Eye,
   Edit,
-  Trash2
+  Trash2,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
 
-const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.OptimizedDataTable })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>,
-  ssr: false
-})
+const OptimizedDataTable = dynamic(
+  () => import('@/components/ui/optimized-data-table').then((mod) => mod.OptimizedDataTable),
+  {
+    loading: () => <LoadingSpinner size="lg" className="p-8" />,
+    ssr: false,
+  }
+)
 import AppLayout from '@/components/layout/AppLayout'
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'
@@ -62,7 +66,7 @@ export default function ValuationsPage() {
           value: 15000000,
           createdDate: '2024-01-01',
           completedDate: '2024-01-10',
-          nextReview: '2024-04-01'
+          nextReview: '2024-04-01',
         },
         {
           id: 2,
@@ -71,7 +75,7 @@ export default function ValuationsPage() {
           status: 'in_progress',
           value: 8500000,
           createdDate: '2024-01-05',
-          nextReview: '2024-02-15'
+          nextReview: '2024-02-15',
         },
         {
           id: 3,
@@ -81,7 +85,7 @@ export default function ValuationsPage() {
           value: 3200000,
           createdDate: '2023-12-10',
           completedDate: '2023-12-20',
-          nextReview: '2024-03-20'
+          nextReview: '2024-03-20',
         },
         {
           id: 4,
@@ -89,7 +93,7 @@ export default function ValuationsPage() {
           valuationType: 'Post-Money',
           status: 'draft',
           value: 0,
-          createdDate: '2024-01-12'
+          createdDate: '2024-01-12',
         },
         {
           id: 5,
@@ -99,8 +103,8 @@ export default function ValuationsPage() {
           value: 12000000,
           createdDate: '2023-10-01',
           completedDate: '2023-10-15',
-          nextReview: '2024-01-15'
-        }
+          nextReview: '2024-01-15',
+        },
       ]
       setValuations(mockValuations)
     } catch (error) {
@@ -110,9 +114,10 @@ export default function ValuationsPage() {
     }
   }
 
-  const filteredValuations = valuations.filter(valuation => {
-    const matchesSearch = valuation.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         valuation.valuationType.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredValuations = valuations.filter((valuation) => {
+    const matchesSearch =
+      valuation.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      valuation.valuationType.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || valuation.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -135,41 +140,44 @@ export default function ValuationsPage() {
   // Calculate metrics for summary cards
   const metrics = useMemo(() => {
     const totalValuations = valuations.length
-    const inProgress = valuations.filter(v => v.status === 'in_progress').length
-    const completed = valuations.filter(v => v.status === 'completed').length
+    const inProgress = valuations.filter((v) => v.status === 'in_progress').length
+    const completed = valuations.filter((v) => v.status === 'completed').length
     const totalValue = valuations
-      .filter(v => v.status === 'completed')
+      .filter((v) => v.status === 'completed')
       .reduce((sum, v) => sum + v.value, 0)
-    
+
     return { totalValuations, inProgress, completed, totalValue }
   }, [valuations])
 
-  const summaryCards: SummaryCard[] = useMemo(() => [
-    {
-      icon: Calculator,
-      iconColor: 'primary',
-      label: 'Total Valuations',
-      value: metrics.totalValuations
-    },
-    {
-      icon: Clock,
-      iconColor: 'chart-1',
-      label: 'In Progress',
-      value: metrics.inProgress
-    },
-    {
-      icon: CheckCircle,
-      iconColor: 'accent',
-      label: 'Completed',
-      value: metrics.completed
-    },
-    {
-      icon: DollarSign,
-      iconColor: 'chart-2',
-      label: 'Total Value',
-      value: formatCurrency(metrics.totalValue)
-    }
-  ], [metrics])
+  const summaryCards: SummaryCard[] = useMemo(
+    () => [
+      {
+        icon: Calculator,
+        iconColor: 'primary',
+        label: 'Total Valuations',
+        value: metrics.totalValuations,
+      },
+      {
+        icon: Clock,
+        iconColor: 'chart-1',
+        label: 'In Progress',
+        value: metrics.inProgress,
+      },
+      {
+        icon: CheckCircle,
+        iconColor: 'accent',
+        label: 'Completed',
+        value: metrics.completed,
+      },
+      {
+        icon: DollarSign,
+        iconColor: 'chart-2',
+        label: 'Total Value',
+        value: formatCurrency(metrics.totalValue),
+      },
+    ],
+    [metrics]
+  )
 
   // Define columns for DataTable
   const columns: ColumnDef<Valuation>[] = useMemo(
@@ -184,14 +192,12 @@ export default function ValuationsPage() {
           return (
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                   <Calculator className="h-4 w-4 text-primary" />
                 </div>
               </div>
               <div>
-                <div className="text-sm font-medium text-foreground">
-                  {valuation.clientName}
-                </div>
+                <div className="text-sm font-medium text-foreground">{valuation.clientName}</div>
                 <div className="text-sm text-muted-foreground">
                   {valuation.valuationType} Valuation
                 </div>
@@ -225,7 +231,7 @@ export default function ValuationsPage() {
         cell: ({ row }) => {
           const valuation = row.original
           return (
-            <div className="text-sm text-foreground font-medium">
+            <div className="text-sm font-medium text-foreground">
               {valuation.value > 0 ? formatCurrency(valuation.value) : '-'}
             </div>
           )
@@ -238,11 +244,7 @@ export default function ValuationsPage() {
         enableSorting: true,
         cell: ({ row }) => {
           const valuation = row.original
-          return (
-            <div className="text-sm text-foreground">
-              {formatDate(valuation.createdDate)}
-            </div>
-          )
+          return <div className="text-sm text-foreground">{formatDate(valuation.createdDate)}</div>
         },
       },
       {
@@ -270,7 +272,9 @@ export default function ValuationsPage() {
               itemId={valuation.id}
               viewHref={`/valuations/${valuation.id}`}
               showEdit={false}
-              onDelete={() => {/* TODO: Implement delete functionality */}}
+              onDelete={() => {
+                /* TODO: Implement delete functionality */
+              }}
             />
           )
         },
@@ -279,29 +283,27 @@ export default function ValuationsPage() {
     []
   )
 
-
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <div className="text-lg text-muted-foreground">Loading valuations...</div>
         </div>
       </AppLayout>
     )
   }
 
-
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         {/* Header */}
-        <PageHeader 
+        <PageHeader
           title="Valuations"
           description="Manage 409A valuations and financial assessments"
           actionButton={{
-            href: "/valuations/new",
+            href: '/valuations/new',
             icon: Plus,
-            text: "New Valuation"
+            text: 'New Valuation',
           }}
         />
 
@@ -311,8 +313,8 @@ export default function ValuationsPage() {
         {/* DataTable */}
         <Card>
           <CardContent className="p-6">
-            <DataTable
-              columns={columns}
+            <OptimizedDataTable
+              columns={columns as any}
               data={filteredValuations}
               searchPlaceholder="Search valuations..."
               tableId="valuations-table"

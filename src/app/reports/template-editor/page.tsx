@@ -1,52 +1,188 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { TemplateEditor } from '@/components/templates/TemplateEditor';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import AppLayout from '@/components/layout/AppLayout';
-import type { ReportTemplate, TemplateVariable } from '@/lib/templates/types';
-import draftService from '@/services/draftService';
+import React, { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { TemplateEditor } from '@/components/templates/TemplateEditor'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import AppLayout from '@/components/layout/AppLayout'
+import type { ReportTemplate, TemplateVariable } from '@/lib/templates/types'
+import draftService from '@/services/draftService'
 
 // Create a sample template based on the 409A template structure
 const createSampleTemplate = (templateId?: string, templateName?: string): ReportTemplate => {
   const defaultVariables: TemplateVariable[] = [
     // Company variables
     { id: 'company.name', name: 'Company Name', type: 'text', required: true, category: 'Company' },
-    { id: 'company.description', name: 'Company Description', type: 'text', required: false, category: 'Company' },
-    { id: 'company.incorporation_year', name: 'Incorporation Year', type: 'number', required: true, category: 'Company' },
-    { id: 'company.headquarters', name: 'Headquarters Location', type: 'text', required: true, category: 'Company' },
-    { id: 'company.business_model', name: 'Business Model', type: 'text', required: false, category: 'Company' },
+    {
+      id: 'company.description',
+      name: 'Company Description',
+      type: 'text',
+      required: false,
+      category: 'Company',
+    },
+    {
+      id: 'company.incorporation_year',
+      name: 'Incorporation Year',
+      type: 'number',
+      required: true,
+      category: 'Company',
+    },
+    {
+      id: 'company.headquarters',
+      name: 'Headquarters Location',
+      type: 'text',
+      required: true,
+      category: 'Company',
+    },
+    {
+      id: 'company.business_model',
+      name: 'Business Model',
+      type: 'text',
+      required: false,
+      category: 'Company',
+    },
 
     // Valuation variables
-    { id: 'valuation.date', name: 'Valuation Date', type: 'date', required: true, category: 'Valuation' },
-    { id: 'valuation.fair_market_value', name: 'Fair Market Value per Share', type: 'currency', required: true, category: 'Valuation' },
-    { id: 'valuation.security_type', name: 'Security Type', type: 'text', required: true, category: 'Valuation', defaultValue: 'Common Stock' },
-    { id: 'valuation.backsolve_equity_value', name: 'Backsolve Equity Value', type: 'currency', required: false, category: 'Valuation' },
-    { id: 'valuation.volatility', name: 'Volatility', type: 'percentage', required: false, category: 'Valuation' },
+    {
+      id: 'valuation.date',
+      name: 'Valuation Date',
+      type: 'date',
+      required: true,
+      category: 'Valuation',
+    },
+    {
+      id: 'valuation.fair_market_value',
+      name: 'Fair Market Value per Share',
+      type: 'currency',
+      required: true,
+      category: 'Valuation',
+    },
+    {
+      id: 'valuation.security_type',
+      name: 'Security Type',
+      type: 'text',
+      required: true,
+      category: 'Valuation',
+      defaultValue: 'Common Stock',
+    },
+    {
+      id: 'valuation.backsolve_equity_value',
+      name: 'Backsolve Equity Value',
+      type: 'currency',
+      required: false,
+      category: 'Valuation',
+    },
+    {
+      id: 'valuation.volatility',
+      name: 'Volatility',
+      type: 'percentage',
+      required: false,
+      category: 'Valuation',
+    },
 
     // Management variables
-    { id: 'management.member_1_name', name: 'CEO Name', type: 'text', required: false, category: 'Management' },
-    { id: 'management.member_1_title', name: 'CEO Title', type: 'text', required: false, category: 'Management' },
-    { id: 'management.member_2_name', name: 'CTO Name', type: 'text', required: false, category: 'Management' },
-    { id: 'management.member_2_title', name: 'CTO Title', type: 'text', required: false, category: 'Management' },
+    {
+      id: 'management.member_1_name',
+      name: 'CEO Name',
+      type: 'text',
+      required: false,
+      category: 'Management',
+    },
+    {
+      id: 'management.member_1_title',
+      name: 'CEO Title',
+      type: 'text',
+      required: false,
+      category: 'Management',
+    },
+    {
+      id: 'management.member_2_name',
+      name: 'CTO Name',
+      type: 'text',
+      required: false,
+      category: 'Management',
+    },
+    {
+      id: 'management.member_2_title',
+      name: 'CTO Title',
+      type: 'text',
+      required: false,
+      category: 'Management',
+    },
 
     // Financing variables
-    { id: 'financing.last_round_date', name: 'Last Financing Round Date', type: 'date', required: false, category: 'Financing' },
-    { id: 'financing.last_round_security', name: 'Last Round Security Type', type: 'text', required: false, category: 'Financing' },
-    { id: 'financing.last_round_pps', name: 'Last Round Price per Share', type: 'currency', required: false, category: 'Financing' },
+    {
+      id: 'financing.last_round_date',
+      name: 'Last Financing Round Date',
+      type: 'date',
+      required: false,
+      category: 'Financing',
+    },
+    {
+      id: 'financing.last_round_security',
+      name: 'Last Round Security Type',
+      type: 'text',
+      required: false,
+      category: 'Financing',
+    },
+    {
+      id: 'financing.last_round_pps',
+      name: 'Last Round Price per Share',
+      type: 'currency',
+      required: false,
+      category: 'Financing',
+    },
 
     // DLOM variables
-    { id: 'dlom.concluded_dlom', name: 'Concluded DLOM', type: 'percentage', required: false, category: 'DLOM' },
-    { id: 'dlom.chaffe_dlom', name: 'Chaffe DLOM', type: 'percentage', required: false, category: 'DLOM' },
-    { id: 'dlom.finnerty_dlom', name: 'Finnerty DLOM', type: 'percentage', required: false, category: 'DLOM' },
+    {
+      id: 'dlom.concluded_dlom',
+      name: 'Concluded DLOM',
+      type: 'percentage',
+      required: false,
+      category: 'DLOM',
+    },
+    {
+      id: 'dlom.chaffe_dlom',
+      name: 'Chaffe DLOM',
+      type: 'percentage',
+      required: false,
+      category: 'DLOM',
+    },
+    {
+      id: 'dlom.finnerty_dlom',
+      name: 'Finnerty DLOM',
+      type: 'percentage',
+      required: false,
+      category: 'DLOM',
+    },
 
     // Appraiser variables
-    { id: 'appraiser.first_name', name: 'Appraiser First Name', type: 'text', required: true, category: 'Appraiser', defaultValue: 'Value8' },
-    { id: 'appraiser.last_name', name: 'Appraiser Last Name', type: 'text', required: true, category: 'Appraiser', defaultValue: 'AI' },
-    { id: 'appraiser.title', name: 'Appraiser Title', type: 'text', required: true, category: 'Appraiser', defaultValue: 'Senior Valuation Analyst' },
-  ];
+    {
+      id: 'appraiser.first_name',
+      name: 'Appraiser First Name',
+      type: 'text',
+      required: true,
+      category: 'Appraiser',
+      defaultValue: 'Value8',
+    },
+    {
+      id: 'appraiser.last_name',
+      name: 'Appraiser Last Name',
+      type: 'text',
+      required: true,
+      category: 'Appraiser',
+      defaultValue: 'AI',
+    },
+    {
+      id: 'appraiser.title',
+      name: 'Appraiser Title',
+      type: 'text',
+      required: true,
+      category: 'Appraiser',
+      defaultValue: 'Senior Valuation Analyst',
+    },
+  ]
 
   return {
     id: templateId || `template_${Date.now()}`,
@@ -68,20 +204,21 @@ const createSampleTemplate = (templateId?: string, templateName?: string): Repor
               fontSize: 24,
               fontWeight: 'bold',
               textAlign: 'center',
-              margin: '0 0 20px 0'
-            }
+              margin: '0 0 20px 0',
+            },
           },
           {
             id: 'summary_paragraph',
             type: 'paragraph',
-            content: 'We have performed a valuation of the common stock of {{company.name}} as of {{valuation.date}} for purposes of determining the fair market value per share for 409A compliance. Based on our analysis, we have determined the fair market value to be ${{valuation.fair_market_value}} per share.',
+            content:
+              'We have performed a valuation of the common stock of {{company.name}} as of {{valuation.date}} for purposes of determining the fair market value per share for 409A compliance. Based on our analysis, we have determined the fair market value to be ${{valuation.fair_market_value}} per share.',
             styling: {
               fontSize: 14,
               textAlign: 'justify',
-              margin: '10px 0'
-            }
-          }
-        ]
+              margin: '10px 0',
+            },
+          },
+        ],
       },
       {
         id: 'company_overview',
@@ -94,20 +231,21 @@ const createSampleTemplate = (templateId?: string, templateName?: string): Repor
             styling: {
               fontSize: 20,
               fontWeight: 'bold',
-              margin: '20px 0 15px 0'
-            }
+              margin: '20px 0 15px 0',
+            },
           },
           {
             id: 'company_description',
             type: 'paragraph',
-            content: '{{company.name}} is a {{company.business_model}} company founded in {{company.incorporation_year}} and headquartered in {{company.headquarters}}. {{company.description}}',
+            content:
+              '{{company.name}} is a {{company.business_model}} company founded in {{company.incorporation_year}} and headquartered in {{company.headquarters}}. {{company.description}}',
             styling: {
               fontSize: 14,
               textAlign: 'justify',
-              margin: '10px 0'
-            }
-          }
-        ]
+              margin: '10px 0',
+            },
+          },
+        ],
       },
       {
         id: 'valuation_approach',
@@ -120,20 +258,21 @@ const createSampleTemplate = (templateId?: string, templateName?: string): Repor
             styling: {
               fontSize: 20,
               fontWeight: 'bold',
-              margin: '20px 0 15px 0'
-            }
+              margin: '20px 0 15px 0',
+            },
           },
           {
             id: 'approach_paragraph',
             type: 'paragraph',
-            content: 'Our valuation approach incorporates multiple methodologies including the income approach, market approach, and asset approach as appropriate. We have considered the company\'s financial performance, market conditions, and risk factors in our analysis.',
+            content:
+              "Our valuation approach incorporates multiple methodologies including the income approach, market approach, and asset approach as appropriate. We have considered the company's financial performance, market conditions, and risk factors in our analysis.",
             styling: {
               fontSize: 14,
               textAlign: 'justify',
-              margin: '10px 0'
-            }
-          }
-        ]
+              margin: '10px 0',
+            },
+          },
+        ],
       },
       {
         id: 'conclusion',
@@ -146,27 +285,28 @@ const createSampleTemplate = (templateId?: string, templateName?: string): Repor
             styling: {
               fontSize: 20,
               fontWeight: 'bold',
-              margin: '20px 0 15px 0'
-            }
+              margin: '20px 0 15px 0',
+            },
           },
           {
             id: 'conclusion_paragraph',
             type: 'paragraph',
-            content: 'Based on our comprehensive analysis of {{company.name}}, we have determined the fair market value of the {{valuation.security_type}} to be ${{valuation.fair_market_value}} per share as of {{valuation.date}}. This valuation reflects our assessment of the company\'s current financial position, growth prospects, and market conditions.',
+            content:
+              "Based on our comprehensive analysis of {{company.name}}, we have determined the fair market value of the {{valuation.security_type}} to be ${{valuation.fair_market_value}} per share as of {{valuation.date}}. This valuation reflects our assessment of the company's current financial position, growth prospects, and market conditions.",
             styling: {
               fontSize: 14,
               textAlign: 'justify',
-              margin: '10px 0'
-            }
-          }
-        ]
-      }
+              margin: '10px 0',
+            },
+          },
+        ],
+      },
     ],
     metadata: {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       author: 'Template Editor',
-      tags: ['409A', 'valuation', 'custom']
+      tags: ['409A', 'valuation', 'custom'],
     },
     settings: {
       paperSize: 'letter',
@@ -175,86 +315,88 @@ const createSampleTemplate = (templateId?: string, templateName?: string): Repor
         top: '1in',
         right: '1in',
         bottom: '1in',
-        left: '1in'
+        left: '1in',
       },
       watermark: {
         enabled: false,
         text: 'DRAFT',
-        opacity: 0.1
-      }
-    }
-  };
-};
+        opacity: 0.1,
+      },
+    },
+  }
+}
 
 function TemplateEditorContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [template, setTemplate] = useState<ReportTemplate | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [template, setTemplate] = useState<ReportTemplate | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const templateId = searchParams.get('templateId');
-  const templateName = searchParams.get('templateName');
-  const valuationId = searchParams.get('valuationId');
-  const reportName = searchParams.get('reportName');
+  const templateId = searchParams.get('templateId')
+  const templateName = searchParams.get('templateName')
+  const valuationId = searchParams.get('valuationId')
+  const reportName = searchParams.get('reportName')
 
   useEffect(() => {
     // Simulate loading template data
     const loadTemplate = async () => {
-      setIsLoading(true);
+      setIsLoading(true)
 
       // In a real implementation, this would fetch from an API
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading
+      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate loading
 
-      const loadedTemplate = createSampleTemplate(templateId || undefined, templateName || undefined);
-      setTemplate(loadedTemplate);
-      setIsLoading(false);
-    };
+      const loadedTemplate = createSampleTemplate(
+        templateId || undefined,
+        templateName || undefined
+      )
+      setTemplate(loadedTemplate)
+      setIsLoading(false)
+    }
 
-    loadTemplate();
-  }, [templateId, templateName]);
+    loadTemplate()
+  }, [templateId, templateName])
 
   const handleSave = async (updatedTemplate: ReportTemplate) => {
     try {
       // In a real implementation, this would save to an API
-      console.log('Saving template:', updatedTemplate);
+      console.log('Saving template:', updatedTemplate)
 
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Show success message or redirect
-      alert('Template saved successfully!');
-
+      alert('Template saved successfully!')
     } catch (error) {
-      console.error('Failed to save template:', error);
-      alert('Failed to save template. Please try again.');
+      console.error('Failed to save template:', error)
+      alert('Failed to save template. Please try again.')
     }
-  };
+  }
 
   const handleCancel = () => {
     // Navigate back to the report generator
     const returnUrl = valuationId
       ? `/reports/generator?selectedValuation=${valuationId}`
-      : '/reports/generator';
-    router.push(returnUrl);
-  };
+      : '/reports/generator'
+    router.push(returnUrl)
+  }
 
   const handlePreview = (previewTemplate: ReportTemplate) => {
     // In a real implementation, this would open a preview modal or new window
-    console.log('Preview template:', previewTemplate);
-    alert('Template preview functionality will be implemented next.');
-  };
+    console.log('Preview template:', previewTemplate)
+    alert('Template preview functionality will be implemented next.')
+  }
 
   if (isLoading || !template) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-full">
+        <div className="flex h-full items-center justify-center">
           <div className="flex items-center space-x-2">
-            <Loader2 className="w-6 h-6 animate-spin" />
+            <Loader2 className="h-6 w-6 animate-spin" />
             <span>Loading template editor...</span>
           </div>
         </div>
       </AppLayout>
-    );
+    )
   }
 
   return (
@@ -271,13 +413,15 @@ function TemplateEditorContent() {
                   onClick={handleCancel}
                   className="flex items-center space-x-2"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="h-4 w-4" />
                   <span>Back to Generator</span>
                 </Button>
                 <div>
                   <h1 className="text-xl font-bold">Template Editor</h1>
                   <p className="text-xs text-muted-foreground">
-                    {valuationId ? `Customizing template for valuation ${valuationId}` : 'Creating custom template'}
+                    {valuationId
+                      ? `Customizing template for valuation ${valuationId}`
+                      : 'Creating custom template'}
                   </p>
                 </div>
               </div>
@@ -296,20 +440,22 @@ function TemplateEditorContent() {
         </div>
       </div>
     </AppLayout>
-  );
+  )
 }
 
 export default function TemplateEditorPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading...</span>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading...</span>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <TemplateEditorContent />
     </Suspense>
-  );
+  )
 }

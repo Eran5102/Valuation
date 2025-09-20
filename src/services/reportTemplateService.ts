@@ -1,7 +1,7 @@
-import { optimizedSupabase } from '@/lib/supabase/optimized-client';
-import type { ReportTemplate, SaveViewRequest, VariableMapping } from '@/types/reports';
+import { optimizedSupabase } from '@/lib/supabase/optimized-client'
+import type { ReportTemplate, SaveViewRequest, VariableMapping } from '@/types/reports'
 
-const supabase = optimizedSupabase.getClient();
+const supabase = optimizedSupabase.getClient()
 
 /**
  * Service for managing report templates and variable mappings
@@ -10,11 +10,13 @@ export class ReportTemplateService {
   /**
    * Save a new report template or update existing one
    */
-  static async saveTemplate(template: Omit<ReportTemplate, 'id' | 'createdAt' | 'updatedAt' | 'version'>): Promise<ReportTemplate | null> {
+  static async saveTemplate(
+    template: Omit<ReportTemplate, 'id' | 'createdAt' | 'updatedAt' | 'version'>
+  ): Promise<ReportTemplate | null> {
     try {
       // For development purposes, we'll use a mock user ID if no user is authenticated
-      const { data: user } = await supabase.auth.getUser();
-      const userId = user.user?.id || 'demo-user-id';
+      const { data: user } = await supabase.auth.getUser()
+      const userId = user.user?.id || 'demo-user-id'
 
       const templateData = {
         name: template.name,
@@ -26,43 +28,46 @@ export class ReportTemplateService {
         organization_id: template.organizationId,
         blocks: template.blocks,
         variables_schema: template.variablesSchema,
-        branding: template.branding
-      };
+        branding: template.branding,
+      }
 
       const { data, error } = await supabase
         .from('report_templates')
         .insert(templateData)
         .select()
-        .single();
+        .single()
 
-      if (error) throw error;
-      return this.mapDbTemplateToType(data);
+      if (error) throw error
+      return this.mapDbTemplateToType(data)
     } catch (error) {
-      console.error('Error saving report template:', error);
-      return null;
+      console.error('Error saving report template:', error)
+      return null
     }
   }
 
   /**
    * Update an existing report template
    */
-  static async updateTemplate(templateId: string, updates: Partial<ReportTemplate>): Promise<ReportTemplate | null> {
+  static async updateTemplate(
+    templateId: string,
+    updates: Partial<ReportTemplate>
+  ): Promise<ReportTemplate | null> {
     try {
       // For development purposes, we'll use a mock user ID if no user is authenticated
-      const { data: user } = await supabase.auth.getUser();
-      const userId = user.user?.id || 'demo-user-id';
-      if (!userId) throw new Error('User not authenticated');
+      const { data: user } = await supabase.auth.getUser()
+      const userId = user.user?.id || 'demo-user-id'
+      if (!userId) throw new Error('User not authenticated')
 
       const updateData: any = {
-        updated_at: new Date().toISOString()
-      };
+        updated_at: new Date().toISOString(),
+      }
 
-      if (updates.name) updateData.name = updates.name;
-      if (updates.description !== undefined) updateData.description = updates.description;
-      if (updates.blocks) updateData.blocks = updates.blocks;
-      if (updates.variablesSchema) updateData.variables_schema = updates.variablesSchema;
-      if (updates.branding) updateData.branding = updates.branding;
-      if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+      if (updates.name) updateData.name = updates.name
+      if (updates.description !== undefined) updateData.description = updates.description
+      if (updates.blocks) updateData.blocks = updates.blocks
+      if (updates.variablesSchema) updateData.variables_schema = updates.variablesSchema
+      if (updates.branding) updateData.branding = updates.branding
+      if (updates.isActive !== undefined) updateData.is_active = updates.isActive
 
       const { data, error } = await supabase
         .from('report_templates')
@@ -70,13 +75,13 @@ export class ReportTemplateService {
         .eq('id', templateId)
         .eq('owner_id', userId)
         .select()
-        .single();
+        .single()
 
-      if (error) throw error;
-      return this.mapDbTemplateToType(data);
+      if (error) throw error
+      return this.mapDbTemplateToType(data)
     } catch (error) {
-      console.error('Error updating report template:', error);
-      return null;
+      console.error('Error updating report template:', error)
+      return null
     }
   }
 
@@ -89,27 +94,27 @@ export class ReportTemplateService {
   ): Promise<{ data: ReportTemplate[]; count: number; hasMore: boolean }> {
     try {
       // For development purposes, we'll use a mock user ID if no user is authenticated
-      const { data: user } = await supabase.auth.getUser();
-      const userId = user.user?.id || 'demo-user-id';
-      if (!userId) return { data: [], count: 0, hasMore: false };
+      const { data: user } = await supabase.auth.getUser()
+      const userId = user.user?.id || 'demo-user-id'
+      if (!userId) return { data: [], count: 0, hasMore: false }
 
-      const { page = 1, limit = 50 } = options || {};
-      const offset = (page - 1) * limit;
+      const { page = 1, limit = 50 } = options || {}
+      const offset = (page - 1) * limit
 
       // Build filter for optimized query
       const filter: Record<string, any> = {
-        is_active: true
-      };
+        is_active: true,
+      }
 
       if (type) {
-        filter.type = type;
+        filter.type = type
       }
 
       // Note: Complex OR conditions need to be handled with regular Supabase client
       // For system templates or simple user filtering, we can use optimized queries
       if (!type || type === 'system') {
         // Use optimized query for system templates
-        const systemFilter = { ...filter, is_system: true };
+        const systemFilter = { ...filter, is_system: true }
         const result = await optimizedSupabase.optimizedQuery<any>('report_templates', {
           select: '*',
           filter: systemFilter,
@@ -117,47 +122,47 @@ export class ReportTemplateService {
           limit,
           offset,
           cache: true,
-          cacheTTL: 10 * 60 * 1000 // 10 minutes cache for templates
-        });
+          cacheTTL: 10 * 60 * 1000, // 10 minutes cache for templates
+        })
 
-        if (result.error) throw result.error;
+        if (result.error) throw result.error
 
         return {
           data: (result.data || []).map(this.mapDbTemplateToType),
           count: result.count || 0,
-          hasMore: result.count ? result.count > offset + limit : false
-        };
+          hasMore: result.count ? result.count > offset + limit : false,
+        }
       } else {
         // Fall back to regular client for complex OR queries
         let query = supabase
           .from('report_templates')
           .select('*', { count: 'exact' })
           .or(`owner_id.eq.${userId},is_system.eq.true`)
-          .eq('is_active', true);
+          .eq('is_active', true)
 
         if (type) {
-          query = query.eq('type', type);
+          query = query.eq('type', type)
         }
 
         const { data, error, count } = await query
           .order('created_at', { ascending: false })
-          .range(offset, offset + limit - 1);
+          .range(offset, offset + limit - 1)
 
         if (error) {
-          console.error('Supabase error details:', error);
-          throw error;
+          console.error('Supabase error details:', error)
+          throw error
         }
 
         return {
           data: (data || []).map(this.mapDbTemplateToType),
           count: count || 0,
-          hasMore: count ? count > offset + limit : false
-        };
+          hasMore: count ? count > offset + limit : false,
+        }
       }
     } catch (error) {
-      console.error('Error loading report templates:', error);
-      console.error('Full error object:', JSON.stringify(error, null, 2));
-      return { data: [], count: 0, hasMore: false };
+      console.error('Error loading report templates:', error)
+      console.error('Full error object:', JSON.stringify(error, null, 2))
+      return { data: [], count: 0, hasMore: false }
     }
   }
 
@@ -167,18 +172,19 @@ export class ReportTemplateService {
   static async loadTemplate(templateId: string): Promise<ReportTemplate | null> {
     try {
       const result = await optimizedSupabase.optimizedQuery<any>('report_templates', {
-        select: 'id, name, description, type, is_system, is_active, owner_id, organization_id, blocks, variables_schema, branding, created_at, updated_at, version',
+        select:
+          'id, name, description, type, is_system, is_active, owner_id, organization_id, blocks, variables_schema, branding, created_at, updated_at, version',
         filter: { id: templateId },
         limit: 1,
         cache: true,
-        cacheTTL: 15 * 60 * 1000 // 15 minutes cache for individual templates
-      });
+        cacheTTL: 15 * 60 * 1000, // 15 minutes cache for individual templates
+      })
 
-      if (result.error) throw result.error;
-      return result.data?.[0] ? this.mapDbTemplateToType(result.data[0]) : null;
+      if (result.error) throw result.error
+      return result.data?.[0] ? this.mapDbTemplateToType(result.data[0]) : null
     } catch (error) {
-      console.error('Error loading report template:', error);
-      return null;
+      console.error('Error loading report template:', error)
+      return null
     }
   }
 
@@ -188,79 +194,87 @@ export class ReportTemplateService {
   static async deleteTemplate(templateId: string): Promise<boolean> {
     try {
       // For development purposes, we'll use a mock user ID if no user is authenticated
-      const { data: user } = await supabase.auth.getUser();
-      const userId = user.user?.id || 'demo-user-id';
-      if (!userId) return false;
+      const { data: user } = await supabase.auth.getUser()
+      const userId = user.user?.id || 'demo-user-id'
+      if (!userId) return false
 
       const { error } = await supabase
         .from('report_templates')
         .delete()
         .eq('id', templateId)
         .eq('owner_id', userId)
-        .neq('is_system', true); // Prevent deletion of system templates
+        .neq('is_system', true) // Prevent deletion of system templates
 
-      if (error) throw error;
-      return true;
+      if (error) throw error
+      return true
     } catch (error) {
-      console.error('Error deleting report template:', error);
-      return false;
+      console.error('Error deleting report template:', error)
+      return false
     }
   }
 
   /**
    * Duplicate a template
    */
-  static async duplicateTemplate(templateId: string, newName: string): Promise<ReportTemplate | null> {
+  static async duplicateTemplate(
+    templateId: string,
+    newName: string
+  ): Promise<ReportTemplate | null> {
     try {
-      const originalTemplate = await this.loadTemplate(templateId);
-      if (!originalTemplate) return null;
+      const originalTemplate = await this.loadTemplate(templateId)
+      if (!originalTemplate) return null
 
       const duplicateTemplate = {
         ...originalTemplate,
         name: newName,
         isSystem: false,
         ownerId: undefined, // Will be set to current user
-        organizationId: originalTemplate.organizationId
-      };
+        organizationId: originalTemplate.organizationId,
+      }
 
       // Remove computed fields
-      delete (duplicateTemplate as any).id;
-      delete (duplicateTemplate as any).createdAt;
-      delete (duplicateTemplate as any).updatedAt;
-      delete (duplicateTemplate as any).version;
+      delete (duplicateTemplate as any).id
+      delete (duplicateTemplate as any).createdAt
+      delete (duplicateTemplate as any).updatedAt
+      delete (duplicateTemplate as any).version
 
-      return await this.saveTemplate(duplicateTemplate);
+      return await this.saveTemplate(duplicateTemplate)
     } catch (error) {
-      console.error('Error duplicating report template:', error);
-      return null;
+      console.error('Error duplicating report template:', error)
+      return null
     }
   }
 
   /**
    * Save variable mapping for a template
    */
-  static async saveVariableMapping(mapping: Omit<VariableMapping, 'id'>): Promise<VariableMapping | null> {
+  static async saveVariableMapping(
+    mapping: Omit<VariableMapping, 'id'>
+  ): Promise<VariableMapping | null> {
     try {
       const { data, error } = await supabase
         .from('report_variable_mappings')
-        .upsert({
-          template_id: mapping.templateId,
-          variable_path: mapping.variablePath,
-          data_source: mapping.dataSource,
-          source_field: mapping.sourceField,
-          transform: mapping.transform,
-          default_value: mapping.defaultValue
-        }, {
-          onConflict: 'template_id,variable_path'
-        })
+        .upsert(
+          {
+            template_id: mapping.templateId,
+            variable_path: mapping.variablePath,
+            data_source: mapping.dataSource,
+            source_field: mapping.sourceField,
+            transform: mapping.transform,
+            default_value: mapping.defaultValue,
+          },
+          {
+            onConflict: 'template_id,variable_path',
+          }
+        )
         .select()
-        .single();
+        .single()
 
-      if (error) throw error;
-      return this.mapDbMappingToType(data);
+      if (error) throw error
+      return this.mapDbMappingToType(data)
     } catch (error) {
-      console.error('Error saving variable mapping:', error);
-      return null;
+      console.error('Error saving variable mapping:', error)
+      return null
     }
   }
 
@@ -272,8 +286,8 @@ export class ReportTemplateService {
     options?: { page?: number; limit?: number }
   ): Promise<{ data: VariableMapping[]; count: number; hasMore: boolean }> {
     try {
-      const { page = 1, limit = 100 } = options || {};
-      const offset = (page - 1) * limit;
+      const { page = 1, limit = 100 } = options || {}
+      const offset = (page - 1) * limit
 
       const result = await optimizedSupabase.optimizedQuery<any>('report_variable_mappings', {
         select: '*',
@@ -281,19 +295,19 @@ export class ReportTemplateService {
         limit,
         offset,
         cache: true,
-        cacheTTL: 5 * 60 * 1000 // 5 minutes cache for variable mappings
-      });
+        cacheTTL: 5 * 60 * 1000, // 5 minutes cache for variable mappings
+      })
 
-      if (result.error) throw result.error;
+      if (result.error) throw result.error
 
       return {
         data: (result.data || []).map(this.mapDbMappingToType),
         count: result.count || 0,
-        hasMore: result.count ? result.count > offset + limit : false
-      };
+        hasMore: result.count ? result.count > offset + limit : false,
+      }
     } catch (error) {
-      console.error('Error loading variable mappings:', error);
-      return { data: [], count: 0, hasMore: false };
+      console.error('Error loading variable mappings:', error)
+      return { data: [], count: 0, hasMore: false }
     }
   }
 
@@ -302,16 +316,13 @@ export class ReportTemplateService {
    */
   static async deleteVariableMapping(mappingId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('report_variable_mappings')
-        .delete()
-        .eq('id', mappingId);
+      const { error } = await supabase.from('report_variable_mappings').delete().eq('id', mappingId)
 
-      if (error) throw error;
-      return true;
+      if (error) throw error
+      return true
     } catch (error) {
-      console.error('Error deleting variable mapping:', error);
-      return false;
+      console.error('Error deleting variable mapping:', error)
+      return false
     }
   }
 
@@ -326,24 +337,24 @@ export class ReportTemplateService {
         company: {
           name: 'Sample Company Inc.',
           state: 'Delaware',
-          description: 'Technology company'
+          description: 'Technology company',
         },
         valuation: {
           date: new Date().toISOString().split('T')[0],
-          fairMarketValue: 12.50,
+          fairMarketValue: 12.5,
           totalEquityValue: 50000000,
           totalShares: 4000000,
-          method: 'Black-Scholes Option Pricing Model'
+          method: 'Black-Scholes Option Pricing Model',
         },
         assumptions: {
           discountRate: 0.25,
           termYears: 5,
-          volatility: 0.45
-        }
-      };
+          volatility: 0.45,
+        },
+      }
     } catch (error) {
-      console.error('Error generating variables from valuation:', error);
-      return {};
+      console.error('Error generating variables from valuation:', error)
+      return {}
     }
   }
 
@@ -366,12 +377,12 @@ export class ReportTemplateService {
         primaryColor: '#124E66',
         fontFamily: 'Inter',
         headerEnabled: true,
-        footerEnabled: true
+        footerEnabled: true,
       },
       createdAt: dbTemplate.created_at,
       updatedAt: dbTemplate.updated_at,
-      version: dbTemplate.version || 1
-    };
+      version: dbTemplate.version || 1,
+    }
   }
 
   /**
@@ -385,7 +396,7 @@ export class ReportTemplateService {
       dataSource: dbMapping.data_source,
       sourceField: dbMapping.source_field,
       transform: dbMapping.transform,
-      defaultValue: dbMapping.default_value
-    };
+      defaultValue: dbMapping.default_value,
+    }
   }
 }

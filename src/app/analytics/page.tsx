@@ -7,7 +7,7 @@ import AppLayout from '@/components/layout/AppLayout'
 export default function AnalyticsPage() {
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
           <p className="mt-1 text-muted-foreground">
@@ -15,10 +15,10 @@ export default function AnalyticsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-card p-6 rounded-lg border border-border">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="rounded-lg border border-border bg-card p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-primary/10 rounded-md">
+              <div className="rounded-md bg-primary/10 p-3">
                 <BarChart3 className="h-6 w-6 text-primary" />
               </div>
               <div className="ml-4">
@@ -27,9 +27,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card p-6 rounded-lg border border-border">
+          <div className="rounded-lg border border-border bg-card p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-accent/10 rounded-md">
+              <div className="rounded-md bg-accent/10 p-3">
                 <Users className="h-6 w-6 text-accent" />
               </div>
               <div className="ml-4">
@@ -38,9 +38,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card p-6 rounded-lg border border-border">
+          <div className="rounded-lg border border-border bg-card p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-chart-2/10 rounded-md">
+              <div className="rounded-md bg-chart-2/10 p-3">
                 <DollarSign className="h-6 w-6 text-chart-2" />
               </div>
               <div className="ml-4">
@@ -49,9 +49,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card p-6 rounded-lg border border-border">
+          <div className="rounded-lg border border-border bg-card p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-chart-1/10 rounded-md">
+              <div className="rounded-md bg-chart-1/10 p-3">
                 <TrendingUp className="h-6 w-6 text-chart-1" />
               </div>
               <div className="ml-4">
@@ -62,11 +62,13 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-card shadow rounded-lg border border-border p-6">
-          <div className="text-center py-12">
-            <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-card-foreground mb-2">Analytics Dashboard</h3>
-            <p className="text-muted-foreground">Advanced analytics and reporting features will be implemented here.</p>
+        <div className="rounded-lg border border-border bg-card p-6 shadow">
+          <div className="py-12 text-center">
+            <BarChart3 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-medium text-card-foreground">Analytics Dashboard</h3>
+            <p className="text-muted-foreground">
+              Advanced analytics and reporting features will be implemented here.
+            </p>
           </div>
         </div>
       </div>

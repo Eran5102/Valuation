@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -50,26 +50,26 @@ export function getStatusColor(status: string) {
     prospect: 'bg-blue-100 text-blue-800 border-blue-200',
     Common: 'bg-blue-100 text-blue-800 border-blue-200',
     Preferred: 'bg-purple-100 text-purple-800 border-purple-200',
-  };
-  return colorMap[status] || colorMap.draft;
+  }
+  return colorMap[status] || colorMap.draft
 }
 
 export function calculatePercentage(value: number, total: number): number {
-  if (total === 0) return 0;
-  return (value / total) * 100;
+  if (total === 0) return 0
+  return (value / total) * 100
 }
 
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
+  let timeout: NodeJS.Timeout
   return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
 }
 
 export function generateId(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  return Math.random().toString(36).substring(2) + Date.now().toString(36)
 }

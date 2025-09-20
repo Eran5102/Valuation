@@ -12,7 +12,7 @@ export default function ActivityPage() {
       title: 'Series A 409A Valuation',
       client: 'TechStart Inc.',
       timestamp: '2 hours ago',
-      status: 'completed'
+      status: 'completed',
     },
     {
       id: 2,
@@ -20,7 +20,7 @@ export default function ActivityPage() {
       title: 'Annual Valuation Report',
       client: 'InnovateCorp',
       timestamp: '4 hours ago',
-      status: 'in_progress'
+      status: 'in_progress',
     },
     {
       id: 3,
@@ -28,8 +28,8 @@ export default function ActivityPage() {
       title: 'New Client Onboarded',
       client: 'StartupXYZ',
       timestamp: '1 day ago',
-      status: 'completed'
-    }
+      status: 'completed',
+    },
   ]
 
   const getActivityIcon = (type: string) => {
@@ -58,7 +58,7 @@ export default function ActivityPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Activity</h1>
           <p className="mt-1 text-muted-foreground">
@@ -66,9 +66,9 @@ export default function ActivityPage() {
           </p>
         </div>
 
-        <div className="bg-card shadow rounded-lg border border-border">
-          <div className="px-4 py-5 sm:px-6 border-b border-border">
-            <h3 className="text-lg leading-6 font-medium text-card-foreground">Recent Activity</h3>
+        <div className="rounded-lg border border-border bg-card shadow">
+          <div className="border-b border-border px-4 py-5 sm:px-6">
+            <h3 className="text-lg font-medium leading-6 text-card-foreground">Recent Activity</h3>
             <p className="mt-1 text-sm text-muted-foreground">Latest updates and completed tasks</p>
           </div>
           <div className="px-4 py-5 sm:p-6">
@@ -78,14 +78,16 @@ export default function ActivityPage() {
                 return (
                   <div key={activity.id} className="flex items-start">
                     <div className="flex-shrink-0">
-                      <div className="p-2 bg-muted rounded-lg">
+                      <div className="rounded-lg bg-muted p-2">
                         <Icon className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div className="ml-3 flex-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-card-foreground">{activity.title}</p>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyle(activity.status)}`}>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusStyle(activity.status)}`}
+                        >
                           {activity.status.replace('_', ' ')}
                         </span>
                       </div>

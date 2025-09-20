@@ -1,25 +1,20 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import {
-  FileText,
-  Plus,
-  Edit,
-  Download,
-  Copy,
-  Trash2,
-  Eye,
-  ArrowLeft
-} from 'lucide-react'
+import { FileText, Plus, Edit, Download, Copy, Trash2, Eye, ArrowLeft } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
 
-const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.OptimizedDataTable })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>,
-  ssr: false
-})
+const OptimizedDataTable = dynamic(
+  () => import('@/components/ui/optimized-data-table').then((mod) => mod.OptimizedDataTable),
+  {
+    loading: () => <LoadingSpinner size="lg" className="p-8" />,
+    ssr: false,
+  }
+)
 import AppLayout from '@/components/layout/AppLayout'
 import { getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'
@@ -66,7 +61,7 @@ export default function ReportsPage() {
           status: 'delivered',
           createdDate: '2024-01-10',
           deliveredDate: '2024-01-12',
-          fileSize: '2.3 MB'
+          fileSize: '2.3 MB',
         },
         {
           id: 'mock_2',
@@ -75,13 +70,13 @@ export default function ReportsPage() {
           type: 'Board Report',
           status: 'final',
           createdDate: '2024-01-08',
-          fileSize: '1.8 MB'
-        }
+          fileSize: '1.8 MB',
+        },
       ]
 
       // Load saved drafts from localStorage
       const savedDrafts = draftService.getAllDrafts()
-      const draftReports: Report[] = savedDrafts.map(draft => ({
+      const draftReports: Report[] = savedDrafts.map((draft) => ({
         id: draft.id,
         title: draft.name,
         clientName: draft.clientName || 'Unknown Client',
@@ -90,12 +85,12 @@ export default function ReportsPage() {
         createdDate: draft.createdAt.split('T')[0],
         fileSize: calculateDraftSize(draft),
         isDraft: true,
-        draftData: draft
+        draftData: draft,
       }))
 
       // Combine and sort by date (newest first)
-      const allReports = [...draftReports, ...mockReports].sort((a, b) =>
-        new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+      const allReports = [...draftReports, ...mockReports].sort(
+        (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
       )
 
       setReports(allReports)
@@ -168,47 +163,51 @@ export default function ReportsPage() {
     }
   }
 
-  const filteredReports = reports.filter(report =>
-    report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    report.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredReports = reports.filter(
+    (report) =>
+      report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.clientName.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Calculate metrics for summary cards
   const metrics = useMemo(() => {
     const totalReports = reports.length
-    const delivered = reports.filter(r => r.status === 'delivered').length
-    const drafts = reports.filter(r => r.status === 'draft').length
-    const final = reports.filter(r => r.status === 'final').length
-    
+    const delivered = reports.filter((r) => r.status === 'delivered').length
+    const drafts = reports.filter((r) => r.status === 'draft').length
+    const final = reports.filter((r) => r.status === 'final').length
+
     return { totalReports, delivered, drafts, final }
   }, [reports])
 
-  const summaryCards: SummaryCard[] = useMemo(() => [
-    {
-      icon: FileText,
-      iconColor: 'primary',
-      label: 'Total Reports',
-      value: metrics.totalReports
-    },
-    {
-      icon: FileText,
-      iconColor: 'accent',
-      label: 'Delivered',
-      value: metrics.delivered
-    },
-    {
-      icon: FileText,
-      iconColor: 'muted-foreground',
-      label: 'Drafts',
-      value: metrics.drafts
-    },
-    {
-      icon: FileText,
-      iconColor: 'chart-1',
-      label: 'Final',
-      value: metrics.final
-    }
-  ], [metrics])
+  const summaryCards: SummaryCard[] = useMemo(
+    () => [
+      {
+        icon: FileText,
+        iconColor: 'primary',
+        label: 'Total Reports',
+        value: metrics.totalReports,
+      },
+      {
+        icon: FileText,
+        iconColor: 'accent',
+        label: 'Delivered',
+        value: metrics.delivered,
+      },
+      {
+        icon: FileText,
+        iconColor: 'muted-foreground',
+        label: 'Drafts',
+        value: metrics.drafts,
+      },
+      {
+        icon: FileText,
+        iconColor: 'chart-1',
+        label: 'Final',
+        value: metrics.final,
+      },
+    ],
+    [metrics]
+  )
 
   // Define columns for DataTable
   const columns: ColumnDef<Report>[] = useMemo(
@@ -223,17 +222,17 @@ export default function ReportsPage() {
           return (
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                  report.isDraft ? 'bg-orange-100 text-orange-600' : 'bg-primary/10 text-primary'
-                }`}>
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    report.isDraft ? 'bg-orange-100 text-orange-600' : 'bg-primary/10 text-primary'
+                  }`}
+                >
                   <FileText className="h-4 w-4" />
                 </div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <div className="text-sm font-medium text-foreground truncate">
-                    {report.title}
-                  </div>
+                  <div className="truncate text-sm font-medium text-foreground">{report.title}</div>
                   {report.isDraft && (
                     <Badge variant="outline" className="text-xs">
                       Draft
@@ -262,11 +261,7 @@ export default function ReportsPage() {
         enableSorting: true,
         cell: ({ row }) => {
           const report = row.original
-          return (
-            <div className="text-sm text-foreground">
-              {report.clientName}
-            </div>
-          )
+          return <div className="text-sm text-foreground">{report.clientName}</div>
         },
       },
       {
@@ -276,11 +271,7 @@ export default function ReportsPage() {
         enableSorting: true,
         cell: ({ row }) => {
           const report = row.original
-          return (
-            <div className="text-sm text-foreground">
-              {report.type}
-            </div>
-          )
+          return <div className="text-sm text-foreground">{report.type}</div>
         },
       },
       {
@@ -304,11 +295,7 @@ export default function ReportsPage() {
         enableSorting: true,
         cell: ({ row }) => {
           const report = row.original
-          return (
-            <div className="text-sm text-foreground">
-              {formatDate(report.createdDate)}
-            </div>
-          )
+          return <div className="text-sm text-foreground">{formatDate(report.createdDate)}</div>
         },
       },
       {
@@ -318,11 +305,7 @@ export default function ReportsPage() {
         enableSorting: true,
         cell: ({ row }) => {
           const report = row.original
-          return (
-            <div className="text-sm text-foreground">
-              {report.fileSize}
-            </div>
-          )
+          return <div className="text-sm text-foreground">{report.fileSize}</div>
         },
       },
       {
@@ -342,7 +325,7 @@ export default function ReportsPage() {
                   onClick={() => handleContinueEditing(report)}
                   className="h-8 px-2"
                 >
-                  <Edit className="w-3 h-3 mr-1" />
+                  <Edit className="mr-1 h-3 w-3" />
                   Edit
                 </Button>
                 <Button
@@ -351,7 +334,7 @@ export default function ReportsPage() {
                   onClick={() => handleDuplicateDraft(report)}
                   className="h-8 px-2"
                 >
-                  <Copy className="w-3 h-3 mr-1" />
+                  <Copy className="mr-1 h-3 w-3" />
                   Copy
                 </Button>
                 <Button
@@ -360,7 +343,7 @@ export default function ReportsPage() {
                   onClick={() => handleExportDraft(report)}
                   className="h-8 px-2"
                 >
-                  <Download className="w-3 h-3 mr-1" />
+                  <Download className="mr-1 h-3 w-3" />
                   Export
                 </Button>
                 <Button
@@ -369,7 +352,7 @@ export default function ReportsPage() {
                   onClick={() => handleDeleteDraft(report)}
                   className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             )
@@ -381,7 +364,9 @@ export default function ReportsPage() {
                 onView={() => handleViewReport(report)}
                 onEdit={() => handleViewReport(report)}
                 onDownload={() => handleViewReport(report)}
-                onDelete={() => {/* TODO: Implement delete functionality */}}
+                onDelete={() => {
+                  /* TODO: Implement delete functionality */
+                }}
                 showDownload={true}
               />
             )
@@ -395,7 +380,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <div className="text-lg text-muted-foreground">Loading reports...</div>
         </div>
       </AppLayout>
@@ -404,18 +389,18 @@ export default function ReportsPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         {/* Header */}
         {!showCreateFlow && (
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-foreground">Reports</h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground">
                 Generate and manage valuation reports and documentation
               </p>
             </div>
             <Button onClick={handleCreateNewReport}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Create New Report
             </Button>
           </div>
@@ -426,15 +411,12 @@ export default function ReportsPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-foreground">Select Valuation Project</h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground">
                 Choose a valuation project to generate a report for
               </p>
               <div className="mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateFlow(false)}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                <Button variant="outline" onClick={() => setShowCreateFlow(false)}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Reports
                 </Button>
               </div>
@@ -450,8 +432,8 @@ export default function ReportsPage() {
             {/* DataTable */}
             <Card>
               <CardContent className="p-6">
-                <DataTable
-                  columns={columns}
+                <OptimizedDataTable
+                  columns={columns as any}
                   data={filteredReports}
                   searchPlaceholder="Search reports..."
                   tableId="reports-table"

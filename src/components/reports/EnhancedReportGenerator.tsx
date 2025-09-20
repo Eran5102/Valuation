@@ -1,7 +1,7 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   FileText,
   Download,
@@ -14,54 +14,67 @@ import {
   CheckCircle,
   Clock,
   Edit,
-  Plus
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import dynamic from 'next/dynamic';
+  Plus,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
+import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import dynamic from 'next/dynamic'
 
-const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.OptimizedDataTable })), {
-  loading: () => <div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>,
-  ssr: false
-});
-import { PageHeader } from '@/components/ui/page-header';
-import { ColumnDef } from '@tanstack/react-table';
-import type { ReportTemplate } from '@/lib/templates/types';
-import { getStatusColor, formatDate } from '@/lib/utils';
-import { TemplatePreview } from '@/components/templates/TemplatePreview';
-import PDFGenerator from '@/lib/services/pdfGenerator';
+const OptimizedDataTable = dynamic(
+  () =>
+    import('@/components/ui/optimized-data-table').then((mod) => ({
+      default: mod.OptimizedDataTable,
+    })),
+  {
+    loading: () => <LoadingSpinner size="md" className="p-4" />,
+    ssr: false,
+  }
+)
+import { PageHeader } from '@/components/ui/page-header'
+import { ColumnDef } from '@tanstack/react-table'
+import type { ReportTemplate } from '@/lib/templates/types'
+import { getStatusColor, formatDate } from '@/lib/utils'
+import { TemplatePreview } from '@/components/templates/TemplatePreview'
+import PDFGenerator from '@/lib/services/pdfGenerator'
 
 interface Valuation {
-  id: number;
-  company_name: string;
-  valuation_date: string;
-  fair_market_value_per_share: number;
-  status: string;
+  id: number
+  company_name: string
+  valuation_date: string
+  fair_market_value_per_share: number
+  status: string
 }
 
 interface GeneratedReport {
-  id: string;
-  name: string;
-  valuationId: number;
-  templateId: string;
-  status: 'draft' | 'final';
-  createdAt: string;
-  updatedAt: string;
-  customizations?: any;
+  id: string
+  name: string
+  valuationId: number
+  templateId: string
+  status: 'draft' | 'final'
+  createdAt: string
+  updatedAt: string
+  customizations?: any
 }
 
 interface EnhancedReportGeneratorProps {
-  preselectedValuationId?: number;
-  templateId?: string;
-  valuationId?: number;
+  preselectedValuationId?: number
+  templateId?: string
+  valuationId?: number
 }
 
 const sampleTemplates: ReportTemplate[] = [
@@ -77,13 +90,14 @@ const sampleTemplates: ReportTemplate[] = [
       createdAt: '2024-01-15T10:30:00Z',
       updatedAt: '2024-02-20T14:45:00Z',
       author: 'Value8 AI',
-      tags: ['409A', 'valuation', 'compliance', 'standard']
-    }
+      tags: ['409A', 'valuation', 'compliance', 'standard'],
+    },
   },
   {
     id: 'template_409a_startup',
     name: 'Early Stage Startup 409A Template',
-    description: 'Simplified 409A template optimized for early-stage startups with limited financial history.',
+    description:
+      'Simplified 409A template optimized for early-stage startups with limited financial history.',
     category: 'financial',
     version: '1.5.0',
     sections: [],
@@ -92,13 +106,14 @@ const sampleTemplates: ReportTemplate[] = [
       createdAt: '2024-02-01T09:15:00Z',
       updatedAt: '2024-02-28T16:20:00Z',
       author: 'Value8 AI',
-      tags: ['409A', 'startup', 'early-stage', 'simplified']
-    }
+      tags: ['409A', 'startup', 'early-stage', 'simplified'],
+    },
   },
   {
     id: 'template_board_resolutions',
     name: 'Board Resolutions Template',
-    description: 'Standard template for board resolutions related to equity transactions and corporate actions.',
+    description:
+      'Standard template for board resolutions related to equity transactions and corporate actions.',
     category: 'legal',
     version: '1.2.0',
     sections: [],
@@ -107,71 +122,75 @@ const sampleTemplates: ReportTemplate[] = [
       createdAt: '2024-01-20T11:00:00Z',
       updatedAt: '2024-02-15T13:30:00Z',
       author: 'Legal Team',
-      tags: ['legal', 'board', 'resolutions', 'equity']
-    }
-  }
-];
+      tags: ['legal', 'board', 'resolutions', 'equity'],
+    },
+  },
+]
 
-export function EnhancedReportGenerator({ preselectedValuationId, templateId, valuationId }: EnhancedReportGeneratorProps) {
-  const router = useRouter();
-  const [step, setStep] = useState<'selectValuation' | 'selectTemplate'>('selectValuation');
-  const [selectedValuation, setSelectedValuation] = useState<Valuation | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
-  const [customizedTemplate, setCustomizedTemplate] = useState<ReportTemplate | null>(null);
-  const [reportStatus, setReportStatus] = useState<'draft' | 'final'>('draft');
-  const [reportName, setReportName] = useState('');
-  const [reportNotes, setReportNotes] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [showWatermark, setShowWatermark] = useState(true);
-  const [savedReport, setSavedReport] = useState<GeneratedReport | null>(null);
-  const [valuationData, setValuationData] = useState<any>(null);
-  const [capTableData, setCapTableData] = useState<any>(null);
-  const [isLoadingValuationData, setIsLoadingValuationData] = useState(false);
+export function EnhancedReportGenerator({
+  preselectedValuationId,
+  templateId,
+  valuationId,
+}: EnhancedReportGeneratorProps) {
+  const router = useRouter()
+  const [step, setStep] = useState<'selectValuation' | 'selectTemplate' | 'customize' | 'preview'>('selectValuation')
+  const [selectedValuation, setSelectedValuation] = useState<Valuation | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null)
+  const [customizedTemplate, setCustomizedTemplate] = useState<ReportTemplate | null>(null)
+  const [reportStatus, setReportStatus] = useState<'draft' | 'final'>('draft')
+  const [reportName, setReportName] = useState('')
+  const [reportNotes, setReportNotes] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [showWatermark, setShowWatermark] = useState(true)
+  const [savedReport, setSavedReport] = useState<GeneratedReport | null>(null)
+  const [valuationData, setValuationData] = useState<any>(null)
+  const [capTableData, setCapTableData] = useState<any>(null)
+  const [isLoadingValuationData, setIsLoadingValuationData] = useState(false)
 
   const [mockValuations] = useState<Valuation[]>([
     {
       id: 1,
       company_name: 'Acme Technology Inc.',
       valuation_date: '2024-09-15',
-      fair_market_value_per_share: 12.50,
-      status: 'Draft'
+      fair_market_value_per_share: 12.5,
+      status: 'Draft',
     },
     {
       id: 2,
       company_name: 'InnovateCorp',
       valuation_date: '2024-08-30',
       fair_market_value_per_share: 8.75,
-      status: 'Final'
+      status: 'Final',
     },
     {
       id: 3,
       company_name: 'TechStart Solutions',
       valuation_date: '2024-07-20',
       fair_market_value_per_share: 15.25,
-      status: 'Final'
-    }
-  ]);
+      status: 'Final',
+    },
+  ])
 
   // Load valuation data when valuationId is provided
   useEffect(() => {
     if (valuationId) {
       const loadValuationData = async () => {
-        setIsLoadingValuationData(true);
+        setIsLoadingValuationData(true)
         try {
           // Load valuation details
-          const valuationResponse = await fetch(`/api/valuations/${valuationId}`);
+          const valuationResponse = await fetch(`/api/valuations/${valuationId}`)
           if (valuationResponse.ok) {
-            const valuation = await valuationResponse.json();
-            setValuationData(valuation);
+            const valuation = await valuationResponse.json()
+            setValuationData(valuation)
 
             // Load company details
-            const companyResponse = await fetch(`/api/companies/${valuation.companyId}`);
-            const company = companyResponse.ok ? await companyResponse.json() : null;
+            const companyResponse = await fetch(`/api/companies/${valuation.companyId}`)
+            const company = companyResponse.ok ? await companyResponse.json() : null
 
             // Load cap table data
-            const capTableResponse = await fetch(`/api/valuations/${valuationId}/cap-table`);
-            const capTable = capTableResponse.ok ? await capTableResponse.json() : null;
-            setCapTableData(capTable);
+            const capTableResponse = await fetch(`/api/valuations/${valuationId}/cap-table`)
+            const capTable = capTableResponse.ok ? await capTableResponse.json() : null
+            setCapTableData(capTable)
 
             // Create valuation object for the selector
             const valuationForSelector = {
@@ -179,49 +198,49 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
               company_name: company?.name || 'Unknown Company',
               valuation_date: valuation.valuationDate,
               fair_market_value_per_share: valuation.fairMarketValuePerShare || 0,
-              status: valuation.status || 'draft'
-            };
+              status: valuation.status || 'draft',
+            }
 
-            setSelectedValuation(valuationForSelector);
-            setReportName(`${company?.name || 'Company'} - 409A Report`);
-            setStep('selectTemplate');
+            setSelectedValuation(valuationForSelector)
+            setReportName(`${company?.name || 'Company'} - 409A Report`)
+            setStep('selectTemplate')
           }
         } catch (error) {
-          console.error('Error loading valuation data:', error);
+          console.error('Error loading valuation data:', error)
         } finally {
-          setIsLoadingValuationData(false);
+          setIsLoadingValuationData(false)
         }
-      };
+      }
 
-      loadValuationData();
+      loadValuationData()
     }
-  }, [valuationId]);
+  }, [valuationId])
 
   useEffect(() => {
     if (preselectedValuationId && !valuationId) {
-      const valuation = mockValuations.find(v => v.id === preselectedValuationId);
+      const valuation = mockValuations.find((v) => v.id === preselectedValuationId)
       if (valuation) {
-        setSelectedValuation(valuation);
-        setReportName(`${valuation.company_name} - 409A Report`);
-        setStep('selectTemplate');
+        setSelectedValuation(valuation)
+        setReportName(`${valuation.company_name} - 409A Report`)
+        setStep('selectTemplate')
       }
     }
     if (templateId) {
-      const template = sampleTemplates.find(t => t.id === templateId);
+      const template = sampleTemplates.find((t) => t.id === templateId)
       if (template) {
-        setSelectedTemplate(template);
-        setCustomizedTemplate(template);
-        setStep('customize');
+        setSelectedTemplate(template)
+        setCustomizedTemplate(template)
+        setStep('customize')
       }
     }
-  }, [preselectedValuationId, templateId, mockValuations]);
+  }, [preselectedValuationId, templateId, mockValuations])
 
   // Auto-inject valuation data into template
   const injectValuationData = (template: ReportTemplate) => {
-    if (!valuationData || !template) return template;
+    if (!valuationData || !template) return template
 
     // Create a copy of the template with injected data
-    const injectedTemplate = { ...template };
+    const injectedTemplate = { ...template }
 
     // Create data context for injection
     const dataContext = {
@@ -234,98 +253,104 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
         assumptions: valuationData.assumptions || {},
         discountRate: valuationData.discountingConvention || 'mid_year',
         taxRate: valuationData.taxRate || 21,
-        currency: valuationData.currency || 'USD'
+        currency: valuationData.currency || 'USD',
       },
       capTable: capTableData || {},
       company: {
         name: selectedValuation?.company_name || 'Company Name',
-        id: valuationData.companyId
+        id: valuationData.companyId,
       },
       reportDate: new Date().toISOString().split('T')[0],
-      reportName: reportName || 'Valuation Report'
-    };
+      reportName: reportName || 'Valuation Report',
+    }
 
     // Inject data into template sections
     if (injectedTemplate.sections) {
-      injectedTemplate.sections = injectedTemplate.sections.map(section => {
+      injectedTemplate.sections = injectedTemplate.sections.map((section) => {
         if (section.blocks) {
           return {
             ...section,
-            blocks: section.blocks.map(block => {
+            blocks: section.blocks.map((block) => {
               // Auto-populate dynamic data blocks
               if (block.type === 'dynamicTable' && block.content?.dataSource) {
-                const [source, field] = block.content.dataSource.split('.');
-                if (source === 'valuation' && dataContext.valuation[field as keyof typeof dataContext.valuation]) {
+                const [source, field] = block.content.dataSource.split('.')
+                if (
+                  source === 'valuation' &&
+                  dataContext.valuation[field as keyof typeof dataContext.valuation]
+                ) {
                   return {
                     ...block,
                     content: {
                       ...block.content,
-                      data: dataContext.valuation[field as keyof typeof dataContext.valuation]
-                    }
-                  };
+                      data: dataContext.valuation[field as keyof typeof dataContext.valuation],
+                    },
+                  }
                 }
               }
 
               // Auto-populate date blocks
               if (block.type === 'dateBlock' && block.content?.dateField) {
-                const [source, field] = block.content.dateField.split('.');
+                const [source, field] = block.content.dateField.split('.')
                 if (source === 'valuation' && field === 'date') {
                   return {
                     ...block,
                     content: {
                       ...block.content,
-                      value: dataContext.valuation.date
-                    }
-                  };
+                      value: dataContext.valuation.date,
+                    },
+                  }
                 }
               }
 
               // Replace variable placeholders in text blocks
               if (block.type === 'paragraph' || block.type === 'header') {
-                let content = block.content;
+                let content = block.content
                 if (typeof content === 'string') {
                   // Replace {{variable}} patterns with actual data
-                  content = content.replace(/\{\{company\.name\}\}/g, dataContext.company.name);
-                  content = content.replace(/\{\{valuation\.date\}\}/g, dataContext.valuation.date);
-                  content = content.replace(/\{\{valuation\.fairMarketValue\}\}/g, dataContext.valuation.fairMarketValue.toString());
-                  content = content.replace(/\{\{reportDate\}\}/g, dataContext.reportDate);
-                  content = content.replace(/\{\{reportName\}\}/g, dataContext.reportName);
+                  content = content.replace(/\{\{company\.name\}\}/g, dataContext.company.name)
+                  content = content.replace(/\{\{valuation\.date\}\}/g, dataContext.valuation.date)
+                  content = content.replace(
+                    /\{\{valuation\.fairMarketValue\}\}/g,
+                    dataContext.valuation.fairMarketValue.toString()
+                  )
+                  content = content.replace(/\{\{reportDate\}\}/g, dataContext.reportDate)
+                  content = content.replace(/\{\{reportName\}\}/g, dataContext.reportName)
 
                   return {
                     ...block,
-                    content
-                  };
+                    content,
+                  }
                 }
               }
 
-              return block;
-            })
-          };
+              return block
+            }),
+          }
         }
-        return section;
-      });
+        return section
+      })
     }
 
-    return injectedTemplate;
-  };
+    return injectedTemplate
+  }
 
   const handleValuationSelect = (valuationId: number) => {
-    const valuation = mockValuations.find(v => v.id === valuationId);
+    const valuation = mockValuations.find((v) => v.id === valuationId)
     if (valuation) {
-      setSelectedValuation(valuation);
-      setReportName(`${valuation.company_name} - 409A Report`);
-      setStep('selectTemplate');
+      setSelectedValuation(valuation)
+      setReportName(`${valuation.company_name} - 409A Report`)
+      setStep('selectTemplate')
     }
-  };
+  }
 
   const handleTemplateSelect = async (template: ReportTemplate) => {
-    if (!selectedValuation) return;
+    if (!selectedValuation) return
 
-    setSelectedTemplate(template);
+    setSelectedTemplate(template)
 
     // Auto-inject valuation data into the template if available
-    const injectedTemplate = valuationId ? injectValuationData(template) : template;
-    setCustomizedTemplate(injectedTemplate);
+    const injectedTemplate = valuationId ? injectValuationData(template) : template
+    setCustomizedTemplate(injectedTemplate)
 
     // Create a new draft report with valuation data injected
     const newDraft = {
@@ -339,22 +364,24 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
       updatedAt: new Date().toISOString(),
       template: injectedTemplate,
       // Store additional valuation context
-      valuationData: valuationId ? {
-        id: valuationData?.id,
-        companyName: selectedValuation.company_name,
-        date: valuationData?.valuationDate,
-        fairMarketValue: valuationData?.fairMarketValuePerShare,
-        capTable: capTableData
-      } : null
-    };
+      valuationData: valuationId
+        ? {
+            id: valuationData?.id,
+            companyName: selectedValuation.company_name,
+            date: valuationData?.valuationDate,
+            fairMarketValue: valuationData?.fairMarketValuePerShare,
+            capTable: capTableData,
+          }
+        : null,
+    }
 
     // Save draft (in real app this would save to database)
-    console.log('Creating report draft with auto-injected data:', newDraft);
+    console.log('Creating report draft with auto-injected data:', newDraft)
 
     // Save the draft (using a simple approach for now)
     try {
       // In a real app, this would be an API call
-      const savedDrafts = JSON.parse(localStorage.getItem('savedReports') || '[]');
+      const savedDrafts = JSON.parse(localStorage.getItem('savedReports') || '[]')
       savedDrafts.push({
         id: newDraft.id,
         name: newDraft.name,
@@ -364,33 +391,33 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
         createdDate: newDraft.createdAt.split('T')[0],
         fileSize: '2.1 KB',
         isDraft: true,
-        draftData: newDraft
-      });
-      localStorage.setItem('savedReports', JSON.stringify(savedDrafts));
+        draftData: newDraft,
+      })
+      localStorage.setItem('savedReports', JSON.stringify(savedDrafts))
 
       // Continue to customization step instead of redirecting immediately
-      setStep('customize');
+      setStep('customize')
     } catch (error) {
-      console.error('Error creating draft:', error);
-      alert('Error creating report. Please try again.');
+      console.error('Error creating draft:', error)
+      alert('Error creating report. Please try again.')
     }
-  };
+  }
 
   const handleCustomizeTemplate = () => {
-    if (!selectedTemplate || !selectedValuation) return;
+    if (!selectedTemplate || !selectedValuation) return
 
     const params = new URLSearchParams({
       templateId: selectedTemplate.id,
       templateName: selectedTemplate.name,
       valuationId: selectedValuation.id.toString(),
-      reportName: reportName
-    });
+      reportName: reportName,
+    })
 
-    router.push(`/reports/template-editor?${params.toString()}`);
-  };
+    router.push(`/reports/template-editor?${params.toString()}`)
+  }
 
   const handleSaveReport = async () => {
-    if (!selectedValuation || !customizedTemplate) return;
+    if (!selectedValuation || !customizedTemplate) return
 
     const report: GeneratedReport = {
       id: `report_${Date.now()}`,
@@ -400,22 +427,22 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
       status: reportStatus,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      customizations: { notes: reportNotes }
-    };
+      customizations: { notes: reportNotes },
+    }
 
     // Save to localStorage (in real app, this would be an API call)
-    const savedReports = JSON.parse(localStorage.getItem('savedReports') || '[]');
-    savedReports.push(report);
-    localStorage.setItem('savedReports', JSON.stringify(savedReports));
+    const savedReports = JSON.parse(localStorage.getItem('savedReports') || '[]')
+    savedReports.push(report)
+    localStorage.setItem('savedReports', JSON.stringify(savedReports))
 
-    setSavedReport(report);
-    alert('Report saved successfully!');
-  };
+    setSavedReport(report)
+    alert('Report saved successfully!')
+  }
 
   const handleGeneratePDF = async (withWatermark: boolean = true) => {
-    if (!selectedValuation || !customizedTemplate) return;
+    if (!selectedValuation || !customizedTemplate) return
 
-    setIsGenerating(true);
+    setIsGenerating(true)
     try {
       // Create HTML content with actual template data and proper styling
       const htmlContent = `
@@ -539,12 +566,16 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
               multiple approaches including the income approach, market approach, and asset approach as applicable.</p>
             </div>
 
-            ${reportNotes ? `
+            ${
+              reportNotes
+                ? `
             <div class="section">
               <h2>Additional Notes</h2>
               <p>${reportNotes}</p>
             </div>
-            ` : ''}
+            `
+                : ''
+            }
 
             <div class="footer">
               <p>This report was generated on ${new Date().toLocaleDateString()} using the Value8 AI platform.</p>
@@ -552,128 +583,127 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
             </div>
           </body>
         </html>
-      `;
+      `
 
       // Generate filename
       const filename = PDFGenerator.generateFilename(
         customizedTemplate.name,
         selectedValuation.company_name
-      );
+      )
 
       // Use our PDF generator service
       const result = await PDFGenerator.generateFromHTML(htmlContent, {
         orientation: 'portrait',
         format: 'letter',
         quality: 2,
-        filename: filename
-      });
+        filename: filename,
+      })
 
       if (result.success) {
         // Show success message
-        alert(`PDF generated successfully: ${result.filename}`);
+        alert(`PDF generated successfully: ${result.filename}`)
       } else {
-        throw new Error(result.error || 'PDF generation failed');
+        throw new Error(result.error || 'PDF generation failed')
       }
-
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert(`Error generating PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error generating PDF:', error)
+      alert(`Error generating PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
   const getStepColor = (stepName: string) => {
-    const steps = ['selectValuation', 'selectTemplate'];
-    const currentIndex = steps.indexOf(step);
-    const stepIndex = steps.indexOf(stepName);
+    const steps = ['selectValuation', 'selectTemplate']
+    const currentIndex = steps.indexOf(step)
+    const stepIndex = steps.indexOf(stepName)
 
-    if (stepIndex < currentIndex) return 'bg-primary text-primary-foreground';
-    if (stepIndex === currentIndex) return 'bg-accent text-accent-foreground';
-    return 'bg-muted text-muted-foreground';
-  };
+    if (stepIndex < currentIndex) return 'bg-primary text-primary-foreground'
+    if (stepIndex === currentIndex) return 'bg-accent text-accent-foreground'
+    return 'bg-muted text-muted-foreground'
+  }
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center space-x-4 mb-8">
+    <div className="mb-8 flex items-center justify-center space-x-4">
       {[
         { key: 'selectValuation', label: 'Select Valuation', icon: Building2 },
-        { key: 'selectTemplate', label: 'Choose Template', icon: FileText }
+        { key: 'selectTemplate', label: 'Choose Template', icon: FileText },
       ].map((stepItem, index) => {
-        const Icon = stepItem.icon;
+        const Icon = stepItem.icon
         return (
           <div key={stepItem.key} className="flex items-center">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full ${getStepColor(stepItem.key)}`}>
-              <Icon className="w-5 h-5" />
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${getStepColor(stepItem.key)}`}
+            >
+              <Icon className="h-5 w-5" />
             </div>
             <span className="ml-2 text-sm font-medium">{stepItem.label}</span>
-            {index < 1 && <div className="w-8 h-0.5 bg-border mx-4" />}
+            {index < 1 && <div className="mx-4 h-0.5 w-8 bg-border" />}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 
-  const valuationColumns: ColumnDef<Valuation>[] = useMemo(() => [
-    {
-      id: 'company_name',
-      header: 'Company Name',
-      accessorKey: 'company_name',
-      enableSorting: true,
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-3">
-          <div className="bg-primary/10 p-2 rounded-full">
-            <Building2 className="w-4 h-4 text-primary" />
+  const valuationColumns: ColumnDef<Valuation>[] = useMemo(
+    () => [
+      {
+        id: 'company_name',
+        header: 'Company Name',
+        accessorKey: 'company_name',
+        enableSorting: true,
+        cell: ({ row }) => (
+          <div className="flex items-center space-x-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <Building2 className="h-4 w-4 text-primary" />
+            </div>
+            <span className="font-medium">{row.getValue('company_name')}</span>
           </div>
-          <span className="font-medium">{row.getValue('company_name')}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'valuation_date',
-      header: 'Valuation Date',
-      accessorKey: 'valuation_date',
-      enableSorting: true,
-      cell: ({ row }) => (
-        <span>{new Date(row.getValue('valuation_date')).toLocaleDateString()}</span>
-      ),
-    },
-    {
-      id: 'fair_market_value_per_share',
-      header: 'Fair Market Value',
-      accessorKey: 'fair_market_value_per_share',
-      enableSorting: true,
-      cell: ({ row }) => (
-        <span className="font-medium">${row.getValue<number>('fair_market_value_per_share').toFixed(2)} per share</span>
-      ),
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      accessorKey: 'status',
-      enableSorting: true,
-      cell: ({ row }) => {
-        const status = row.getValue('status') as string;
-        return (
-          <Badge className={getStatusColor(status)}>
-            {status}
-          </Badge>
-        );
+        ),
       },
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      enableSorting: false,
-      cell: ({ row }) => (
-        <Button
-          size="sm"
-          onClick={() => handleValuationSelect(row.original.id)}
-        >
-          Select
-        </Button>
-      ),
-    },
-  ], []);
+      {
+        id: 'valuation_date',
+        header: 'Valuation Date',
+        accessorKey: 'valuation_date',
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span>{new Date(row.getValue('valuation_date')).toLocaleDateString()}</span>
+        ),
+      },
+      {
+        id: 'fair_market_value_per_share',
+        header: 'Fair Market Value',
+        accessorKey: 'fair_market_value_per_share',
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="font-medium">
+            ${row.getValue<number>('fair_market_value_per_share').toFixed(2)} per share
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        accessorKey: 'status',
+        enableSorting: true,
+        cell: ({ row }) => {
+          const status = row.getValue('status') as string
+          return <Badge className={getStatusColor(status)}>{status}</Badge>
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Button size="sm" onClick={() => handleValuationSelect(row.original.id)}>
+            Select
+          </Button>
+        ),
+      },
+    ],
+    []
+  )
 
   const renderValuationSelection = () => (
     <div className="space-y-6">
@@ -681,8 +711,8 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
 
       <Card>
         <CardContent className="p-6">
-          <DataTable
-            columns={valuationColumns}
+          <OptimizedDataTable
+            columns={valuationColumns as any}
             data={mockValuations}
             searchPlaceholder="Search companies..."
             tableId="valuation-selection"
@@ -693,36 +723,35 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
         </CardContent>
       </Card>
     </div>
-  );
+  )
 
   const renderTemplateSelection = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Choose Template for {selectedValuation?.company_name}</h2>
-        <Button
-          variant="outline"
-          onClick={() => router.push('/reports/template-library')}
-        >
+        <h2 className="text-2xl font-bold">
+          Choose Template for {selectedValuation?.company_name}
+        </h2>
+        <Button variant="outline" onClick={() => router.push('/reports/template-library')}>
           Browse Template Library
         </Button>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {sampleTemplates.map((template) => (
           <Card
             key={template.id}
-            className="cursor-pointer hover:shadow-md transition-shadow"
+            className="cursor-pointer transition-shadow hover:shadow-md"
             onClick={() => handleTemplateSelect(template)}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
+                <FileText className="h-5 w-5" />
                 {template.name}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm mb-4">{template.description}</p>
-              <div className="flex flex-wrap gap-1 mb-4">
+              <p className="mb-4 text-sm text-muted-foreground">{template.description}</p>
+              <div className="mb-4 flex flex-wrap gap-1">
                 {template.metadata?.tags?.map((tag) => (
                   <Badge key={tag} variant="secondary" className="text-xs">
                     {tag}
@@ -739,12 +768,12 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
 
       <div className="flex justify-center">
         <Button variant="outline" onClick={() => setStep('selectValuation')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Valuations
         </Button>
       </div>
     </div>
-  );
+  )
 
   const renderCustomization = () => (
     <div className="space-y-6">
@@ -755,12 +784,12 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-6">
+      <div className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-2">
         {/* Settings Panel */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
+              <Settings className="h-5 w-5" />
               Report Settings
             </CardTitle>
           </CardHeader>
@@ -777,20 +806,23 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
 
             <div>
               <Label htmlFor="reportStatus">Status</Label>
-              <Select value={reportStatus} onValueChange={(value: 'draft' | 'final') => setReportStatus(value)}>
+              <Select
+                value={reportStatus}
+                onValueChange={(value: 'draft' | 'final') => setReportStatus(value)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="draft">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
+                      <Clock className="h-4 w-4" />
                       Draft
                     </div>
                   </SelectItem>
                   <SelectItem value="final">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
+                      <CheckCircle className="h-4 w-4" />
                       Final
                     </div>
                   </SelectItem>
@@ -813,18 +845,20 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
 
             <div className="flex items-center justify-between">
               <Label htmlFor="watermark">Include watermark for drafts</Label>
-              <Switch
-                id="watermark"
-                checked={showWatermark}
-                onCheckedChange={setShowWatermark}
-              />
+              <Switch id="watermark" checked={showWatermark} onCheckedChange={setShowWatermark} />
             </div>
 
             <Alert>
               <AlertDescription>
-                Template: <strong>{selectedTemplate?.name}</strong><br/>
-                Company: <strong>{selectedValuation?.company_name}</strong><br/>
-                Valuation Date: <strong>{selectedValuation && new Date(selectedValuation.valuation_date).toLocaleDateString()}</strong>
+                Template: <strong>{selectedTemplate?.name}</strong>
+                <br />
+                Company: <strong>{selectedValuation?.company_name}</strong>
+                <br />
+                Valuation Date:{' '}
+                <strong>
+                  {selectedValuation &&
+                    new Date(selectedValuation.valuation_date).toLocaleDateString()}
+                </strong>
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -834,19 +868,19 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
+              <Eye className="h-5 w-5" />
               Template Preview
             </CardTitle>
           </CardHeader>
           <CardContent>
             {customizedTemplate && (
-              <div className="border rounded-lg p-4 bg-muted min-h-[400px]">
-                <div className="text-center space-y-4">
+              <div className="min-h-[400px] rounded-lg border bg-muted p-4">
+                <div className="space-y-4 text-center">
                   <h3 className="text-xl font-bold">{customizedTemplate.name}</h3>
                   <p className="text-muted-foreground">{customizedTemplate.description}</p>
 
-                  <div className="bg-background p-4 rounded border text-left">
-                    <h4 className="font-semibold mb-2">Template Structure:</h4>
+                  <div className="rounded border bg-background p-4 text-left">
+                    <h4 className="mb-2 font-semibold">Template Structure:</h4>
                     <ul className="space-y-1 text-sm">
                       <li>• Executive Summary</li>
                       <li>• Company Overview</li>
@@ -864,19 +898,17 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
 
       <div className="flex justify-center space-x-4">
         <Button variant="outline" onClick={() => setStep('selectTemplate')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Templates
         </Button>
         <Button variant="outline" onClick={handleCustomizeTemplate}>
-          <Edit className="w-4 h-4 mr-2" />
+          <Edit className="mr-2 h-4 w-4" />
           Advanced Editor
         </Button>
-        <Button onClick={() => setStep('preview')}>
-          Continue to Preview
-        </Button>
+        <Button onClick={() => setStep('preview')}>Continue to Preview</Button>
       </div>
     </div>
-  );
+  )
 
   const renderPreview = () => (
     <div className="space-y-6">
@@ -885,13 +917,13 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
         <p className="text-muted-foreground">Review your settings and generate the final report</p>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Report Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-3">
                 <div>
                   <span className="text-muted-foreground">Report Name:</span>
@@ -909,26 +941,27 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
               <div className="space-y-3">
                 <div>
                   <span className="text-muted-foreground">Status:</span>
-                  <Badge className={getStatusColor(reportStatus)}>
-                    {reportStatus}
-                  </Badge>
+                  <Badge className={getStatusColor(reportStatus)}>{reportStatus}</Badge>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Valuation Date:</span>
                   <div className="font-medium">
-                    {selectedValuation && new Date(selectedValuation.valuation_date).toLocaleDateString()}
+                    {selectedValuation &&
+                      new Date(selectedValuation.valuation_date).toLocaleDateString()}
                   </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Fair Market Value:</span>
-                  <div className="font-medium">${selectedValuation?.fair_market_value_per_share.toFixed(2)} per share</div>
+                  <div className="font-medium">
+                    ${selectedValuation?.fair_market_value_per_share.toFixed(2)} per share
+                  </div>
                 </div>
               </div>
             </div>
             {reportNotes && (
-              <div className="mt-4 pt-4 border-t">
+              <div className="mt-4 border-t pt-4">
                 <span className="text-muted-foreground">Notes:</span>
-                <div className="mt-1 text-sm bg-muted p-3 rounded">{reportNotes}</div>
+                <div className="mt-1 rounded bg-muted p-3 text-sm">{reportNotes}</div>
               </div>
             )}
           </CardContent>
@@ -936,24 +969,20 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
 
         <div className="flex justify-center space-x-4">
           <Button variant="outline" onClick={() => setStep('customize')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Settings
           </Button>
 
           <Button variant="outline" onClick={handleSaveReport}>
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="mr-2 h-4 w-4" />
             Save Report
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => handleGeneratePDF(true)}
-            disabled={isGenerating}
-          >
+          <Button variant="outline" onClick={() => handleGeneratePDF(true)} disabled={isGenerating}>
             {isGenerating ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-foreground mr-2"></div>
+              <LoadingSpinner size="xs" className="mr-2" />
             ) : (
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="mr-2 h-4 w-4" />
             )}
             Generate Draft PDF
           </Button>
@@ -963,9 +992,9 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
             disabled={isGenerating || reportStatus !== 'final'}
           >
             {isGenerating ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+              <LoadingSpinner size="xs" className="mr-2" />
             ) : (
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="mr-2 h-4 w-4" />
             )}
             Generate Final PDF
           </Button>
@@ -981,12 +1010,12 @@ export function EnhancedReportGenerator({ preselectedValuationId, templateId, va
         )}
       </div>
     </div>
-  );
+  )
 
   return (
     <div className="space-y-6">
       {step === 'selectValuation' && renderValuationSelection()}
       {step === 'selectTemplate' && renderTemplateSelection()}
     </div>
-  );
+  )
 }

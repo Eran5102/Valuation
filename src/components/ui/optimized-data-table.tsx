@@ -1,4 +1,13 @@
-import React, { useState, useCallback, useEffect, useMemo, useReducer, memo, lazy, Suspense } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  memo,
+  lazy,
+  Suspense,
+} from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -10,7 +19,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
+} from '@tanstack/react-table'
 import {
   DndContext,
   closestCenter,
@@ -19,7 +28,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
@@ -27,8 +36,8 @@ import {
   verticalListSortingStrategy,
   horizontalListSortingStrategy,
   useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   ChevronDown,
   Search,
@@ -52,10 +61,10 @@ import {
   Trash2,
   BookmarkPlus,
   Menu,
-} from 'lucide-react';
+} from 'lucide-react'
 
-import { Button } from './button';
-import { Input } from './input';
+import { Button } from './button'
+import { Input } from './input'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -64,72 +73,65 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './dropdown-menu';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from './table';
-import { Badge } from './badge';
-import { cn } from '@/lib/utils';
+} from './dropdown-menu'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table'
+import { Badge } from './badge'
+import { cn } from '@/lib/utils'
 
 // Lazy load Excel export functionality
-const ExcelExporter = lazy(() => import('./excel-exporter'));
+const ExcelExporter = lazy(() => import('./excel-exporter'))
 
 // Debounce utility
 function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+  const [debouncedValue, setDebouncedValue] = useState(value)
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
+      setDebouncedValue(value)
+    }, delay)
 
     return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
+      clearTimeout(handler)
+    }
+  }, [value, delay])
 
-  return debouncedValue;
+  return debouncedValue
 }
 
 // View management types
 interface TableView {
-  id: string;
-  name: string;
-  isDefault?: boolean;
+  id: string
+  name: string
+  isDefault?: boolean
   config: {
-    columnVisibility: VisibilityState;
-    columnOrder: string[];
-    pinnedColumns: { left: string[]; right: string[] };
-    sorting: SortingState;
-    columnFilters: ColumnFiltersState;
-    pageSize: number;
-  };
-  createdAt: string;
+    columnVisibility: VisibilityState
+    columnOrder: string[]
+    pinnedColumns: { left: string[]; right: string[] }
+    sorting: SortingState
+    columnFilters: ColumnFiltersState
+    pageSize: number
+  }
+  createdAt: string
 }
 
 // Consolidated state management with useReducer
 interface TableState {
-  sorting: SortingState;
-  columnFilters: ColumnFiltersState;
-  columnVisibility: VisibilityState;
-  rowSelection: Record<string, boolean>;
-  columnOrder: string[];
-  pinnedColumns: { left: string[]; right: string[] };
-  globalFilter: string;
-  views: TableView[];
-  currentView: TableView | null;
-  showCreateView: boolean;
-  newViewName: string;
-  localEnableSorting: boolean;
-  localEnableFilters: boolean;
-  localEnableReordering: boolean;
-  localEnableRowReordering: boolean;
-  rowOrder: string[];
+  sorting: SortingState
+  columnFilters: ColumnFiltersState
+  columnVisibility: VisibilityState
+  rowSelection: Record<string, boolean>
+  columnOrder: string[]
+  pinnedColumns: { left: string[]; right: string[] }
+  globalFilter: string
+  views: TableView[]
+  currentView: TableView | null
+  showCreateView: boolean
+  newViewName: string
+  localEnableSorting: boolean
+  localEnableFilters: boolean
+  localEnableReordering: boolean
+  localEnableRowReordering: boolean
+  rowOrder: string[]
 }
 
 type TableAction =
@@ -150,42 +152,42 @@ type TableAction =
   | { type: 'SET_LOCAL_ENABLE_ROW_REORDERING'; payload: boolean }
   | { type: 'SET_ROW_ORDER'; payload: string[] }
   | { type: 'LOAD_VIEW'; payload: TableView }
-  | { type: 'INITIALIZE'; payload: Partial<TableState> };
+  | { type: 'INITIALIZE'; payload: Partial<TableState> }
 
 function tableReducer(state: TableState, action: TableAction): TableState {
   switch (action.type) {
     case 'SET_SORTING':
-      return { ...state, sorting: action.payload };
+      return { ...state, sorting: action.payload }
     case 'SET_COLUMN_FILTERS':
-      return { ...state, columnFilters: action.payload };
+      return { ...state, columnFilters: action.payload }
     case 'SET_COLUMN_VISIBILITY':
-      return { ...state, columnVisibility: action.payload };
+      return { ...state, columnVisibility: action.payload }
     case 'SET_ROW_SELECTION':
-      return { ...state, rowSelection: action.payload };
+      return { ...state, rowSelection: action.payload }
     case 'SET_COLUMN_ORDER':
-      return { ...state, columnOrder: action.payload };
+      return { ...state, columnOrder: action.payload }
     case 'SET_PINNED_COLUMNS':
-      return { ...state, pinnedColumns: action.payload };
+      return { ...state, pinnedColumns: action.payload }
     case 'SET_GLOBAL_FILTER':
-      return { ...state, globalFilter: action.payload };
+      return { ...state, globalFilter: action.payload }
     case 'SET_VIEWS':
-      return { ...state, views: action.payload };
+      return { ...state, views: action.payload }
     case 'SET_CURRENT_VIEW':
-      return { ...state, currentView: action.payload };
+      return { ...state, currentView: action.payload }
     case 'SET_SHOW_CREATE_VIEW':
-      return { ...state, showCreateView: action.payload };
+      return { ...state, showCreateView: action.payload }
     case 'SET_NEW_VIEW_NAME':
-      return { ...state, newViewName: action.payload };
+      return { ...state, newViewName: action.payload }
     case 'SET_LOCAL_ENABLE_SORTING':
-      return { ...state, localEnableSorting: action.payload };
+      return { ...state, localEnableSorting: action.payload }
     case 'SET_LOCAL_ENABLE_FILTERS':
-      return { ...state, localEnableFilters: action.payload };
+      return { ...state, localEnableFilters: action.payload }
     case 'SET_LOCAL_ENABLE_REORDERING':
-      return { ...state, localEnableReordering: action.payload };
+      return { ...state, localEnableReordering: action.payload }
     case 'SET_LOCAL_ENABLE_ROW_REORDERING':
-      return { ...state, localEnableRowReordering: action.payload };
+      return { ...state, localEnableRowReordering: action.payload }
     case 'SET_ROW_ORDER':
-      return { ...state, rowOrder: action.payload };
+      return { ...state, rowOrder: action.payload }
     case 'LOAD_VIEW':
       return {
         ...state,
@@ -195,70 +197,63 @@ function tableReducer(state: TableState, action: TableAction): TableState {
         sorting: action.payload.config.sorting || [],
         columnFilters: action.payload.config.columnFilters || [],
         currentView: action.payload,
-      };
+      }
     case 'INITIALIZE':
-      return { ...state, ...action.payload };
+      return { ...state, ...action.payload }
     default:
-      return state;
+      return state
   }
 }
 
 interface OptimizedDataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  searchKey?: string;
-  searchPlaceholder?: string;
-  onRowEdit?: (row: TData) => void;
-  onRowDelete?: (row: TData) => void;
-  onRowReorder?: (fromIndex: number, toIndex: number) => void;
-  enableColumnFilters?: boolean;
-  enableSorting?: boolean;
-  enableColumnVisibility?: boolean;
-  enableColumnReordering?: boolean;
-  enableColumnPinning?: boolean;
-  enableRowReordering?: boolean;
-  enablePagination?: boolean;
-  pageSize?: number;
-  className?: string;
-  tableId?: string;
-  onStateChange?: (state: any) => void;
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
+  searchKey?: string
+  searchPlaceholder?: string
+  onRowEdit?: (row: TData) => void
+  onRowDelete?: (row: TData) => void
+  onRowReorder?: (fromIndex: number, toIndex: number) => void
+  enableColumnFilters?: boolean
+  enableSorting?: boolean
+  enableColumnVisibility?: boolean
+  enableColumnReordering?: boolean
+  enableColumnPinning?: boolean
+  enableRowReordering?: boolean
+  enablePagination?: boolean
+  pageSize?: number
+  className?: string
+  tableId?: string
+  onStateChange?: (state: any) => void
   initialState?: Partial<{
-    columnVisibility: VisibilityState;
-    columnOrder: string[];
-    pinnedColumns: { left: string[]; right: string[] };
-    sorting: SortingState;
-    columnFilters: ColumnFiltersState;
-    pageSize: number;
-  }>;
+    columnVisibility: VisibilityState
+    columnOrder: string[]
+    pinnedColumns: { left: string[]; right: string[] }
+    sorting: SortingState
+    columnFilters: ColumnFiltersState
+    pageSize: number
+  }>
 }
 
 // Memoized draggable header component
 const DraggableColumnHeader = memo(function DraggableColumnHeader({
   column,
   children,
-  isPinned = false
+  isPinned = false,
 }: {
-  column: any;
-  children: React.ReactNode;
-  isPinned?: boolean;
+  column: any
+  children: React.ReactNode
+  isPinned?: boolean
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.id,
     disabled: isPinned,
-  });
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
+  }
 
   return (
     <TableHead
@@ -267,22 +262,20 @@ const DraggableColumnHeader = memo(function DraggableColumnHeader({
       className={cn('relative', isPinned ? 'bg-muted/50' : '', isDragging ? 'z-50' : '')}
       {...attributes}
     >
-      <div className="flex items-center space-x-1 w-full">
+      <div className="flex w-full items-center space-x-1">
         {!isPinned && (
           <div
             {...listeners}
-            className="cursor-grab hover:cursor-grabbing p-1 hover:bg-muted rounded flex-shrink-0"
+            className="flex-shrink-0 cursor-grab rounded p-1 hover:cursor-grabbing hover:bg-muted"
           >
             <GripVertical className="h-3 w-3 text-muted-foreground" />
           </div>
         )}
-        <div className="flex-1 min-w-0">
-          {children}
-        </div>
+        <div className="min-w-0 flex-1">{children}</div>
       </div>
     </TableHead>
-  );
-});
+  )
+})
 
 // Memoized draggable row component
 const DraggableTableRow = memo(function DraggableTableRow({
@@ -292,28 +285,21 @@ const DraggableTableRow = memo(function DraggableTableRow({
   className,
   ...props
 }: {
-  row: any;
-  index: number;
-  children: React.ReactNode;
-  className?: string;
-  [key: string]: any;
+  row: any
+  index: number
+  children: React.ReactNode
+  className?: string
+  [key: string]: any
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: index.toString(),
-  });
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
+  }
 
   return (
     <TableRow
@@ -326,21 +312,21 @@ const DraggableTableRow = memo(function DraggableTableRow({
       <TableCell className="w-8 p-2">
         <div
           {...listeners}
-          className="cursor-grab hover:cursor-grabbing p-1 hover:bg-muted rounded flex items-center justify-center"
+          className="flex cursor-grab items-center justify-center rounded p-1 hover:cursor-grabbing hover:bg-muted"
         >
           <Menu className="h-3 w-3 text-muted-foreground" />
         </div>
       </TableCell>
       {children}
     </TableRow>
-  );
-});
+  )
+})
 
 export function OptimizedDataTable<TData, TValue>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = 'Search...',
   onRowEdit,
   onRowDelete,
   onRowReorder,
@@ -357,7 +343,6 @@ export function OptimizedDataTable<TData, TValue>({
   onStateChange,
   initialState,
 }: OptimizedDataTableProps<TData, TValue>) {
-
   // Initialize state with useReducer for better performance
   const [state, dispatch] = useReducer(tableReducer, {
     sorting: initialState?.sorting || [],
@@ -376,70 +361,72 @@ export function OptimizedDataTable<TData, TValue>({
     localEnableReordering: enableColumnReordering,
     localEnableRowReordering: enableRowReordering,
     rowOrder: [],
-  });
+  })
 
   // Debounce global filter for better performance
-  const debouncedGlobalFilter = useDebounce(state.globalFilter, 300);
+  const debouncedGlobalFilter = useDebounce(state.globalFilter, 300)
 
   // Initialize row order when data changes
   useEffect(() => {
     if (data.length > 0) {
-      dispatch({ type: 'SET_ROW_ORDER', payload: data.map((_, index) => index.toString()) });
+      dispatch({ type: 'SET_ROW_ORDER', payload: data.map((_, index) => index.toString()) })
     }
-  }, [data]);
+  }, [data])
 
   // Memoized column ordering calculation
   const orderedColumns = useMemo(() => {
-    const columnOrderArray = Array.isArray(state.columnOrder) ? state.columnOrder : columns.map((col) => col.id || '');
-    const leftPinned = state.pinnedColumns?.left || [];
-    const rightPinned = state.pinnedColumns?.right || [];
-    const pinned = [...leftPinned, ...rightPinned];
-    const unpinned = columnOrderArray.filter((id) => !pinned.includes(id));
-    const finalOrder = [...leftPinned, ...unpinned, ...rightPinned];
+    const columnOrderArray = Array.isArray(state.columnOrder)
+      ? state.columnOrder
+      : columns.map((col) => col.id || '')
+    const leftPinned = state.pinnedColumns?.left || []
+    const rightPinned = state.pinnedColumns?.right || []
+    const pinned = [...leftPinned, ...rightPinned]
+    const unpinned = columnOrderArray.filter((id) => !pinned.includes(id))
+    const finalOrder = [...leftPinned, ...unpinned, ...rightPinned]
 
     return finalOrder
       .map((id) => columns.find((col) => col.id === id))
-      .filter(Boolean) as ColumnDef<TData, TValue>[];
-  }, [columns, state.columnOrder, state.pinnedColumns]);
+      .filter(Boolean) as ColumnDef<TData, TValue>[]
+  }, [columns, state.columnOrder, state.pinnedColumns])
 
   // Debounced localStorage operations
   const debouncedSaveToLocalStorage = useCallback(
     useDebounce((views: TableView[]) => {
       if (typeof window !== 'undefined') {
-        localStorage.setItem(`table-views-${tableId}`, JSON.stringify(views));
+        localStorage.setItem(`table-views-${tableId}`, JSON.stringify(views))
       }
     }, 500),
     [tableId]
-  );
+  )
 
   // Load views from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedViews = localStorage.getItem(`table-views-${tableId}`);
+      const savedViews = localStorage.getItem(`table-views-${tableId}`)
       if (savedViews) {
         try {
-          const parsedViews = JSON.parse(savedViews);
-          dispatch({ type: 'SET_VIEWS', payload: parsedViews });
-          const defaultView = parsedViews.find((v: TableView) => v.isDefault);
+          const parsedViews = JSON.parse(savedViews)
+          dispatch({ type: 'SET_VIEWS', payload: parsedViews })
+          const defaultView = parsedViews.find((v: TableView) => v.isDefault)
           if (defaultView) {
-            dispatch({ type: 'LOAD_VIEW', payload: defaultView });
+            dispatch({ type: 'LOAD_VIEW', payload: defaultView })
           }
         } catch (error) {
-          console.warn('Failed to load saved views:', error);
+          console.warn('Failed to load saved views:', error)
         }
       }
     }
-  }, [tableId]);
+  }, [tableId])
 
   // Notify parent of state changes (debounced)
   const debouncedStateChange = useCallback(
     useDebounce((newState: any) => {
       if (onStateChange) {
-        onStateChange(newState);
+        onStateChange(newState)
       }
     }, 300),
     [onStateChange]
-  );
+  )
 
   useEffect(() => {
     if (onStateChange && debouncedStateChange) {
@@ -450,23 +437,67 @@ export function OptimizedDataTable<TData, TValue>({
         columnOrder: state.columnOrder,
         pinnedColumns: state.pinnedColumns,
         pageSize: table?.getState().pagination.pageSize || pageSize,
-      });
+      })
     }
-  }, [state.sorting, state.columnFilters, state.columnVisibility, state.columnOrder, state.pinnedColumns, onStateChange, debouncedStateChange]);
+  }, [
+    state.sorting,
+    state.columnFilters,
+    state.columnVisibility,
+    state.columnOrder,
+    state.pinnedColumns,
+    onStateChange,
+    debouncedStateChange,
+  ])
 
   // Memoized table instance
   const table = useReactTable({
     data,
     columns: orderedColumns,
-    onSortingChange: useCallback((sorting) => dispatch({ type: 'SET_SORTING', payload: typeof sorting === 'function' ? sorting(state.sorting) : sorting }), [state.sorting]),
-    onColumnFiltersChange: useCallback((filters) => dispatch({ type: 'SET_COLUMN_FILTERS', payload: typeof filters === 'function' ? filters(state.columnFilters) : filters }), [state.columnFilters]),
+    onSortingChange: useCallback(
+      (sorting) =>
+        dispatch({
+          type: 'SET_SORTING',
+          payload: typeof sorting === 'function' ? sorting(state.sorting) : sorting,
+        }),
+      [state.sorting]
+    ),
+    onColumnFiltersChange: useCallback(
+      (filters) =>
+        dispatch({
+          type: 'SET_COLUMN_FILTERS',
+          payload: typeof filters === 'function' ? filters(state.columnFilters) : filters,
+        }),
+      [state.columnFilters]
+    ),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
     getSortedRowModel: state.localEnableSorting ? getSortedRowModel() : undefined,
     getFilteredRowModel: state.localEnableFilters ? getFilteredRowModel() : undefined,
-    onColumnVisibilityChange: useCallback((visibility) => dispatch({ type: 'SET_COLUMN_VISIBILITY', payload: typeof visibility === 'function' ? visibility(state.columnVisibility) : visibility }), [state.columnVisibility]),
-    onRowSelectionChange: useCallback((selection) => dispatch({ type: 'SET_ROW_SELECTION', payload: typeof selection === 'function' ? selection(state.rowSelection) : selection }), [state.rowSelection]),
-    onGlobalFilterChange: useCallback((filter) => dispatch({ type: 'SET_GLOBAL_FILTER', payload: typeof filter === 'function' ? filter(state.globalFilter) : filter }), [state.globalFilter]),
+    onColumnVisibilityChange: useCallback(
+      (visibility) =>
+        dispatch({
+          type: 'SET_COLUMN_VISIBILITY',
+          payload:
+            typeof visibility === 'function' ? visibility(state.columnVisibility) : visibility,
+        }),
+      [state.columnVisibility]
+    ),
+    onRowSelectionChange: useCallback(
+      (selection) =>
+        dispatch({
+          type: 'SET_ROW_SELECTION',
+          payload: typeof selection === 'function' ? selection(state.rowSelection) : selection,
+        }),
+      [state.rowSelection]
+    ),
+    onGlobalFilterChange: useCallback(
+      (filter) =>
+        dispatch({
+          type: 'SET_GLOBAL_FILTER',
+          payload: typeof filter === 'function' ? filter(state.globalFilter) : filter,
+        }),
+      [state.globalFilter]
+    ),
     globalFilterFn: 'includesString',
     state: {
       sorting: state.sorting,
@@ -480,7 +511,7 @@ export function OptimizedDataTable<TData, TValue>({
         pageSize: initialState?.pageSize || pageSize,
       },
     },
-  });
+  })
 
   // DnD sensors - cannot be memoized as they are hooks
   const sensors = useSensors(
@@ -488,139 +519,166 @@ export function OptimizedDataTable<TData, TValue>({
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
-  );
+  )
 
   // Handle column reordering
-  const handleColumnDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleColumnDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
 
-    if (active.id !== over?.id) {
-      dispatch({
-        type: 'SET_COLUMN_ORDER',
-        payload: (items) => {
-          const oldIndex = items.indexOf(active.id as string);
-          const newIndex = items.indexOf(over?.id as string);
-          return arrayMove(items, oldIndex, newIndex);
-        }
-      });
-    }
-  }, [dispatch]);
+      if (active.id !== over?.id) {
+        dispatch({
+          type: 'SET_COLUMN_ORDER',
+          payload: (items) => {
+            const oldIndex = items.indexOf(active.id as string)
+            const newIndex = items.indexOf(over?.id as string)
+            return arrayMove(items, oldIndex, newIndex)
+          },
+        })
+      }
+    },
+    [dispatch]
+  )
 
   // Handle row reordering
-  const handleRowDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleRowDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
 
-    if (active.id !== over?.id && onRowReorder) {
-      const activeIndex = parseInt(active.id as string);
-      const overIndex = parseInt(over?.id as string);
+      if (active.id !== over?.id && onRowReorder) {
+        const activeIndex = parseInt(active.id as string)
+        const overIndex = parseInt(over?.id as string)
 
-      if (!isNaN(activeIndex) && !isNaN(overIndex)) {
-        dispatch({
-          type: 'SET_ROW_ORDER',
-          payload: (items) => {
-            const oldIndex = items.indexOf(activeIndex.toString());
-            const newIndex = items.indexOf(overIndex.toString());
-            return arrayMove(items, oldIndex, newIndex);
-          }
-        });
-        onRowReorder(activeIndex, overIndex);
+        if (!isNaN(activeIndex) && !isNaN(overIndex)) {
+          dispatch({
+            type: 'SET_ROW_ORDER',
+            payload: (items) => {
+              const oldIndex = items.indexOf(activeIndex.toString())
+              const newIndex = items.indexOf(overIndex.toString())
+              return arrayMove(items, oldIndex, newIndex)
+            },
+          })
+          onRowReorder(activeIndex, overIndex)
+        }
       }
-    }
-  }, [dispatch, onRowReorder]);
+    },
+    [dispatch, onRowReorder]
+  )
 
   // Pin/unpin column
   const toggleColumnPin = useCallback((columnId: string, side: 'left' | 'right') => {
     dispatch({
       type: 'SET_PINNED_COLUMNS',
       payload: (prev) => {
-        const isCurrentlyPinned = prev.left.includes(columnId) || prev.right.includes(columnId);
+        const isCurrentlyPinned = prev.left.includes(columnId) || prev.right.includes(columnId)
 
         if (isCurrentlyPinned) {
           return {
             left: prev.left.filter((id) => id !== columnId),
             right: prev.right.filter((id) => id !== columnId),
-          };
+          }
         } else {
           if (side === 'left') {
             return {
               ...prev,
               left: [...prev.left, columnId],
-            };
+            }
           } else {
             return {
               ...prev,
               right: [...prev.right, columnId],
-            };
+            }
           }
         }
-      }
-    });
-  }, []);
+      },
+    })
+  }, [])
 
-  const isPinnedColumn = useCallback((columnId: string) => {
-    const leftPinned = state.pinnedColumns?.left || [];
-    const rightPinned = state.pinnedColumns?.right || [];
-    return leftPinned.includes(columnId) || rightPinned.includes(columnId);
-  }, [state.pinnedColumns]);
+  const isPinnedColumn = useCallback(
+    (columnId: string) => {
+      const leftPinned = state.pinnedColumns?.left || []
+      const rightPinned = state.pinnedColumns?.right || []
+      return leftPinned.includes(columnId) || rightPinned.includes(columnId)
+    },
+    [state.pinnedColumns]
+  )
 
   // View management functions
-  const saveCurrentAsView = useCallback((name: string, isDefault = false) => {
-    const newView: TableView = {
-      id: Date.now().toString(),
-      name,
-      isDefault,
-      config: {
-        columnVisibility: state.columnVisibility,
-        columnOrder: state.columnOrder,
-        pinnedColumns: state.pinnedColumns,
-        sorting: state.sorting,
-        columnFilters: state.columnFilters,
-        pageSize: table.getState().pagination.pageSize,
-      },
-      createdAt: new Date().toISOString(),
-    };
+  const saveCurrentAsView = useCallback(
+    (name: string, isDefault = false) => {
+      const newView: TableView = {
+        id: Date.now().toString(),
+        name,
+        isDefault,
+        config: {
+          columnVisibility: state.columnVisibility,
+          columnOrder: state.columnOrder,
+          pinnedColumns: state.pinnedColumns,
+          sorting: state.sorting,
+          columnFilters: state.columnFilters,
+          pageSize: table.getState().pagination.pageSize,
+        },
+        createdAt: new Date().toISOString(),
+      }
 
-    const updatedViews = isDefault
-      ? [newView, ...state.views.map(v => ({ ...v, isDefault: false }))]
-      : [...state.views, newView];
+      const updatedViews = isDefault
+        ? [newView, ...state.views.map((v) => ({ ...v, isDefault: false }))]
+        : [...state.views, newView]
 
-    dispatch({ type: 'SET_VIEWS', payload: updatedViews });
-    dispatch({ type: 'SET_CURRENT_VIEW', payload: newView });
-    debouncedSaveToLocalStorage(updatedViews);
-  }, [state.columnVisibility, state.columnOrder, state.pinnedColumns, state.sorting, state.columnFilters, table, state.views, debouncedSaveToLocalStorage]);
+      dispatch({ type: 'SET_VIEWS', payload: updatedViews })
+      dispatch({ type: 'SET_CURRENT_VIEW', payload: newView })
+      debouncedSaveToLocalStorage(updatedViews)
+    },
+    [
+      state.columnVisibility,
+      state.columnOrder,
+      state.pinnedColumns,
+      state.sorting,
+      state.columnFilters,
+      table,
+      state.views,
+      debouncedSaveToLocalStorage,
+    ]
+  )
 
-  const loadView = useCallback((view: TableView) => {
-    dispatch({ type: 'LOAD_VIEW', payload: view });
-    table.setPageSize(view.config.pageSize);
-  }, [table]);
+  const loadView = useCallback(
+    (view: TableView) => {
+      dispatch({ type: 'LOAD_VIEW', payload: view })
+      table.setPageSize(view.config.pageSize)
+    },
+    [table]
+  )
 
-  const deleteView = useCallback((viewId: string) => {
-    const updatedViews = state.views.filter(v => v.id !== viewId);
-    dispatch({ type: 'SET_VIEWS', payload: updatedViews });
-    debouncedSaveToLocalStorage(updatedViews);
+  const deleteView = useCallback(
+    (viewId: string) => {
+      const updatedViews = state.views.filter((v) => v.id !== viewId)
+      dispatch({ type: 'SET_VIEWS', payload: updatedViews })
+      debouncedSaveToLocalStorage(updatedViews)
 
-    if (state.currentView?.id === viewId) {
-      dispatch({ type: 'SET_CURRENT_VIEW', payload: null });
-    }
-  }, [state.views, state.currentView, debouncedSaveToLocalStorage]);
+      if (state.currentView?.id === viewId) {
+        dispatch({ type: 'SET_CURRENT_VIEW', payload: null })
+      }
+    },
+    [state.views, state.currentView, debouncedSaveToLocalStorage]
+  )
 
   // Lazy-loaded export function
   const exportToExcel = useCallback(async () => {
     try {
-      const { exportTableToExcel } = await import('./excel-exporter');
-      exportTableToExcel(table, tableId);
+      const { exportTableToExcel } = await import('./excel-exporter')
+      exportTableToExcel(table, tableId)
     } catch (error) {
-      console.error('Failed to export to Excel:', error);
+      console.error('Failed to export to Excel:', error)
     }
-  }, [table, tableId]);
+  }, [table, tableId])
 
   const createNewView = useCallback(() => {
     if (state.newViewName.trim()) {
-      saveCurrentAsView(state.newViewName.trim());
-      dispatch({ type: 'SET_NEW_VIEW_NAME', payload: '' });
-      dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: false });
+      saveCurrentAsView(state.newViewName.trim())
+      dispatch({ type: 'SET_NEW_VIEW_NAME', payload: '' })
+      dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: false })
     }
-  }, [state.newViewName, saveCurrentAsView]);
+  }, [state.newViewName, saveCurrentAsView])
 
   // Rest of the component remains the same but uses the optimized state and callbacks...
   // [The render JSX would be identical to the original but using the optimized state and callbacks]
@@ -645,9 +703,9 @@ export function OptimizedDataTable<TData, TValue>({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <BookmarkPlus className="h-4 w-4 mr-2" />
+                  <BookmarkPlus className="mr-2 h-4 w-4" />
                   Views
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[250px]">
@@ -665,7 +723,9 @@ export function OptimizedDataTable<TData, TValue>({
                             {view.name}
                           </span>
                           {view.isDefault && (
-                            <Badge variant="secondary" className="text-xs">Default</Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              Default
+                            </Badge>
                           )}
                         </div>
                       </DropdownMenuItem>
@@ -674,8 +734,8 @@ export function OptimizedDataTable<TData, TValue>({
                         size="sm"
                         className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                         onClick={(e) => {
-                          e.stopPropagation();
-                          deleteView(view.id);
+                          e.stopPropagation()
+                          deleteView(view.id)
                         }}
                       >
                         <Trash2 className="h-3 w-3" />
@@ -683,9 +743,7 @@ export function OptimizedDataTable<TData, TValue>({
                     </div>
                   ))
                 ) : (
-                  <div className="px-2 py-1 text-sm text-muted-foreground">
-                    No saved views
-                  </div>
+                  <div className="px-2 py-1 text-sm text-muted-foreground">No saved views</div>
                 )}
                 <DropdownMenuSeparator />
                 <div className="p-2">
@@ -694,7 +752,9 @@ export function OptimizedDataTable<TData, TValue>({
                       <Input
                         placeholder="View name"
                         value={state.newViewName}
-                        onChange={(e) => dispatch({ type: 'SET_NEW_VIEW_NAME', payload: e.target.value })}
+                        onChange={(e) =>
+                          dispatch({ type: 'SET_NEW_VIEW_NAME', payload: e.target.value })
+                        }
                         onKeyPress={(e) => e.key === 'Enter' && createNewView()}
                         className="h-8"
                       />
@@ -712,8 +772,8 @@ export function OptimizedDataTable<TData, TValue>({
                           variant="outline"
                           className="h-6 text-xs"
                           onClick={() => {
-                            dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: false });
-                            dispatch({ type: 'SET_NEW_VIEW_NAME', payload: '' });
+                            dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: false })
+                            dispatch({ type: 'SET_NEW_VIEW_NAME', payload: '' })
                           }}
                         >
                           Cancel
@@ -724,10 +784,10 @@ export function OptimizedDataTable<TData, TValue>({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full h-8"
+                      className="h-8 w-full"
                       onClick={() => dispatch({ type: 'SET_SHOW_CREATE_VIEW', payload: true })}
                     >
-                      <Plus className="h-3 w-3 mr-1" />
+                      <Plus className="mr-1 h-3 w-3" />
                       Create View
                     </Button>
                   )}
@@ -743,8 +803,10 @@ export function OptimizedDataTable<TData, TValue>({
               <Input
                 placeholder={searchPlaceholder}
                 value={state.globalFilter ?? ''}
-                onChange={(event) => dispatch({ type: 'SET_GLOBAL_FILTER', payload: event.target.value })}
-                className="pl-8 max-w-sm"
+                onChange={(event) =>
+                  dispatch({ type: 'SET_GLOBAL_FILTER', payload: event.target.value })
+                }
+                className="max-w-sm pl-8"
               />
             </div>
           )}
@@ -753,7 +815,7 @@ export function OptimizedDataTable<TData, TValue>({
         <div className="flex items-center space-x-2">
           {/* Export */}
           <Button variant="outline" size="sm" onClick={exportToExcel}>
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
 
@@ -762,9 +824,9 @@ export function OptimizedDataTable<TData, TValue>({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Eye className="h-4 w-4 mr-2" />
+                  <Eye className="mr-2 h-4 w-4" />
                   Columns
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
@@ -781,14 +843,14 @@ export function OptimizedDataTable<TData, TValue>({
                         checked={column.getIsVisible()}
                         onCheckedChange={(value) => column.toggleVisibility(!!value)}
                       >
-                        <div className="flex items-center justify-between w-full">
+                        <div className="flex w-full items-center justify-between">
                           <span>{column.id}</span>
                           {isPinnedColumn(column.id) && (
                             <Pin className="h-3 w-3 text-muted-foreground" />
                           )}
                         </div>
                       </DropdownMenuCheckboxItem>
-                    );
+                    )
                   })}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -806,32 +868,40 @@ export function OptimizedDataTable<TData, TValue>({
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
                 checked={state.localEnableSorting}
-                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_SORTING', payload: !!checked })}
+                onCheckedChange={(checked) =>
+                  dispatch({ type: 'SET_LOCAL_ENABLE_SORTING', payload: !!checked })
+                }
               >
                 Sorting
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
                 checked={state.localEnableFilters}
-                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_FILTERS', payload: !!checked })}
+                onCheckedChange={(checked) =>
+                  dispatch({ type: 'SET_LOCAL_ENABLE_FILTERS', payload: !!checked })
+                }
               >
                 Filtering
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
                 checked={state.localEnableReordering}
-                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_REORDERING', payload: !!checked })}
+                onCheckedChange={(checked) =>
+                  dispatch({ type: 'SET_LOCAL_ENABLE_REORDERING', payload: !!checked })
+                }
               >
                 Column Reordering
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
                 checked={state.localEnableRowReordering}
-                onCheckedChange={(checked) => dispatch({ type: 'SET_LOCAL_ENABLE_ROW_REORDERING', payload: !!checked })}
+                onCheckedChange={(checked) =>
+                  dispatch({ type: 'SET_LOCAL_ENABLE_ROW_REORDERING', payload: !!checked })
+                }
                 disabled={!onRowReorder}
               >
                 Row Reordering
               </DropdownMenuCheckboxItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => saveCurrentAsView('Default View', true)}>
-                <Save className="h-3 w-3 mr-2" />
+                <Save className="mr-2 h-3 w-3" />
                 Save as Default
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -849,10 +919,10 @@ export function OptimizedDataTable<TData, TValue>({
                 onClick={() => {
                   dispatch({
                     type: 'SET_COLUMN_FILTERS',
-                    payload: state.columnFilters.filter((f) => f.id !== filter.id)
-                  });
+                    payload: state.columnFilters.filter((f) => f.id !== filter.id),
+                  })
                 }}
-                className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5"
+                className="ml-1 rounded-full p-0.5 hover:bg-secondary-foreground/20"
               >
                 ×
               </button>
@@ -868,10 +938,10 @@ export function OptimizedDataTable<TData, TValue>({
           collisionDetection={closestCenter}
           onDragEnd={(event) => {
             if (state.localEnableReordering) {
-              handleColumnDragEnd(event);
+              handleColumnDragEnd(event)
             }
             if (state.localEnableRowReordering && onRowReorder) {
-              handleRowDragEnd(event);
+              handleRowDragEnd(event)
             }
           }}
         >
@@ -886,24 +956,24 @@ export function OptimizedDataTable<TData, TValue>({
                     >
                       {state.localEnableRowReordering && onRowReorder && (
                         <TableHead className="w-8 p-2">
-                          <div className="w-6 h-6 flex items-center justify-center">
+                          <div className="flex h-6 w-6 items-center justify-center">
                             {/* Drag handle column header */}
                           </div>
                         </TableHead>
                       )}
                       {headerGroup.headers.map((header) => {
-                        const isPinned = isPinnedColumn(header.column.id);
+                        const isPinned = isPinnedColumn(header.column.id)
                         return (
                           <DraggableColumnHeader
                             key={header.id}
                             column={header.column}
                             isPinned={isPinned}
                           >
-                            <div className="flex items-center space-x-1 min-w-0 flex-1">
+                            <div className="flex min-w-0 flex-1 items-center space-x-1">
                               {header.isPlaceholder ? null : (
                                 <>
                                   {/* Column Header Content */}
-                                  <div className="flex-1 min-w-0">
+                                  <div className="min-w-0 flex-1">
                                     {state.localEnableSorting && header.column.getCanSort() ? (
                                       <Button
                                         variant="ghost"
@@ -951,23 +1021,29 @@ export function OptimizedDataTable<TData, TValue>({
                                         {!isPinned ? (
                                           <>
                                             <DropdownMenuItem
-                                              onClick={() => toggleColumnPin(header.column.id, 'left')}
+                                              onClick={() =>
+                                                toggleColumnPin(header.column.id, 'left')
+                                              }
                                             >
-                                              <Pin className="h-3 w-3 mr-2" />
+                                              <Pin className="mr-2 h-3 w-3" />
                                               Pin Left
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                              onClick={() => toggleColumnPin(header.column.id, 'right')}
+                                              onClick={() =>
+                                                toggleColumnPin(header.column.id, 'right')
+                                              }
                                             >
-                                              <Pin className="h-3 w-3 mr-2" />
+                                              <Pin className="mr-2 h-3 w-3" />
                                               Pin Right
                                             </DropdownMenuItem>
                                           </>
                                         ) : (
                                           <DropdownMenuItem
-                                            onClick={() => toggleColumnPin(header.column.id, 'left')}
+                                            onClick={() =>
+                                              toggleColumnPin(header.column.id, 'left')
+                                            }
                                           >
-                                            <PinOff className="h-3 w-3 mr-2" />
+                                            <PinOff className="mr-2 h-3 w-3" />
                                             Unpin
                                           </DropdownMenuItem>
                                         )}
@@ -975,7 +1051,7 @@ export function OptimizedDataTable<TData, TValue>({
                                         <DropdownMenuItem
                                           onClick={() => header.column.toggleVisibility()}
                                         >
-                                          <EyeOff className="h-3 w-3 mr-2" />
+                                          <EyeOff className="mr-2 h-3 w-3" />
                                           Hide Column
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
@@ -985,30 +1061,30 @@ export function OptimizedDataTable<TData, TValue>({
                               )}
                             </div>
                           </DraggableColumnHeader>
-                        );
+                        )
                       })}
                     </SortableContext>
                   ) : (
                     <>
                       {state.localEnableRowReordering && onRowReorder && (
                         <TableHead className="w-8 p-2">
-                          <div className="w-6 h-6 flex items-center justify-center">
+                          <div className="flex h-6 w-6 items-center justify-center">
                             {/* Drag handle column header */}
                           </div>
                         </TableHead>
                       )}
                       {headerGroup.headers.map((header) => {
-                        const isPinned = isPinnedColumn(header.column.id);
+                        const isPinned = isPinnedColumn(header.column.id)
                         return (
                           <TableHead
                             key={header.id}
                             className={cn('relative', isPinned ? 'bg-muted/50' : '')}
                           >
-                            <div className="flex items-center space-x-1 min-w-0 flex-1">
+                            <div className="flex min-w-0 flex-1 items-center space-x-1">
                               {header.isPlaceholder ? null : (
                                 <>
                                   {/* Column Header Content */}
-                                  <div className="flex-1 min-w-0">
+                                  <div className="min-w-0 flex-1">
                                     {state.localEnableSorting && header.column.getCanSort() ? (
                                       <Button
                                         variant="ghost"
@@ -1056,23 +1132,29 @@ export function OptimizedDataTable<TData, TValue>({
                                         {!isPinned ? (
                                           <>
                                             <DropdownMenuItem
-                                              onClick={() => toggleColumnPin(header.column.id, 'left')}
+                                              onClick={() =>
+                                                toggleColumnPin(header.column.id, 'left')
+                                              }
                                             >
-                                              <Pin className="h-3 w-3 mr-2" />
+                                              <Pin className="mr-2 h-3 w-3" />
                                               Pin Left
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                              onClick={() => toggleColumnPin(header.column.id, 'right')}
+                                              onClick={() =>
+                                                toggleColumnPin(header.column.id, 'right')
+                                              }
                                             >
-                                              <Pin className="h-3 w-3 mr-2" />
+                                              <Pin className="mr-2 h-3 w-3" />
                                               Pin Right
                                             </DropdownMenuItem>
                                           </>
                                         ) : (
                                           <DropdownMenuItem
-                                            onClick={() => toggleColumnPin(header.column.id, 'left')}
+                                            onClick={() =>
+                                              toggleColumnPin(header.column.id, 'left')
+                                            }
                                           >
-                                            <PinOff className="h-3 w-3 mr-2" />
+                                            <PinOff className="mr-2 h-3 w-3" />
                                             Unpin
                                           </DropdownMenuItem>
                                         )}
@@ -1080,7 +1162,7 @@ export function OptimizedDataTable<TData, TValue>({
                                         <DropdownMenuItem
                                           onClick={() => header.column.toggleVisibility()}
                                         >
-                                          <EyeOff className="h-3 w-3 mr-2" />
+                                          <EyeOff className="mr-2 h-3 w-3" />
                                           Hide Column
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
@@ -1090,7 +1172,7 @@ export function OptimizedDataTable<TData, TValue>({
                               )}
                             </div>
                           </TableHead>
-                        );
+                        )
                       })}
                     </>
                   )}
@@ -1109,19 +1191,16 @@ export function OptimizedDataTable<TData, TValue>({
                         key={row.id}
                         row={row}
                         index={index}
-                        data-state={row.getIsSelected() && "selected"}
+                        data-state={row.getIsSelected() && 'selected'}
                         className="hover:bg-muted/50"
                       >
                         {row.getVisibleCells().map((cell) => {
-                          const isPinned = isPinnedColumn(cell.column.id);
+                          const isPinned = isPinnedColumn(cell.column.id)
                           return (
-                            <TableCell
-                              key={cell.id}
-                              className={isPinned ? 'bg-muted/30' : ''}
-                            >
+                            <TableCell key={cell.id} className={isPinned ? 'bg-muted/30' : ''}>
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
-                          );
+                          )
                         })}
                       </DraggableTableRow>
                     ))}
@@ -1130,26 +1209,23 @@ export function OptimizedDataTable<TData, TValue>({
                   table.getRowModel().rows.map((row, index) => (
                     <TableRow
                       key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
+                      data-state={row.getIsSelected() && 'selected'}
                       className="hover:bg-muted/50"
                     >
                       {state.localEnableRowReordering && onRowReorder && (
                         <TableCell className="w-8 p-2">
-                          <div className="w-6 h-6 flex items-center justify-center">
+                          <div className="flex h-6 w-6 items-center justify-center">
                             {/* Placeholder for alignment */}
                           </div>
                         </TableCell>
                       )}
                       {row.getVisibleCells().map((cell) => {
-                        const isPinned = isPinnedColumn(cell.column.id);
+                        const isPinned = isPinnedColumn(cell.column.id)
                         return (
-                          <TableCell
-                            key={cell.id}
-                            className={isPinned ? 'bg-muted/30' : ''}
-                          >
+                          <TableCell key={cell.id} className={isPinned ? 'bg-muted/30' : ''}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
-                        );
+                        )
                       })}
                     </TableRow>
                   ))
@@ -1157,7 +1233,10 @@ export function OptimizedDataTable<TData, TValue>({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={orderedColumns.length + (state.localEnableRowReordering && onRowReorder ? 1 : 0)}
+                    colSpan={
+                      orderedColumns.length +
+                      (state.localEnableRowReordering && onRowReorder ? 1 : 0)
+                    }
                     className="h-24 text-center"
                   >
                     No results.
@@ -1173,7 +1252,7 @@ export function OptimizedDataTable<TData, TValue>({
       {enablePagination && (
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+            {table.getFilteredSelectedRowModel().rows.length} of{' '}
             {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
@@ -1182,7 +1261,7 @@ export function OptimizedDataTable<TData, TValue>({
               <select
                 value={table.getState().pagination.pageSize}
                 onChange={(e) => {
-                  table.setPageSize(Number(e.target.value));
+                  table.setPageSize(Number(e.target.value))
                 }}
                 className="h-8 w-[70px] rounded border border-input bg-background px-3 py-1 text-sm"
               >
@@ -1194,8 +1273,7 @@ export function OptimizedDataTable<TData, TValue>({
               </select>
             </div>
             <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
+              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -1239,7 +1317,7 @@ export function OptimizedDataTable<TData, TValue>({
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default OptimizedDataTable;
+export default OptimizedDataTable

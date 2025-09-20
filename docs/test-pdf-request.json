@@ -1,0 +1,34 @@
+{
+  "templateVariables": {
+    "company": {
+      "name": "TechCorp Inc.",
+      "state": "Delaware",
+      "description": "SaaS Technology Company"
+    },
+    "fair_market_value": "15.25",
+    "valuation_date": "December 31, 2024",
+    "total_equity_value": "5,250,000",
+    "total_shares": "344,262",
+    "valuation_method": "Discounted Cash Flow (DCF)",
+    "report_date": "January 15, 2025",
+    "revenue": "2,100,000",
+    "revenue_notes": "Based on trailing 12 months",
+    "ebitda": "450,000",
+    "ebitda_notes": "Adjusted for one-time expenses",
+    "total_assets": "1,800,000",
+    "assets_notes": "Including cash and receivables",
+    "total_liabilities": "320,000",
+    "liabilities_notes": "Current and long-term debt",
+    "discount_rate": "12.5",
+    "terminal_growth_rate": "3.0",
+    "market_multiple": "4.2",
+    "report_generation_date": "January 15, 2025"
+  },
+  "customContent": "<p>This company has shown strong growth trajectory with recurring revenue model and has recently secured Series A funding.</p>",
+  "reportSettings": {
+    "includeHeader": true,
+    "includeFooter": true,
+    "format": "A4",
+    "orientation": "portrait"
+  }
+}

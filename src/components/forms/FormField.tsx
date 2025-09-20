@@ -1,16 +1,16 @@
-import React from 'react';
-import { UseFormRegisterReturn, FieldError } from 'react-hook-form';
-import { cn } from '@/lib/utils';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import React from 'react'
+import { UseFormRegisterReturn, FieldError } from 'react-hook-form'
+import { cn } from '@/lib/utils'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 
 interface FormFieldProps {
-  label: string;
-  error?: FieldError;
-  children?: React.ReactNode;
-  required?: boolean;
-  description?: string;
-  className?: string;
+  label: string
+  error?: FieldError
+  children?: React.ReactNode
+  required?: boolean
+  description?: string
+  className?: string
 }
 
 export function FormField({
@@ -19,39 +19,39 @@ export function FormField({
   children,
   required,
   description,
-  className
+  className,
 }: FormFieldProps) {
   return (
     <div className={cn('space-y-2', className)}>
-      <Label className={cn(
-        'text-sm font-medium',
-        error && 'text-red-600',
-        required && 'after:content-["*"] after:text-red-500 after:ml-1'
-      )}>
+      <Label
+        className={cn(
+          'text-sm font-medium',
+          error && 'text-red-600',
+          required && 'after:ml-1 after:text-red-500 after:content-["*"]'
+        )}
+      >
         {label}
       </Label>
 
-      {description && (
-        <p className="text-sm text-gray-500">{description}</p>
-      )}
+      {description && <p className="text-sm text-gray-500">{description}</p>}
 
       {children}
 
       {error && (
-        <p className="text-sm text-red-600 flex items-start gap-1">
-          <span className="block w-1 h-1 rounded-full bg-red-600 mt-2 flex-shrink-0" />
+        <p className="flex items-start gap-1 text-sm text-red-600">
+          <span className="mt-2 block h-1 w-1 flex-shrink-0 rounded-full bg-red-600" />
           {error.message}
         </p>
       )}
     </div>
-  );
+  )
 }
 
 interface TextFieldProps extends FormFieldProps {
-  register: UseFormRegisterReturn;
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url';
-  placeholder?: string;
-  disabled?: boolean;
+  register: UseFormRegisterReturn
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
+  placeholder?: string
+  disabled?: boolean
 }
 
 export function TextField({
@@ -63,7 +63,7 @@ export function TextField({
   disabled,
   required,
   description,
-  className
+  className,
 }: TextFieldProps) {
   return (
     <FormField
@@ -78,19 +78,17 @@ export function TextField({
         type={type}
         placeholder={placeholder}
         disabled={disabled}
-        className={cn(
-          error && 'border-red-500 focus:border-red-500 focus:ring-red-500'
-        )}
+        className={cn(error && 'border-red-500 focus:border-red-500 focus:ring-red-500')}
       />
     </FormField>
-  );
+  )
 }
 
 interface SelectFieldProps extends FormFieldProps {
-  register: UseFormRegisterReturn;
-  options: Array<{ value: string; label: string }>;
-  placeholder?: string;
-  disabled?: boolean;
+  register: UseFormRegisterReturn
+  options: Array<{ value: string; label: string }>
+  placeholder?: string
+  disabled?: boolean
 }
 
 export function SelectField({
@@ -102,7 +100,7 @@ export function SelectField({
   disabled,
   required,
   description,
-  className
+  className,
 }: SelectFieldProps) {
   return (
     <FormField
@@ -128,14 +126,14 @@ export function SelectField({
         ))}
       </select>
     </FormField>
-  );
+  )
 }
 
 interface TextAreaFieldProps extends FormFieldProps {
-  register: UseFormRegisterReturn;
-  placeholder?: string;
-  disabled?: boolean;
-  rows?: number;
+  register: UseFormRegisterReturn
+  placeholder?: string
+  disabled?: boolean
+  rows?: number
 }
 
 export function TextAreaField({
@@ -147,7 +145,7 @@ export function TextAreaField({
   rows = 4,
   required,
   description,
-  className
+  className,
 }: TextAreaFieldProps) {
   return (
     <FormField
@@ -168,12 +166,12 @@ export function TextAreaField({
         )}
       />
     </FormField>
-  );
+  )
 }
 
 interface CheckboxFieldProps extends FormFieldProps {
-  register: UseFormRegisterReturn;
-  disabled?: boolean;
+  register: UseFormRegisterReturn
+  disabled?: boolean
 }
 
 export function CheckboxField({
@@ -182,7 +180,7 @@ export function CheckboxField({
   error,
   disabled,
   description,
-  className
+  className,
 }: CheckboxFieldProps) {
   return (
     <div className={cn('flex items-start space-x-3', className)}>
@@ -191,34 +189,27 @@ export function CheckboxField({
         type="checkbox"
         disabled={disabled}
         className={cn(
-          'h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-offset-0 mt-1',
+          'mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-offset-0',
           error && 'border-red-500 text-red-500 focus:ring-red-500'
         )}
       />
       <div className="space-y-1">
-        <Label className={cn(
-          'text-sm font-medium cursor-pointer',
-          error && 'text-red-600'
-        )}>
+        <Label className={cn('cursor-pointer text-sm font-medium', error && 'text-red-600')}>
           {label}
         </Label>
 
-        {description && (
-          <p className="text-sm text-gray-500">{description}</p>
-        )}
+        {description && <p className="text-sm text-gray-500">{description}</p>}
 
-        {error && (
-          <p className="text-sm text-red-600">{error.message}</p>
-        )}
+        {error && <p className="text-sm text-red-600">{error.message}</p>}
       </div>
     </div>
-  );
+  )
 }
 
 interface RadioGroupFieldProps extends FormFieldProps {
-  register: UseFormRegisterReturn;
-  options: Array<{ value: string; label: string; description?: string }>;
-  disabled?: boolean;
+  register: UseFormRegisterReturn
+  options: Array<{ value: string; label: string; description?: string }>
+  disabled?: boolean
 }
 
 export function RadioGroupField({
@@ -229,7 +220,7 @@ export function RadioGroupField({
   disabled,
   required,
   description,
-  className
+  className,
 }: RadioGroupFieldProps) {
   return (
     <FormField
@@ -248,21 +239,17 @@ export function RadioGroupField({
               value={option.value}
               disabled={disabled}
               className={cn(
-                'h-4 w-4 border-gray-300 text-primary focus:ring-primary focus:ring-offset-0 mt-1',
+                'mt-1 h-4 w-4 border-gray-300 text-primary focus:ring-primary focus:ring-offset-0',
                 error && 'border-red-500 text-red-500 focus:ring-red-500'
               )}
             />
             <div>
-              <Label className="text-sm font-medium cursor-pointer">
-                {option.label}
-              </Label>
-              {option.description && (
-                <p className="text-sm text-gray-500">{option.description}</p>
-              )}
+              <Label className="cursor-pointer text-sm font-medium">{option.label}</Label>
+              {option.description && <p className="text-sm text-gray-500">{option.description}</p>}
             </div>
           </div>
         ))}
       </div>
     </FormField>
-  );
+  )
 }

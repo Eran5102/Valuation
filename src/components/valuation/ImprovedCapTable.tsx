@@ -1,162 +1,189 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { ShareClass, OptionsWarrants, OptionsType } from '@/types';
-import dynamic from 'next/dynamic';
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
+import { ShareClass, OptionsWarrants, OptionsType } from '@/types'
+import dynamic from 'next/dynamic'
 
-const DataTable = dynamic(() => import('@/components/ui/optimized-data-table').then(mod => ({ default: mod.OptimizedDataTable })), {
-  loading: () => <div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>,
-  ssr: false
-});
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Edit3, Edit, Check, Save, Trash2, Plus, DollarSign, Calendar } from 'lucide-react';
-import { formatNumber, formatPercentage, enhanceShareClassesWithCalculations } from '@/lib/capTableCalculations';
-import { formatCurrency } from '@/lib/utils';
+const OptimizedDataTable = dynamic(
+  () =>
+    import('@/components/ui/optimized-data-table').then((mod) => ({
+      default: mod.OptimizedDataTable,
+    })),
+  {
+    loading: () => <LoadingSpinner size="md" className="p-4" />,
+    ssr: false,
+  }
+)
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Badge } from '@/components/ui/badge'
+import { Edit3, Edit, Check, Save, Trash2, Plus, DollarSign, Calendar } from 'lucide-react'
+import {
+  formatNumber,
+  formatPercentage,
+  enhanceShareClassesWithCalculations,
+} from '@/lib/capTableCalculations'
+import { formatCurrency } from '@/lib/utils'
 
 interface CapTableProps {
-  valuationId: string;
-  onSave?: (data: { shareClasses: ShareClass[], options: OptionsWarrants[] }) => void;
+  valuationId: string
+  onSave?: (data: { shareClasses: ShareClass[]; options: OptionsWarrants[] }) => void
 }
 
 export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
-  const [shareClasses, setShareClasses] = useState<ShareClass[]>([]);
-  const [options, setOptions] = useState<OptionsWarrants[]>([]);
-  const [editingRows, setEditingRows] = useState<Set<string>>(new Set());
-  const [hasChanges, setHasChanges] = useState(false);
+  const [shareClasses, setShareClasses] = useState<ShareClass[]>([])
+  const [options, setOptions] = useState<OptionsWarrants[]>([])
+  const [editingRows, setEditingRows] = useState<Set<string>>(new Set())
+  const [hasChanges, setHasChanges] = useState(false)
 
   // Load cap table data
   useEffect(() => {
     const loadCapTableData = async () => {
       try {
-        const response = await fetch(`/api/valuations/${valuationId}/cap-table`);
+        const response = await fetch(`/api/valuations/${valuationId}/cap-table`)
         if (response.ok) {
-          const data = await response.json();
-          const enhancedShareClasses = enhanceShareClassesWithCalculations(data.shareClasses || []);
-          setShareClasses(enhancedShareClasses);
-          setOptions(data.options || []);
+          const data = await response.json()
+          const enhancedShareClasses = enhanceShareClassesWithCalculations(data.shareClasses || [])
+          setShareClasses(enhancedShareClasses)
+          setOptions(data.options || [])
         }
       } catch (error) {
-        console.error('Error loading cap table data:', error);
+        console.error('Error loading cap table data:', error)
       }
-    };
+    }
 
-    loadCapTableData();
-  }, [valuationId]);
+    loadCapTableData()
+  }, [valuationId])
 
   // Save cap table data
   const saveCapTable = useCallback(async () => {
-    if (!hasChanges) return;
+    if (!hasChanges) return
 
     try {
       const response = await fetch(`/api/valuations/${valuationId}/cap-table`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shareClasses, options }),
-      });
+      })
 
       if (response.ok) {
-        setHasChanges(false);
-        onSave?.({ shareClasses, options });
+        setHasChanges(false)
+        onSave?.({ shareClasses, options })
       }
     } catch (error) {
-      console.error('Error saving cap table:', error);
+      console.error('Error saving cap table:', error)
     }
-  }, [valuationId, shareClasses, options, hasChanges, onSave]);
+  }, [valuationId, shareClasses, options, hasChanges, onSave])
 
   // Update share class on blur (when user leaves the field)
-  const updateShareClass = useCallback((id: string, field: keyof ShareClass, value: any) => {
-    // Validation for share type changes
-    if (field === 'shareType' && value === 'common') {
-      const hasOtherCommon = shareClasses.some(sc => sc.shareType === 'common' && sc.id !== id);
-      if (hasOtherCommon) {
-        alert('Only one common share class is allowed');
-        return;
+  const updateShareClass = useCallback(
+    (id: string, field: keyof ShareClass, value: any) => {
+      // Validation for share type changes
+      if (field === 'shareType' && value === 'common') {
+        const hasOtherCommon = shareClasses.some((sc) => sc.shareType === 'common' && sc.id !== id)
+        if (hasOtherCommon) {
+          alert('Only one common share class is allowed')
+          return
+        }
       }
-    }
-    
-    setHasChanges(true);
-    
-    // Update state and run calculations immediately on blur
-    setShareClasses(prev => {
-      const updated = prev.map(sc => 
-        sc.id === id ? { ...sc, [field]: value } : sc
-      );
-      return enhanceShareClassesWithCalculations(updated);
-    });
-  }, [shareClasses]);
+
+      setHasChanges(true)
+
+      // Update state and run calculations immediately on blur
+      setShareClasses((prev) => {
+        const updated = prev.map((sc) => (sc.id === id ? { ...sc, [field]: value } : sc))
+        return enhanceShareClassesWithCalculations(updated)
+      })
+    },
+    [shareClasses]
+  )
 
   // Validation function for seniority
-  const validateSeniority = useCallback((newSeniority: number, currentId: string) => {
-    // Minimum seniority for preferred shares is 0 (most senior position)
-    if (newSeniority < 0) {
-      alert('Minimum seniority for preferred shares is 0 (most senior position)');
-      return false;
-    }
+  const validateSeniority = useCallback(
+    (newSeniority: number, currentId: string) => {
+      // Minimum seniority for preferred shares is 0 (most senior position)
+      if (newSeniority < 0) {
+        alert('Minimum seniority for preferred shares is 0 (most senior position)')
+        return false
+      }
 
-    // Allow multiple preferred classes to have the same seniority (pari passu)
-    // No additional validation needed - multiple classes can rank equally
-    
-    return true;
-  }, [shareClasses]);
+      // Allow multiple preferred classes to have the same seniority (pari passu)
+      // No additional validation needed - multiple classes can rank equally
+
+      return true
+    },
+    [shareClasses]
+  )
 
   // Toggle row editing
   const toggleRowEdit = (id: string) => {
-    setEditingRows(prev => {
-      const newSet = new Set(prev);
+    setEditingRows((prev) => {
+      const newSet = new Set(prev)
       if (newSet.has(id)) {
-        newSet.delete(id);
+        newSet.delete(id)
       } else {
-        newSet.add(id);
+        newSet.add(id)
       }
-      return newSet;
-    });
-  };
+      return newSet
+    })
+  }
 
   // Add new share class
   const addShareClass = () => {
-    const commonClassExists = shareClasses.some(sc => sc.shareType === 'common');
-    const isFirstClass = shareClasses.length === 0;
-    
+    const commonClassExists = shareClasses.some((sc) => sc.shareType === 'common')
+    const isFirstClass = shareClasses.length === 0
+
     const newShareClass: ShareClass = {
       id: Date.now().toString(),
       companyId: 1,
       shareType: isFirstClass || !commonClassExists ? 'common' : 'preferred',
-      name: isFirstClass || !commonClassExists ? 'Common Stock' : `Preferred Series ${String.fromCharCode(65 + shareClasses.filter(sc => sc.shareType === 'preferred').length)}`,
+      name:
+        isFirstClass || !commonClassExists
+          ? 'Common Stock'
+          : `Preferred Series ${String.fromCharCode(65 + shareClasses.filter((sc) => sc.shareType === 'preferred').length)}`,
       roundDate: new Date().toISOString().split('T')[0],
       sharesOutstanding: 0,
       pricePerShare: 0,
       preferenceType: 'non-participating',
       lpMultiple: 1.0,
-      seniority: shareClasses.filter(sc => sc.shareType === 'preferred').length + 1,
+      seniority: shareClasses.filter((sc) => sc.shareType === 'preferred').length + 1,
       participationCap: null,
       conversionRatio: 1.0,
       dividendsDeclared: false,
       dividendsRate: null,
       dividendsType: null,
-      pik: false
-    };
+      pik: false,
+    }
 
-    setHasChanges(true);
-    const enhancedShareClasses = enhanceShareClassesWithCalculations([...shareClasses, newShareClass]);
-    setShareClasses(enhancedShareClasses);
-  };
+    setHasChanges(true)
+    const enhancedShareClasses = enhanceShareClassesWithCalculations([
+      ...shareClasses,
+      newShareClass,
+    ])
+    setShareClasses(enhancedShareClasses)
+  }
 
   // Delete share class
   const deleteShareClass = (id: string) => {
-    setHasChanges(true);
-    setShareClasses(prev => prev.filter(sc => sc.id !== id));
-    setEditingRows(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
-  };
+    setHasChanges(true)
+    setShareClasses((prev) => prev.filter((sc) => sc.id !== id))
+    setEditingRows((prev) => {
+      const newSet = new Set(prev)
+      newSet.delete(id)
+      return newSet
+    })
+  }
 
   // Options/Warrants Management Functions
   const addOption = () => {
@@ -164,139 +191,141 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       id: Date.now().toString(),
       numOptions: 0,
       exercisePrice: 0,
-      type: 'Options'
-    };
+      type: 'Options',
+    }
 
-    setHasChanges(true);
-    setOptions([...options, newOption]);
-  };
+    setHasChanges(true)
+    setOptions([...options, newOption])
+  }
 
   const updateOption = useCallback((id: string, field: keyof OptionsWarrants, value: any) => {
-    setHasChanges(true);
-    setOptions(prev => prev.map(opt => 
-      opt.id === id ? { ...opt, [field]: value } : opt
-    ));
-  }, []);
+    setHasChanges(true)
+    setOptions((prev) => prev.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)))
+  }, [])
 
   const deleteOption = (id: string) => {
-    setHasChanges(true);
-    setOptions(prev => prev.filter(opt => opt.id !== id));
-    setEditingRows(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
-  };
+    setHasChanges(true)
+    setOptions((prev) => prev.filter((opt) => opt.id !== id))
+    setEditingRows((prev) => {
+      const newSet = new Set(prev)
+      newSet.delete(id)
+      return newSet
+    })
+  }
 
   // Options/Warrants Table Columns
   const optionsColumns: ColumnDef<OptionsWarrants>[] = [
     // Type column
     {
-      id: "type",
-      accessorKey: "type",
-      header: "Type",
+      id: 'type',
+      accessorKey: 'type',
+      header: 'Type',
       size: 120,
       enableSorting: true,
       cell: ({ row }) => {
-        const option = row.original;
-        const isEditing = editingRows.has(option.id);
-        
+        const option = row.original
+        const isEditing = editingRows.has(option.id)
+
         if (isEditing) {
           return (
-            <select 
+            <select
               defaultValue={option.type}
               onBlur={(e) => updateOption(option.id, 'type', e.target.value as OptionsType)}
-              className="w-full px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
             >
               <option value="Options">Options</option>
               <option value="Warrants">Warrants</option>
               <option value="RSUs">RSUs</option>
             </select>
-          );
+          )
         }
-        
+
         return (
-          <span className={`px-2 py-1 text-xs rounded-full ${
-            option.type === 'Options' 
-              ? 'bg-blue-100 text-blue-800' 
-              : option.type === 'Warrants'
-              ? 'bg-purple-100 text-purple-800'
-              : 'bg-green-100 text-green-800'
-          }`}>
+          <span
+            className={`rounded-full px-2 py-1 text-xs ${
+              option.type === 'Options'
+                ? 'bg-blue-100 text-blue-800'
+                : option.type === 'Warrants'
+                  ? 'bg-purple-100 text-purple-800'
+                  : 'bg-green-100 text-green-800'
+            }`}
+          >
             {option.type}
           </span>
-        );
-      }
+        )
+      },
     },
-    
+
     // Number of Options column
     {
-      id: "numOptions",
-      accessorKey: "numOptions",
-      header: "Number of Options",
+      id: 'numOptions',
+      accessorKey: 'numOptions',
+      header: 'Number of Options',
       size: 150,
       enableSorting: true,
       cell: ({ row }) => {
-        const option = row.original;
-        const isEditing = editingRows.has(option.id);
-        
+        const option = row.original
+        const isEditing = editingRows.has(option.id)
+
         if (isEditing) {
           return (
             <input
               type="number"
               defaultValue={option.numOptions}
               onBlur={(e) => updateOption(option.id, 'numOptions', parseFloat(e.target.value) || 0)}
-              className="w-full px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
               placeholder="0"
               min="0"
               step="1"
             />
-          );
+          )
         }
-        
-        return <span className="font-medium">{formatNumber(option.numOptions)}</span>;
-      }
+
+        return <span className="font-medium">{formatNumber(option.numOptions)}</span>
+      },
     },
-    
+
     // Exercise Price column
     {
-      id: "exercisePrice",
-      accessorKey: "exercisePrice",
-      header: "Exercise Price",
+      id: 'exercisePrice',
+      accessorKey: 'exercisePrice',
+      header: 'Exercise Price',
       size: 120,
       enableSorting: true,
       cell: ({ row }) => {
-        const option = row.original;
-        const isEditing = editingRows.has(option.id);
-        
+        const option = row.original
+        const isEditing = editingRows.has(option.id)
+
         if (isEditing) {
           return (
             <input
               type="number"
               defaultValue={option.exercisePrice}
-              onBlur={(e) => updateOption(option.id, 'exercisePrice', parseFloat(e.target.value) || 0)}
-              className="w-full px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              onBlur={(e) =>
+                updateOption(option.id, 'exercisePrice', parseFloat(e.target.value) || 0)
+              }
+              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
               placeholder="0.00"
               min="0"
               step="0.01"
             />
-          );
+          )
         }
-        
-        return <span className="font-medium">{formatCurrency(option.exercisePrice)}</span>;
-      }
+
+        return <span className="font-medium">{formatCurrency(option.exercisePrice)}</span>
+      },
     },
-    
+
     // Actions column
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       size: 120,
       enableSorting: false,
       cell: ({ row }) => {
-        const option = row.original;
-        const isEditing = editingRows.has(option.id);
-        
+        const option = row.original
+        const isEditing = editingRows.has(option.id)
+
         return (
           <div className="flex items-center gap-2">
             <Button
@@ -304,7 +333,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 hover:bg-primary/10"
-              title={isEditing ? "Save" : "Edit"}
+              title={isEditing ? 'Save' : 'Edit'}
             >
               {isEditing ? (
                 <Save className="h-4 w-4 text-green-600" />
@@ -322,10 +351,10 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
-        );
-      }
-    }
-  ];
+        )
+      },
+    },
+  ]
 
   // Enhanced Share Class Columns with improved styling
   const shareClassColumns: ColumnDef<ShareClass>[] = [
@@ -336,38 +365,40 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Type',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
 
         if (isEditing) {
           return (
             <Select
               value={shareClass.shareType}
-              onValueChange={(value: 'common' | 'preferred') => 
+              onValueChange={(value: 'common' | 'preferred') =>
                 updateShareClass(shareClass.id, 'shareType', value)
               }
             >
-              <SelectTrigger className="w-28 bg-background border-primary/20 focus:border-primary focus:ring-primary">
+              <SelectTrigger className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-primary">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-card border-primary/20">
+              <SelectContent className="border-primary/20 bg-card">
                 <SelectItem value="common">Common</SelectItem>
                 <SelectItem value="preferred">Preferred</SelectItem>
               </SelectContent>
             </Select>
-          );
+          )
         }
 
         return (
-          <Badge 
+          <Badge
             variant={shareClass.shareType === 'preferred' ? 'default' : 'secondary'}
-            className={shareClass.shareType === 'preferred' 
-              ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-              : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'}
+            className={
+              shareClass.shareType === 'preferred'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+            }
           >
             {shareClass.shareType === 'common' ? 'Common' : 'Preferred'}
           </Badge>
-        );
+        )
       },
     },
 
@@ -378,21 +409,21 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Class Name',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
 
         if (isEditing) {
           return (
             <Input
               defaultValue={shareClass.name}
               onBlur={(e) => updateShareClass(shareClass.id, 'name', e.target.value)}
-              className="w-40 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              className="w-40 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="Enter class name"
             />
-          );
+          )
         }
 
-        return <span className="font-medium text-foreground">{shareClass.name}</span>;
+        return <span className="font-medium text-foreground">{shareClass.name}</span>
       },
     },
 
@@ -403,8 +434,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Round Date',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
 
         if (isEditing) {
           return (
@@ -412,17 +443,17 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               type="date"
               defaultValue={shareClass.roundDate}
               onBlur={(e) => updateShareClass(shareClass.id, 'roundDate', e.target.value)}
-              className="w-36 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              className="w-36 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
             />
-          );
+          )
         }
 
         return (
           <div className="flex items-center text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
+            <Calendar className="mr-1 h-4 w-4" />
             {new Date(shareClass.roundDate).toLocaleDateString()}
           </div>
-        );
+        )
       },
     },
 
@@ -433,8 +464,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: '# Shares',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
 
         if (isEditing) {
           return (
@@ -442,14 +473,16 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               type="number"
               min="0"
               defaultValue={shareClass.sharesOutstanding}
-              onBlur={(e) => updateShareClass(shareClass.id, 'sharesOutstanding', parseInt(e.target.value) || 0)}
-              className="w-32 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              onBlur={(e) =>
+                updateShareClass(shareClass.id, 'sharesOutstanding', parseInt(e.target.value) || 0)
+              }
+              className="w-32 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0"
             />
-          );
+          )
         }
 
-        return <span className="font-medium">{formatNumber(shareClass.sharesOutstanding)}</span>;
+        return <span className="font-medium">{formatNumber(shareClass.sharesOutstanding)}</span>
       },
     },
 
@@ -460,8 +493,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Price/Share',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
 
         if (isEditing) {
           return (
@@ -470,19 +503,21 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               step="0.01"
               min="0"
               defaultValue={shareClass.pricePerShare}
-              onBlur={(e) => updateShareClass(shareClass.id, 'pricePerShare', parseFloat(e.target.value) || 0)}
-              className="w-28 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              onBlur={(e) =>
+                updateShareClass(shareClass.id, 'pricePerShare', parseFloat(e.target.value) || 0)
+              }
+              className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0.00"
             />
-          );
+          )
         }
 
         return (
           <div className="flex items-center text-accent">
-            <DollarSign className="h-4 w-4 mr-1" />
+            <DollarSign className="mr-1 h-4 w-4" />
             <span className="font-medium">{shareClass.pricePerShare.toFixed(2)}</span>
           </div>
-        );
+        )
       },
     },
 
@@ -493,18 +528,18 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Amount Invested',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         return (
-          <span className="font-medium text-primary font-medium">
+          <span className="font-medium text-primary">
             {formatCurrency(shareClass.amountInvested || 0)}
           </span>
-        );
+        )
       },
     },
 
@@ -515,41 +550,41 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Preference Type',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
           return (
             <Select
               value={shareClass.preferenceType}
-              onValueChange={(value: 'non-participating' | 'participating' | 'participating-with-cap') => 
-                updateShareClass(shareClass.id, 'preferenceType', value)
-              }
+              onValueChange={(
+                value: 'non-participating' | 'participating' | 'participating-with-cap'
+              ) => updateShareClass(shareClass.id, 'preferenceType', value)}
             >
-              <SelectTrigger className="w-40 bg-background border-primary/20 focus:border-primary focus:ring-primary">
+              <SelectTrigger className="w-40 border-primary/20 bg-background focus:border-primary focus:ring-primary">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-card border-primary/20">
+              <SelectContent className="border-primary/20 bg-card">
                 <SelectItem value="non-participating">Non-Participating</SelectItem>
                 <SelectItem value="participating">Participating</SelectItem>
                 <SelectItem value="participating-with-cap">Participating w/ Cap</SelectItem>
               </SelectContent>
             </Select>
-          );
+          )
         }
 
         const prefTypeDisplay = {
           'non-participating': 'Non-Part',
-          'participating': 'Part',
-          'participating-with-cap': 'Part w/ Cap'
-        }[shareClass.preferenceType];
+          participating: 'Part',
+          'participating-with-cap': 'Part w/ Cap',
+        }[shareClass.preferenceType]
 
-        return <span className="text-sm text-foreground">{prefTypeDisplay}</span>;
+        return <span className="text-sm text-foreground">{prefTypeDisplay}</span>
       },
     },
 
@@ -560,12 +595,12 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'LP Multiple (x)',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
@@ -575,14 +610,18 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               step="0.1"
               min="0"
               defaultValue={shareClass.lpMultiple}
-              onBlur={(e) => updateShareClass(shareClass.id, 'lpMultiple', parseFloat(e.target.value) || 1.0)}
-              className="w-20 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              onBlur={(e) =>
+                updateShareClass(shareClass.id, 'lpMultiple', parseFloat(e.target.value) || 1.0)
+              }
+              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="1.0"
             />
-          );
+          )
         }
 
-        return <span className="font-medium text-foreground">{shareClass.lpMultiple.toFixed(1)}x</span>;
+        return (
+          <span className="font-medium text-foreground">{shareClass.lpMultiple.toFixed(1)}x</span>
+        )
       },
     },
 
@@ -593,18 +632,16 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Total LP',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         return (
-          <span className="font-medium text-accent font-medium">
-            {formatCurrency(shareClass.totalLP || 0)}
-          </span>
-        );
+          <span className="font-medium text-accent">{formatCurrency(shareClass.totalLP || 0)}</span>
+        )
       },
     },
 
@@ -615,12 +652,12 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Seniority',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
@@ -630,29 +667,31 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               min="0"
               defaultValue={shareClass.seniority}
               onBlur={(e) => {
-                const newValue = parseInt(e.target.value) || 0;
+                const newValue = parseInt(e.target.value) || 0
                 if (validateSeniority(newValue, shareClass.id)) {
-                  updateShareClass(shareClass.id, 'seniority', newValue);
+                  updateShareClass(shareClass.id, 'seniority', newValue)
                 }
               }}
-              className="w-20 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0"
             />
-          );
+          )
         }
 
         return (
           <div className="text-center">
-            <Badge 
+            <Badge
               variant={shareClass.seniority === 1 ? 'default' : 'secondary'}
-              className={shareClass.seniority === 1 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-secondary text-secondary-foreground'}
+              className={
+                shareClass.seniority === 1
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground'
+              }
             >
               {shareClass.seniority}
             </Badge>
           </div>
-        );
+        )
       },
     },
 
@@ -663,13 +702,13 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Participation Cap',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
-        const showCap = shareClass.preferenceType === 'participating-with-cap';
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
+        const showCap = shareClass.preferenceType === 'participating-with-cap'
 
         if (isCommon || !showCap) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
@@ -679,18 +718,24 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               step="0.01"
               min="0"
               defaultValue={shareClass.participationCap || ''}
-              onBlur={(e) => updateShareClass(shareClass.id, 'participationCap', parseFloat(e.target.value) || null)}
-              className="w-28 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              onBlur={(e) =>
+                updateShareClass(
+                  shareClass.id,
+                  'participationCap',
+                  parseFloat(e.target.value) || null
+                )
+              }
+              className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0.00"
             />
-          );
+          )
         }
 
         return (
           <span className="font-medium text-foreground">
             {shareClass.participationCap ? formatCurrency(shareClass.participationCap) : '-'}
           </span>
-        );
+        )
       },
     },
 
@@ -701,12 +746,12 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Conversion Ratio',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
@@ -716,14 +761,24 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               step="0.01"
               min="0"
               defaultValue={shareClass.conversionRatio}
-              onBlur={(e) => updateShareClass(shareClass.id, 'conversionRatio', parseFloat(e.target.value) || 1.0)}
-              className="w-20 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              onBlur={(e) =>
+                updateShareClass(
+                  shareClass.id,
+                  'conversionRatio',
+                  parseFloat(e.target.value) || 1.0
+                )
+              }
+              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="1.0"
             />
-          );
+          )
         }
 
-        return <span className="font-medium text-foreground">{shareClass.conversionRatio.toFixed(2)}</span>;
+        return (
+          <span className="font-medium text-foreground">
+            {shareClass.conversionRatio.toFixed(2)}
+          </span>
+        )
       },
     },
 
@@ -734,18 +789,18 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'As Converted Shares',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         return (
           <span className="font-medium text-foreground">
             {formatNumber(shareClass.asConvertedShares || 0)}
           </span>
-        );
+        )
       },
     },
 
@@ -756,28 +811,30 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Dividends Declared',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
           return (
             <Switch
               checked={shareClass.dividendsDeclared}
-              onCheckedChange={(checked) => updateShareClass(shareClass.id, 'dividendsDeclared', checked)}
+              onCheckedChange={(checked) =>
+                updateShareClass(shareClass.id, 'dividendsDeclared', checked)
+              }
             />
-          );
+          )
         }
 
         return (
           <Badge variant={shareClass.dividendsDeclared ? 'default' : 'secondary'}>
             {shareClass.dividendsDeclared ? 'Yes' : 'No'}
           </Badge>
-        );
+        )
       },
     },
 
@@ -788,13 +845,13 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Dividends Rate',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
-        const showRate = shareClass.dividendsDeclared;
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
+        const showRate = shareClass.dividendsDeclared
 
         if (isCommon || !showRate) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
@@ -804,18 +861,20 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               step="0.01"
               min="0"
               defaultValue={shareClass.dividendsRate || ''}
-              onBlur={(e) => updateShareClass(shareClass.id, 'dividendsRate', parseFloat(e.target.value) || null)}
-              className="w-20 bg-background border-primary/20 focus:border-primary focus:ring-primary focus:ring-1"
+              onBlur={(e) =>
+                updateShareClass(shareClass.id, 'dividendsRate', parseFloat(e.target.value) || null)
+              }
+              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0.00"
             />
-          );
+          )
         }
 
         return (
           <span className="font-medium text-foreground">
             {shareClass.dividendsRate ? `${shareClass.dividendsRate.toFixed(2)}%` : '-'}
           </span>
-        );
+        )
       },
     },
 
@@ -826,39 +885,41 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Dividends Type',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
-        const showType = shareClass.dividendsDeclared;
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
+        const showType = shareClass.dividendsDeclared
 
         if (isCommon || !showType) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
           return (
             <Select
               value={shareClass.dividendsType || ''}
-              onValueChange={(value: 'cumulative' | 'non-cumulative' | '') => 
+              onValueChange={(value: 'cumulative' | 'non-cumulative' | '') =>
                 updateShareClass(shareClass.id, 'dividendsType', value || null)
               }
             >
-              <SelectTrigger className="w-32 bg-background border-primary/20 focus:border-primary focus:ring-primary">
+              <SelectTrigger className="w-32 border-primary/20 bg-background focus:border-primary focus:ring-primary">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-primary/20">
+              <SelectContent className="border-primary/20 bg-card">
                 <SelectItem value="cumulative">Cumulative</SelectItem>
                 <SelectItem value="non-cumulative">Non-Cumulative</SelectItem>
               </SelectContent>
             </Select>
-          );
+          )
         }
 
         return (
           <span className="text-sm text-foreground">
-            {shareClass.dividendsType ? shareClass.dividendsType.charAt(0).toUpperCase() + shareClass.dividendsType.slice(1) : '-'}
+            {shareClass.dividendsType
+              ? shareClass.dividendsType.charAt(0).toUpperCase() + shareClass.dividendsType.slice(1)
+              : '-'}
           </span>
-        );
+        )
       },
     },
 
@@ -869,12 +930,12 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'PIK',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         if (isEditing) {
@@ -883,14 +944,14 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               checked={shareClass.pik}
               onCheckedChange={(checked) => updateShareClass(shareClass.id, 'pik', checked)}
             />
-          );
+          )
         }
 
         return (
           <Badge variant={shareClass.pik ? 'default' : 'secondary'}>
             {shareClass.pik ? 'Yes' : 'No'}
           </Badge>
-        );
+        )
       },
     },
 
@@ -901,18 +962,18 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Total Dividends',
       enableSorting: true,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isCommon = shareClass.shareType === 'common';
+        const shareClass = row.original
+        const isCommon = shareClass.shareType === 'common'
 
         if (isCommon) {
-          return <span className="text-muted-foreground">N/A</span>;
+          return <span className="text-muted-foreground">N/A</span>
         }
 
         return (
-          <span className="font-medium text-accent font-medium">
+          <span className="font-medium text-accent">
             {formatCurrency(shareClass.totalDividends || 0)}
           </span>
-        );
+        )
       },
     },
 
@@ -922,8 +983,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       header: 'Actions',
       enableSorting: false,
       cell: ({ row }) => {
-        const shareClass = row.original;
-        const isEditing = editingRows.has(shareClass.id);
+        const shareClass = row.original
+        const isEditing = editingRows.has(shareClass.id)
 
         return (
           <div className="flex items-center gap-2">
@@ -948,10 +1009,10 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
-        );
+        )
       },
     },
-  ];
+  ]
 
   // Calculate totals for summary
   const totals = {
@@ -959,31 +1020,35 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
     totalInvested: shareClasses.reduce((sum, sc) => sum + (sc.amountInvested || 0), 0),
     totalLP: shareClasses.reduce((sum, sc) => sum + (sc.totalLP || 0), 0),
     totalDividends: shareClasses.reduce((sum, sc) => sum + (sc.totalDividends || 0), 0),
-  };
+  }
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card border-primary/20">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <Card className="border-primary/20 bg-card">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-primary">{shareClasses.length}</div>
             <p className="text-sm text-muted-foreground">Share Classes</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-primary/20">
+        <Card className="border-primary/20 bg-card">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{formatNumber(totals.totalShares)}</div>
+            <div className="text-2xl font-bold text-primary">
+              {formatNumber(totals.totalShares)}
+            </div>
             <p className="text-sm text-muted-foreground">Total Shares</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-primary/20">
+        <Card className="border-primary/20 bg-card">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-accent">{formatCurrency(totals.totalInvested)}</div>
+            <div className="text-2xl font-bold text-accent">
+              {formatCurrency(totals.totalInvested)}
+            </div>
             <p className="text-sm text-muted-foreground">Total Invested</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-primary/20">
+        <Card className="border-primary/20 bg-card">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-accent">{formatCurrency(totals.totalLP)}</div>
             <p className="text-sm text-muted-foreground">Total LP</p>
@@ -992,8 +1057,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       </div>
 
       {/* Main Table */}
-      <Card className="bg-card border-primary/20">
-        <CardHeader className="bg-primary/5 border-b border-primary/20">
+      <Card className="border-primary/20 bg-card">
+        <CardHeader className="border-b border-primary/20 bg-primary/5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Cap Table Configuration</h3>
@@ -1002,11 +1067,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={addShareClass}
-                size="sm"
-              >
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={addShareClass} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
                 Add Share Class
               </Button>
               {hasChanges && (
@@ -1016,7 +1078,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                   size="sm"
                   title="Save all changes to database (row edit buttons only update local state)"
                 >
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="mr-2 h-4 w-4" />
                   Save Changes
                 </Button>
               )}
@@ -1024,10 +1086,10 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <DataTable
+          <OptimizedDataTable
             key="share-classes-table"
             tableId="share-classes-table"
-            columns={shareClassColumns}
+            columns={shareClassColumns as any}
             data={shareClasses}
             enableColumnReordering={true}
             enableColumnVisibility={true}
@@ -1037,11 +1099,11 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
             enableColumnPinning={true}
             enableRowReordering={true}
             onRowReorder={(fromIndex, toIndex) => {
-              const newShareClasses = [...shareClasses];
-              const [movedShareClass] = newShareClasses.splice(fromIndex, 1);
-              newShareClasses.splice(toIndex, 0, movedShareClass);
-              setShareClasses(newShareClasses);
-              setHasChanges(true);
+              const newShareClasses = [...shareClasses]
+              const [movedShareClass] = newShareClasses.splice(fromIndex, 1)
+              newShareClasses.splice(toIndex, 0, movedShareClass)
+              setShareClasses(newShareClasses)
+              setHasChanges(true)
             }}
             className="border-0"
           />
@@ -1049,8 +1111,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       </Card>
 
       {/* Options/Warrants Table */}
-      <Card className="bg-card border-primary/20">
-        <CardHeader className="bg-primary/5 border-b border-primary/20">
+      <Card className="border-primary/20 bg-card">
+        <CardHeader className="border-b border-primary/20 bg-primary/5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Options & Warrants</h3>
@@ -1061,10 +1123,10 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
             <div className="flex items-center gap-2">
               <Button
                 onClick={addOption}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 size="sm"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Add Option/Warrant
               </Button>
               {hasChanges && (
@@ -1074,7 +1136,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                   size="sm"
                   title="Save all changes to database (row edit buttons only update local state)"
                 >
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="mr-2 h-4 w-4" />
                   Save Changes
                 </Button>
               )}
@@ -1084,46 +1146,46 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
         <CardContent className="p-0">
           {options.length > 0 ? (
             <div>
-              <DataTable
+              <OptimizedDataTable
                 key="options-table"
                 tableId="options-table"
-                columns={optionsColumns}
+                columns={optionsColumns as any}
                 data={options}
                 enableColumnReordering={true}
-                    enableColumnVisibility={true}
+                enableColumnVisibility={true}
                 enableSorting={true}
                 enablePagination={false}
                 enableColumnFilters={true}
                 enableColumnPinning={true}
                 enableRowReordering={true}
                 onRowReorder={(fromIndex, toIndex) => {
-                  const newOptions = [...options];
-                  const [movedOption] = newOptions.splice(fromIndex, 1);
-                  newOptions.splice(toIndex, 0, movedOption);
-                  setOptions(newOptions);
-                  setHasChanges(true);
+                  const newOptions = [...options]
+                  const [movedOption] = newOptions.splice(fromIndex, 1)
+                  newOptions.splice(toIndex, 0, movedOption)
+                  setOptions(newOptions)
+                  setHasChanges(true)
                 }}
                 initialState={{
                   columnVisibility: {
                     type: true,
                     numOptions: true,
                     exercisePrice: true,
-                    actions: true
+                    actions: true,
                   },
-                  columnOrder: ['type', 'numOptions', 'exercisePrice', 'actions']
+                  columnOrder: ['type', 'numOptions', 'exercisePrice', 'actions'],
                 }}
                 className="border-0"
               />
             </div>
           ) : (
             <div className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No options or warrants added yet</p>
+              <p className="mb-4 text-muted-foreground">No options or warrants added yet</p>
               <Button
                 onClick={addOption}
                 variant="outline"
                 className="border-primary/20 hover:bg-primary/5"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Add First Option/Warrant
               </Button>
             </div>
@@ -1131,7 +1193,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
 
-export default ImprovedCapTable;
+export default ImprovedCapTable

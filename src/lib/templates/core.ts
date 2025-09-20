@@ -1,4 +1,4 @@
-import type { ReportTemplate, TemplateBlock, TemplateVariable, GeneratedReport } from './types';
+import type { ReportTemplate, TemplateBlock, TemplateVariable, GeneratedReport } from './types'
 
 /**
  * Core template engine for processing templates and generating reports
@@ -11,19 +11,22 @@ export class TemplateEngine {
     template: ReportTemplate,
     data: Record<string, any>,
     options: {
-      status?: 'draft' | 'final';
-      watermark?: boolean;
+      status?: 'draft' | 'final'
+      watermark?: boolean
     } = {}
   ): GeneratedReport {
-    const processedSections = template.sections.map(section => ({
+    const processedSections = template.sections.map((section) => ({
       ...section,
-      blocks: this.processBlocks(section.blocks, data, template.variables)
-    }));
+      blocks: this.processBlocks(section.blocks, data, template.variables),
+    }))
 
-    const html = this.generateHTML({
-      ...template,
-      sections: processedSections
-    }, options);
+    const html = this.generateHTML(
+      {
+        ...template,
+        sections: processedSections,
+      },
+      options
+    )
 
     return {
       id: this.generateId(),
@@ -32,8 +35,8 @@ export class TemplateEngine {
       data,
       html,
       status: options.status || 'draft',
-      watermark: options.watermark || false
-    };
+      watermark: options.watermark || false,
+    }
   }
 
   /**
@@ -45,36 +48,36 @@ export class TemplateEngine {
     variables: TemplateVariable[]
   ): TemplateBlock[] {
     return blocks
-      .filter(block => this.shouldDisplayBlock(block, data))
-      .map(block => ({
+      .filter((block) => this.shouldDisplayBlock(block, data))
+      .map((block) => ({
         ...block,
         content: this.processContent(block.content, data, variables),
-        children: block.children ? this.processBlocks(block.children, data, variables) : undefined
-      }));
+        children: block.children ? this.processBlocks(block.children, data, variables) : undefined,
+      }))
   }
 
   /**
    * Determines if a block should be displayed based on conditional display rules
    */
   private static shouldDisplayBlock(block: TemplateBlock, data: Record<string, any>): boolean {
-    if (!block.conditionalDisplay) return true;
+    if (!block.conditionalDisplay) return true
 
-    const { variable, condition, value } = block.conditionalDisplay;
-    const dataValue = data[variable];
+    const { variable, condition, value } = block.conditionalDisplay
+    const dataValue = data[variable]
 
     switch (condition) {
       case 'exists':
-        return dataValue !== undefined && dataValue !== null && dataValue !== '';
+        return dataValue !== undefined && dataValue !== null && dataValue !== ''
       case 'equals':
-        return dataValue === value;
+        return dataValue === value
       case 'notEquals':
-        return dataValue !== value;
+        return dataValue !== value
       case 'greaterThan':
-        return typeof dataValue === 'number' && typeof value === 'number' && dataValue > value;
+        return typeof dataValue === 'number' && typeof value === 'number' && dataValue > value
       case 'lessThan':
-        return typeof dataValue === 'number' && typeof value === 'number' && dataValue < value;
+        return typeof dataValue === 'number' && typeof value === 'number' && dataValue < value
       default:
-        return true;
+        return true
     }
   }
 
@@ -88,41 +91,41 @@ export class TemplateEngine {
   ): string | any {
     if (typeof content !== 'string') {
       if (Array.isArray(content)) {
-        return content.map(item => this.processContent(item, data, variables));
+        return content.map((item) => this.processContent(item, data, variables))
       }
-      return content;
+      return content
     }
 
     // Replace template variables in the format {{variable_name}}
     return content.replace(/\{\{([^}]+)\}\}/g, (match, variableName) => {
-      const variable = variables.find(v => v.id === variableName.trim());
-      const value = data[variableName.trim()];
+      const variable = variables.find((v) => v.id === variableName.trim())
+      const value = data[variableName.trim()]
 
       if (value === undefined || value === null) {
-        return variable?.defaultValue || match; // Keep placeholder if no value
+        return variable?.defaultValue || match // Keep placeholder if no value
       }
 
-      return this.formatValue(value, variable);
-    });
+      return this.formatValue(value, variable)
+    })
   }
 
   /**
    * Formats a value based on its variable type and format specification
    */
   private static formatValue(value: any, variable?: TemplateVariable): string {
-    if (!variable) return String(value);
+    if (!variable) return String(value)
 
     switch (variable.type) {
       case 'currency':
-        return this.formatCurrency(value);
+        return this.formatCurrency(value)
       case 'percentage':
-        return this.formatPercentage(value);
+        return this.formatPercentage(value)
       case 'date':
-        return this.formatDate(value, variable.format);
+        return this.formatDate(value, variable.format)
       case 'number':
-        return this.formatNumber(value);
+        return this.formatNumber(value)
       default:
-        return String(value);
+        return String(value)
     }
   }
 
@@ -130,43 +133,43 @@ export class TemplateEngine {
    * Formats currency values
    */
   private static formatCurrency(value: number | string): string {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(numValue)) return String(value);
+    const numValue = typeof value === 'string' ? parseFloat(value) : value
+    if (isNaN(numValue)) return String(value)
 
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(numValue);
+      maximumFractionDigits: 2,
+    }).format(numValue)
   }
 
   /**
    * Formats percentage values
    */
   private static formatPercentage(value: number | string): string {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(numValue)) return String(value);
+    const numValue = typeof value === 'string' ? parseFloat(value) : value
+    if (isNaN(numValue)) return String(value)
 
     // If value is already in percentage format (like 30), divide by 100
-    const percentValue = numValue > 1 ? numValue / 100 : numValue;
-    
+    const percentValue = numValue > 1 ? numValue / 100 : numValue
+
     return new Intl.NumberFormat('en-US', {
       style: 'percent',
       minimumFractionDigits: 1,
-      maximumFractionDigits: 1
-    }).format(percentValue);
+      maximumFractionDigits: 1,
+    }).format(percentValue)
   }
 
   /**
    * Formats date values
    */
   private static formatDate(value: string | Date, format?: string): string {
-    const date = value instanceof Date ? value : new Date(value);
-    if (isNaN(date.getTime())) return String(value);
+    const date = value instanceof Date ? value : new Date(value)
+    if (isNaN(date.getTime())) return String(value)
 
     if (!format) {
-      return date.toLocaleDateString('en-US');
+      return date.toLocaleDateString('en-US')
     }
 
     // Simple format mapping
@@ -175,14 +178,14 @@ export class TemplateEngine {
         return date.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
-          day: 'numeric'
-        });
+          day: 'numeric',
+        })
       case 'MM/DD/YYYY':
-        return date.toLocaleDateString('en-US');
+        return date.toLocaleDateString('en-US')
       case 'YYYY-MM-DD':
-        return date.toISOString().split('T')[0];
+        return date.toISOString().split('T')[0]
       default:
-        return date.toLocaleDateString('en-US');
+        return date.toLocaleDateString('en-US')
     }
   }
 
@@ -190,18 +193,23 @@ export class TemplateEngine {
    * Formats number values
    */
   private static formatNumber(value: number | string): string {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(numValue)) return String(value);
+    const numValue = typeof value === 'string' ? parseFloat(value) : value
+    if (isNaN(numValue)) return String(value)
 
-    return new Intl.NumberFormat('en-US').format(numValue);
+    return new Intl.NumberFormat('en-US').format(numValue)
   }
 
   /**
    * Generates HTML from a processed template
    */
-  private static generateHTML(template: ReportTemplate, options: { status?: 'draft' | 'final'; watermark?: boolean } = {}): string {
-    const { watermark = false } = options;
-    const watermarkHTML = watermark && template.settings?.watermark?.enabled ? `
+  private static generateHTML(
+    template: ReportTemplate,
+    options: { status?: 'draft' | 'final'; watermark?: boolean } = {}
+  ): string {
+    const { watermark = false } = options
+    const watermarkHTML =
+      watermark && template.settings?.watermark?.enabled
+        ? `
       <div class="watermark" style="
         position: fixed;
         top: 50%;
@@ -215,20 +223,23 @@ export class TemplateEngine {
       ">
         ${template.settings.watermark.text || 'DRAFT'}
       </div>
-    ` : '';
+    `
+        : ''
 
-    const sectionsHTML = template.sections.map(section => {
-      const sectionClass = section.pageBreakBefore ? 'page-break-before' : '';
-      const pageBreakAfter = section.pageBreakAfter ? 'page-break-after' : '';
-      
-      const blocksHTML = section.blocks.map(block => this.generateBlockHTML(block)).join('\n');
-      
-      return `
+    const sectionsHTML = template.sections
+      .map((section) => {
+        const sectionClass = section.pageBreakBefore ? 'page-break-before' : ''
+        const pageBreakAfter = section.pageBreakAfter ? 'page-break-after' : ''
+
+        const blocksHTML = section.blocks.map((block) => this.generateBlockHTML(block)).join('\n')
+
+        return `
         <section class="template-section ${sectionClass} ${pageBreakAfter}">
           ${blocksHTML}
         </section>
-      `;
-    }).join('\n');
+      `
+      })
+      .join('\n')
 
     return `
       <!DOCTYPE html>
@@ -248,43 +259,43 @@ export class TemplateEngine {
         </div>
       </body>
       </html>
-    `;
+    `
   }
 
   /**
    * Generates HTML for individual blocks
    */
   private static generateBlockHTML(block: TemplateBlock): string {
-    const styles = this.getBlockStyles(block.styling);
-    const styleAttr = styles ? ` style="${styles}"` : '';
-    const blockId = block.id ? ` id="${block.id}"` : '';
-    
+    const styles = this.getBlockStyles(block.styling)
+    const styleAttr = styles ? ` style="${styles}"` : ''
+    const blockId = block.id ? ` id="${block.id}"` : ''
+
     switch (block.type) {
       case 'header':
-        return `<h1 class="template-header"${blockId}${styleAttr}>${block.content}</h1>`;
-      
+        return `<h1 class="template-header"${blockId}${styleAttr}>${block.content}</h1>`
+
       case 'paragraph':
-        const paragraphContent = String(block.content).replace(/\n/g, '<br>');
-        return `<p class="template-paragraph"${blockId}${styleAttr}>${paragraphContent}</p>`;
-      
+        const paragraphContent = String(block.content).replace(/\n/g, '<br>')
+        return `<p class="template-paragraph"${blockId}${styleAttr}>${paragraphContent}</p>`
+
       case 'list':
         if (Array.isArray(block.content)) {
-          const listItems = block.content.map(item => `<li>${item}</li>`).join('\n');
-          return `<ul class="template-list"${blockId}${styleAttr}>${listItems}</ul>`;
+          const listItems = block.content.map((item) => `<li>${item}</li>`).join('\n')
+          return `<ul class="template-list"${blockId}${styleAttr}>${listItems}</ul>`
         }
-        return `<div class="template-list"${blockId}${styleAttr}>${block.content}</div>`;
-      
+        return `<div class="template-list"${blockId}${styleAttr}>${block.content}</div>`
+
       case 'table':
-        return `<div class="template-table"${blockId}${styleAttr}>[Table content will be implemented]</div>`;
-      
+        return `<div class="template-table"${blockId}${styleAttr}>[Table content will be implemented]</div>`
+
       case 'chart':
-        return `<div class="template-chart"${blockId}${styleAttr}>[Chart will be implemented]</div>`;
-      
+        return `<div class="template-chart"${blockId}${styleAttr}>[Chart will be implemented]</div>`
+
       case 'pageBreak':
-        return `<div class="page-break"${blockId}></div>`;
-      
+        return `<div class="page-break"${blockId}></div>`
+
       default:
-        return `<div class="template-text"${blockId}${styleAttr}>${block.content}</div>`;
+        return `<div class="template-text"${blockId}${styleAttr}>${block.content}</div>`
     }
   }
 
@@ -292,22 +303,22 @@ export class TemplateEngine {
    * Converts block styling object to CSS string
    */
   private static getBlockStyles(styling?: any): string {
-    if (!styling) return '';
-    
-    const styles: string[] = [];
-    
-    if (styling.fontSize) styles.push(`font-size: ${styling.fontSize}px`);
-    if (styling.fontFamily) styles.push(`font-family: ${styling.fontFamily}`);
-    if (styling.fontWeight) styles.push(`font-weight: ${styling.fontWeight}`);
-    if (styling.fontStyle) styles.push(`font-style: ${styling.fontStyle}`);
-    if (styling.textAlign) styles.push(`text-align: ${styling.textAlign}`);
-    if (styling.color) styles.push(`color: ${styling.color}`);
-    if (styling.backgroundColor) styles.push(`background-color: ${styling.backgroundColor}`);
-    if (styling.padding) styles.push(`padding: ${styling.padding}`);
-    if (styling.margin) styles.push(`margin: ${styling.margin}`);
-    if (styling.textDecoration) styles.push(`text-decoration: ${styling.textDecoration}`);
-    
-    return styles.join('; ');
+    if (!styling) return ''
+
+    const styles: string[] = []
+
+    if (styling.fontSize) styles.push(`font-size: ${styling.fontSize}px`)
+    if (styling.fontFamily) styles.push(`font-family: ${styling.fontFamily}`)
+    if (styling.fontWeight) styles.push(`font-weight: ${styling.fontWeight}`)
+    if (styling.fontStyle) styles.push(`font-style: ${styling.fontStyle}`)
+    if (styling.textAlign) styles.push(`text-align: ${styling.textAlign}`)
+    if (styling.color) styles.push(`color: ${styling.color}`)
+    if (styling.backgroundColor) styles.push(`background-color: ${styling.backgroundColor}`)
+    if (styling.padding) styles.push(`padding: ${styling.padding}`)
+    if (styling.margin) styles.push(`margin: ${styling.margin}`)
+    if (styling.textDecoration) styles.push(`text-decoration: ${styling.textDecoration}`)
+
+    return styles.join('; ')
   }
 
   /**
@@ -318,8 +329,8 @@ export class TemplateEngine {
       top: '1in',
       right: '1in',
       bottom: '1in',
-      left: '1in'
-    };
+      left: '1in',
+    }
 
     return `
       @page {
@@ -413,53 +424,59 @@ export class TemplateEngine {
           page-break-after: avoid;
         }
       }
-    `;
+    `
   }
 
   /**
    * Generates a unique ID for reports
    */
   private static generateId(): string {
-    return `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
   /**
    * Validates template data against variable requirements
    */
-  static validateData(template: ReportTemplate, data: Record<string, any>): {
-    isValid: boolean;
-    errors: string[];
-    warnings: string[];
+  static validateData(
+    template: ReportTemplate,
+    data: Record<string, any>
+  ): {
+    isValid: boolean
+    errors: string[]
+    warnings: string[]
   } {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: string[] = []
+    const warnings: string[] = []
 
     // Check required variables
-    template.variables.forEach(variable => {
-      if (variable.required && (data[variable.id] === undefined || data[variable.id] === null || data[variable.id] === '')) {
-        errors.push(`Required variable '${variable.name}' (${variable.id}) is missing`);
+    template.variables.forEach((variable) => {
+      if (
+        variable.required &&
+        (data[variable.id] === undefined || data[variable.id] === null || data[variable.id] === '')
+      ) {
+        errors.push(`Required variable '${variable.name}' (${variable.id}) is missing`)
       }
-    });
+    })
 
     // Type validation
-    template.variables.forEach(variable => {
-      const value = data[variable.id];
+    template.variables.forEach((variable) => {
+      const value = data[variable.id]
       if (value !== undefined && value !== null && value !== '') {
         if (variable.type === 'number' && isNaN(Number(value))) {
-          warnings.push(`Variable '${variable.name}' should be a number but got: ${value}`);
+          warnings.push(`Variable '${variable.name}' should be a number but got: ${value}`)
         }
         if (variable.type === 'date' && isNaN(Date.parse(value))) {
-          warnings.push(`Variable '${variable.name}' should be a valid date but got: ${value}`);
+          warnings.push(`Variable '${variable.name}' should be a valid date but got: ${value}`)
         }
       }
-    });
+    })
 
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
-    };
+      warnings,
+    }
   }
 }
 
-export default TemplateEngine;
+export default TemplateEngine

@@ -8,7 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import AppLayout from '@/components/layout/AppLayout'
 
 interface ClientFormData {
@@ -35,7 +41,7 @@ export default function EditClientPage() {
     email: '',
     phone: '',
     contactPerson: '',
-    status: 'active'
+    status: 'active',
   })
 
   useEffect(() => {
@@ -56,7 +62,7 @@ export default function EditClientPage() {
           email: data.email || `contact@${data.name?.toLowerCase().replace(/\\s+/g, '')}.com`,
           phone: data.phone || '+1 (555) 123-4567',
           contactPerson: data.contact_person || 'John Smith',
-          status: data.status || 'active'
+          status: data.status || 'active',
         })
       } else if (response.status === 404) {
         setError('Client not found')
@@ -89,7 +95,7 @@ export default function EditClientPage() {
           email: formData.email,
           phone: formData.phone,
           contact_person: formData.contactPerson,
-          status: formData.status
+          status: formData.status,
         }),
       })
 
@@ -108,16 +114,16 @@ export default function EditClientPage() {
   }
 
   const handleChange = (field: keyof ClientFormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
   }
 
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <div className="text-lg text-muted-foreground">Loading client details...</div>
         </div>
       </AppLayout>
@@ -128,7 +134,7 @@ export default function EditClientPage() {
     return (
       <AppLayout>
         <div className="p-6">
-          <div className="flex items-center space-x-4 mb-6">
+          <div className="mb-6 flex items-center space-x-4">
             <Button variant="outline" size="icon" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -149,18 +155,20 @@ export default function EditClientPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="mx-auto max-w-4xl p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="icon" onClick={() => router.push(`/clients/${clientId}`)}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => router.push(`/clients/${clientId}`)}
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">Edit Client</h1>
-              <p className="text-muted-foreground">
-                Update client information and status
-              </p>
+              <p className="text-muted-foreground">Update client information and status</p>
             </div>
           </div>
         </div>
@@ -173,12 +181,12 @@ export default function EditClientPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
                   {error}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Company Name */}
                 <div className="space-y-2">
                   <Label htmlFor="name">Company Name *</Label>
@@ -291,18 +299,18 @@ export default function EditClientPage() {
               </div>
 
               {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-6 border-t">
+              <div className="flex justify-end space-x-3 border-t pt-6">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.push(`/clients/${clientId}`)}
                   disabled={saving}
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="mr-2 h-4 w-4" />
                   Cancel
                 </Button>
                 <Button type="submit" disabled={saving}>
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="mr-2 h-4 w-4" />
                   {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>

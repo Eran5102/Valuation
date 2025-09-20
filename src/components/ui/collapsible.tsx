@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from 'react'
+import { cn } from '@/lib/utils'
 
 interface CollapsibleProps {
   children: React.ReactNode
@@ -27,12 +27,8 @@ const Collapsible = React.forwardRef<HTMLDivElement, CollapsibleProps>(
     }
 
     return (
-      <div
-        ref={ref}
-        className={cn("", className)}
-        data-state={isOpen ? "open" : "closed"}
-      >
-        {React.Children.map(children, child =>
+      <div ref={ref} className={cn('', className)} data-state={isOpen ? 'open' : 'closed'}>
+        {React.Children.map(children, (child) =>
           React.isValidElement(child) && child.type === CollapsibleTrigger
             ? React.cloneElement(child, { onClick: handleToggle } as any)
             : child
@@ -41,7 +37,7 @@ const Collapsible = React.forwardRef<HTMLDivElement, CollapsibleProps>(
     )
   }
 )
-Collapsible.displayName = "Collapsible"
+Collapsible.displayName = 'Collapsible'
 
 interface CollapsibleTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode
@@ -52,14 +48,17 @@ const CollapsibleTrigger = React.forwardRef<HTMLButtonElement, CollapsibleTrigge
     <button
       ref={ref}
       type="button"
-      className={cn("flex w-full items-center justify-between py-2 font-medium transition-all hover:underline", className)}
+      className={cn(
+        'flex w-full items-center justify-between py-2 font-medium transition-all hover:underline',
+        className
+      )}
       {...props}
     >
       {children}
     </button>
   )
 )
-CollapsibleTrigger.displayName = "CollapsibleTrigger"
+CollapsibleTrigger.displayName = 'CollapsibleTrigger'
 
 interface CollapsibleContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
@@ -73,17 +72,13 @@ const CollapsibleContent = React.forwardRef<HTMLDivElement, CollapsibleContentPr
     if (!isOpen) return null
 
     return (
-      <div
-        ref={ref}
-        className={cn("overflow-hidden transition-all", className)}
-        {...props}
-      >
+      <div ref={ref} className={cn('overflow-hidden transition-all', className)} {...props}>
         {children}
       </div>
     )
   }
 )
-CollapsibleContent.displayName = "CollapsibleContent"
+CollapsibleContent.displayName = 'CollapsibleContent'
 
 const CollapsibleContext = React.createContext<HTMLDivElement | null>(null)
 

@@ -1,19 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import ApiHandler from '@/lib/middleware/apiHandler';
-import { jobManager } from '@/lib/jobs/jobManager';
+import { NextRequest, NextResponse } from 'next/server'
+import ApiHandler from '@/lib/middleware/apiHandler'
+import { jobManager } from '@/lib/jobs/jobManager'
 
 // GET /api/jobs/[id] - Get specific job status
-export const GET = ApiHandler.handle(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
-    const jobId = params.id;
-    const job = jobManager.getJobStatus(jobId);
+export const GET = async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id: jobId } = await params
+    const job = jobManager.getJobStatus(jobId)
 
     if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
-      );
-    }
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+  }
 
     return NextResponse.json({
       job: {
@@ -30,86 +26,49 @@ export const GET = ApiHandler.handle(
         createdAt: job.createdAt,
         startedAt: job.startedAt,
         completedAt: job.completedAt,
-        failedAt: job.failedAt
+        failedAt: job.failedAt,
       },
-      timestamp: new Date().toISOString()
-    });
-  },
-  {
-    cache: {
-      maxAge: 5, // Cache for 5 seconds
-      private: true
-    },
-    rateLimit: {
-      requests: 200,
-      window: 60000
-    },
-    security: true,
-    monitoring: true
-  }
-);
+      timestamp: new Date().toISOString(),
+    })
+}
 
 // DELETE /api/jobs/[id] - Cancel a job
-export const DELETE = ApiHandler.handle(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
-    const jobId = params.id;
-    const success = await jobManager.cancelJob(jobId);
+export const DELETE = async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id: jobId } = await params
+    const success = await jobManager.cancelJob(jobId)
 
     if (!success) {
-      return NextResponse.json(
-        { error: 'Job not found or cannot be cancelled' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Job not found or cannot be cancelled' }, { status: 404 })
     }
 
     return NextResponse.json({
       message: 'Job cancelled successfully',
       jobId,
-      timestamp: new Date().toISOString()
-    });
-  },
-  {
-    rateLimit: {
-      requests: 30,
-      window: 60000
-    },
-    security: true,
-    monitoring: true
-  }
-);
+      timestamp: new Date().toISOString(),
+    })
+}
 
 // POST /api/jobs/[id]/retry - Retry a failed job
-export const POST = ApiHandler.handle(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
-    const jobId = params.id;
-    const success = await jobManager.retryJob(jobId);
+export const POST = async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id: jobId } = await params
+    const success = await jobManager.retryJob(jobId)
 
     if (!success) {
-      return NextResponse.json(
-        { error: 'Job not found or cannot be retried' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Job not found or cannot be retried' }, { status: 404 })
     }
 
-    const job = jobManager.getJobStatus(jobId);
+    const job = jobManager.getJobStatus(jobId)
 
     return NextResponse.json({
       message: 'Job retry initiated successfully',
       jobId,
-      job: job ? {
-        id: job.id,
-        status: job.status,
-        attempts: job.attempts
-      } : null,
-      timestamp: new Date().toISOString()
-    });
-  },
-  {
-    rateLimit: {
-      requests: 20,
-      window: 60000
-    },
-    security: true,
-    monitoring: true
-  }
-);
+      job: job
+        ? {
+            id: job.id,
+            status: job.status,
+            attempts: job.attempts,
+        }
+        : null,
+      timestamp: new Date().toISOString(),
+    })
+}

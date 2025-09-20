@@ -1,9 +1,9 @@
-import JobQueue from './jobQueue';
-import { registerValuationProcessors } from './processors/valuationProcessors';
+import JobQueue from './jobQueue'
+import { registerValuationProcessors } from './processors/valuationProcessors'
 
 class JobManager {
-  private static instance: JobManager;
-  private queue: JobQueue;
+  private static instance: JobManager
+  private queue: JobQueue
 
   private constructor() {
     // Initialize job queue with optimized settings
@@ -12,27 +12,27 @@ class JobManager {
       maxAttempts: 3,
       defaultDelay: 0,
       retryDelay: 5000,
-      jobTimeout: 10 * 60 * 1000 // 10 minutes for heavy operations
-    });
+      jobTimeout: 10 * 60 * 1000, // 10 minutes for heavy operations
+    })
 
     // Register all job processors
-    this.registerProcessors();
+    this.registerProcessors()
 
-    console.log('JobManager initialized with background processing');
+    console.log('JobManager initialized with background processing')
   }
 
   static getInstance(): JobManager {
     if (!JobManager.instance) {
-      JobManager.instance = new JobManager();
+      JobManager.instance = new JobManager()
     }
-    return JobManager.instance;
+    return JobManager.instance
   }
 
   /**
    * Register all job processors
    */
   private registerProcessors(): void {
-    registerValuationProcessors(this.queue);
+    registerValuationProcessors(this.queue)
   }
 
   /**
@@ -51,13 +51,13 @@ class JobManager {
         valuationId,
         companyId,
         assumptions,
-        shareClasses
+        shareClasses,
       },
       {
         priority,
-        maxAttempts: 2 // Valuation calculations are critical
+        maxAttempts: 2, // Valuation calculations are critical
       }
-    );
+    )
   }
 
   /**
@@ -77,13 +77,13 @@ class JobManager {
         templateId,
         format,
         includeCharts: options.includeCharts || false,
-        watermark: options.watermark
+        watermark: options.watermark,
       },
       {
         priority,
-        delay: 2000 // Small delay to allow valuation to complete first
+        delay: 2000, // Small delay to allow valuation to complete first
       }
-    );
+    )
   }
 
   /**
@@ -102,13 +102,13 @@ class JobManager {
         type,
         format,
         filters,
-        dateRange
+        dateRange,
       },
       {
         priority,
-        maxAttempts: 2
+        maxAttempts: 2,
       }
-    );
+    )
   }
 
   /**
@@ -119,9 +119,9 @@ class JobManager {
     template: string,
     data: Record<string, any>,
     attachments?: Array<{
-      filename: string;
-      content: Buffer;
-      contentType: string;
+      filename: string
+      content: Buffer
+      contentType: string
     }>,
     priority: number = 0
   ): Promise<string> {
@@ -131,13 +131,13 @@ class JobManager {
         to,
         template,
         data,
-        attachments
+        attachments,
       },
       {
         priority,
-        maxAttempts: 3 // Retry email notifications
+        maxAttempts: 3, // Retry email notifications
       }
-    );
+    )
   }
 
   /**
@@ -145,113 +145,110 @@ class JobManager {
    */
   async queueBulkOperation(
     operations: Array<{
-      type: string;
-      data: any;
-      priority?: number;
-      delay?: number;
+      type: string
+      data: any
+      priority?: number
+      delay?: number
     }>
   ): Promise<string[]> {
-    const jobIds: string[] = [];
+    const jobIds: string[] = []
 
     for (const operation of operations) {
-      const jobId = await this.queue.add(
-        operation.type,
-        operation.data,
-        {
-          priority: operation.priority || 0,
-          delay: operation.delay || 0
-        }
-      );
-      jobIds.push(jobId);
+      const jobId = await this.queue.add(operation.type, operation.data, {
+        priority: operation.priority || 0,
+        delay: operation.delay || 0,
+      })
+      jobIds.push(jobId)
     }
 
-    console.log(`Queued ${operations.length} bulk operations`);
-    return jobIds;
+    console.log(`Queued ${operations.length} bulk operations`)
+    return jobIds
   }
 
   /**
    * Get job status
    */
   getJobStatus(jobId: string) {
-    return this.queue.getJob(jobId);
+    return this.queue.getJob(jobId)
   }
 
   /**
    * Get jobs by status
    */
   getJobsByStatus(status: 'pending' | 'processing' | 'completed' | 'failed' | 'delayed') {
-    return this.queue.getJobsByStatus(status);
+    return this.queue.getJobsByStatus(status)
   }
 
   /**
    * Get jobs by type
    */
   getJobsByType(type: string) {
-    return this.queue.getJobsByType(type);
+    return this.queue.getJobsByType(type)
   }
 
   /**
    * Cancel a job
    */
   async cancelJob(jobId: string): Promise<boolean> {
-    return await this.queue.cancel(jobId);
+    return await this.queue.cancel(jobId)
   }
 
   /**
    * Retry a failed job
    */
   async retryJob(jobId: string): Promise<boolean> {
-    return await this.queue.retry(jobId);
+    return await this.queue.retry(jobId)
   }
 
   /**
    * Get queue statistics
    */
   getStats() {
-    return this.queue.getStats();
+    return this.queue.getStats()
   }
 
   /**
    * Clean old jobs
    */
   cleanOldJobs(ageInHours: number = 24): number {
-    return this.queue.clean(ageInHours * 60 * 60 * 1000);
+    return this.queue.clean(ageInHours * 60 * 60 * 1000)
   }
 
   /**
    * Health check for job system
    */
   getHealthStatus(): {
-    status: 'healthy' | 'warning' | 'critical';
-    stats: any;
-    issues: string[];
+    status: 'healthy' | 'warning' | 'critical'
+    stats: any
+    issues: string[]
   } {
-    const stats = this.getStats();
-    const issues: string[] = [];
-    let status: 'healthy' | 'warning' | 'critical' = 'healthy';
+    const stats = this.getStats()
+    const issues: string[] = []
+    let status: 'healthy' | 'warning' | 'critical' = 'healthy'
 
     // Check for concerning metrics
     if (stats.failed > stats.completed * 0.1) {
-      issues.push('High failure rate detected');
-      status = 'warning';
+      issues.push('High failure rate detected')
+      status = 'warning'
     }
 
     if (stats.pending > 100) {
-      issues.push('Large number of pending jobs');
-      status = 'warning';
+      issues.push('Large number of pending jobs')
+      status = 'warning'
     }
 
     if (stats.processing === 0 && stats.pending > 0) {
-      issues.push('Jobs not being processed');
-      status = 'critical';
+      issues.push('Jobs not being processed')
+      status = 'critical'
     }
 
-    if (stats.averageProcessingTime > 5 * 60 * 1000) { // 5 minutes
-      issues.push('Slow job processing detected');
-      status = status === 'critical' ? 'critical' : 'warning';
+    if (stats.averageProcessingTime > 5 * 60 * 1000) {
+      // 5 minutes
+      issues.push('Slow job processing detected')
+      status = status === 'critical' ? 'critical' : 'warning'
     }
 
-    return { status, stats, issues };
+    return { status, stats, issues }
   }
 
   /**
@@ -259,23 +256,23 @@ class JobManager {
    */
   async processWorkflow(
     workflow: Array<{
-      type: string;
-      data: any;
-      dependsOn?: string; // Job ID this job depends on
-      delay?: number;
+      type: string
+      data: any
+      dependsOn?: string // Job ID this job depends on
+      delay?: number
     }>
   ): Promise<{ workflowId: string; jobIds: string[] }> {
-    const workflowId = `workflow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const jobIds: string[] = [];
+    const workflowId = `workflow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const jobIds: string[] = []
 
     for (const step of workflow) {
-      let delay = step.delay || 0;
+      let delay = step.delay || 0
 
       // If this step depends on another job, add delay to allow completion
       if (step.dependsOn) {
-        const dependentJob = this.queue.getJob(step.dependsOn);
+        const dependentJob = this.queue.getJob(step.dependsOn)
         if (dependentJob && dependentJob.status !== 'completed') {
-          delay = Math.max(delay, 30000); // Minimum 30 second delay for dependencies
+          delay = Math.max(delay, 30000) // Minimum 30 second delay for dependencies
         }
       }
 
@@ -284,26 +281,26 @@ class JobManager {
         {
           ...step.data,
           workflowId,
-          dependsOn: step.dependsOn
+          dependsOn: step.dependsOn,
         },
         { delay }
-      );
+      )
 
-      jobIds.push(jobId);
+      jobIds.push(jobId)
     }
 
-    console.log(`Started workflow ${workflowId} with ${workflow.length} steps`);
-    return { workflowId, jobIds };
+    console.log(`Started workflow ${workflowId} with ${workflow.length} steps`)
+    return { workflowId, jobIds }
   }
 
   /**
    * Graceful shutdown
    */
   async shutdown(): Promise<void> {
-    await this.queue.shutdown();
+    await this.queue.shutdown()
   }
 }
 
 // Export singleton instance
-export const jobManager = JobManager.getInstance();
-export default JobManager;
+export const jobManager = JobManager.getInstance()
+export default JobManager

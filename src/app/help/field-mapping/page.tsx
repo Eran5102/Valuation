@@ -211,7 +211,7 @@ const FieldMappingHelp = () => {
                     </p>
                     <div className="bg-muted p-3 rounded-md">
                       <code className="text-sm">
-                        transformer: (value) => formatCurrency(value)
+                        {`transformer: (value) => formatCurrency(value)`}
                       </code>
                     </div>
                   </CollapsibleContent>
@@ -234,9 +234,9 @@ const FieldMappingHelp = () => {
                     </p>
                     <div className="bg-muted p-3 rounded-md">
                       <code className="text-sm">
-                        required: true,<br />
-                        validator: (value) => value > 0,<br />
-                        fallback: 'Default Value'
+                        {`required: true,`}<br />
+                        {`validator: (value) => value > 0,`}<br />
+                        {`fallback: 'Default Value'`}
                       </code>
                     </div>
                   </CollapsibleContent>

@@ -17,11 +17,14 @@ interface PerformanceStats {
   averageResponseTime: number
   errorRate: number
   cacheHitRate: number
-  byTable: Record<string, {
-    count: number
-    avgDuration: number
-    slowCount: number
-  }>
+  byTable: Record<
+    string,
+    {
+      count: number
+      avgDuration: number
+      slowCount: number
+    }
+  >
 }
 
 class QueryMonitor {
@@ -32,7 +35,7 @@ class QueryMonitor {
   private readonly alertThresholds = {
     slowQueryRate: 0.1, // 10% slow queries triggers alert
     errorRate: 0.05, // 5% error rate triggers alert
-    avgResponseTime: 500 // 500ms average response time triggers alert
+    avgResponseTime: 500, // 500ms average response time triggers alert
   }
 
   private constructor() {
@@ -52,7 +55,7 @@ class QueryMonitor {
   recordQuery(metric: Omit<QueryMetrics, 'timestamp'>): void {
     const fullMetric: QueryMetrics = {
       ...metric,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
 
     this.metrics.push(fullMetric)
@@ -72,7 +75,7 @@ class QueryMonitor {
         operation: metric.operation,
         duration: `${metric.duration}ms`,
         queryType: metric.queryType,
-        timestamp: fullMetric.timestamp.toISOString()
+        timestamp: fullMetric.timestamp.toISOString(),
       })
     }
   }
@@ -82,7 +85,7 @@ class QueryMonitor {
    */
   getStats(timeWindowMinutes: number = 60): PerformanceStats {
     const cutoff = new Date(Date.now() - timeWindowMinutes * 60 * 1000)
-    const recentMetrics = this.metrics.filter(m => m.timestamp >= cutoff)
+    const recentMetrics = this.metrics.filter((m) => m.timestamp >= cutoff)
 
     if (recentMetrics.length === 0) {
       return {
@@ -91,18 +94,18 @@ class QueryMonitor {
         averageResponseTime: 0,
         errorRate: 0,
         cacheHitRate: 0,
-        byTable: {}
+        byTable: {},
       }
     }
 
-    const slowQueries = recentMetrics.filter(m => m.duration > this.slowQueryThreshold)
-    const errors = recentMetrics.filter(m => !m.success)
-    const cacheHits = recentMetrics.filter(m => m.cacheHit === true)
+    const slowQueries = recentMetrics.filter((m) => m.duration > this.slowQueryThreshold)
+    const errors = recentMetrics.filter((m) => !m.success)
+    const cacheHits = recentMetrics.filter((m) => m.cacheHit === true)
 
     const byTable: Record<string, { count: number; avgDuration: number; slowCount: number }> = {}
 
     // Group by table
-    recentMetrics.forEach(metric => {
+    recentMetrics.forEach((metric) => {
       if (!byTable[metric.table]) {
         byTable[metric.table] = { count: 0, avgDuration: 0, slowCount: 0 }
       }
@@ -114,7 +117,7 @@ class QueryMonitor {
     })
 
     // Calculate averages
-    Object.keys(byTable).forEach(table => {
+    Object.keys(byTable).forEach((table) => {
       byTable[table].avgDuration = byTable[table].avgDuration / byTable[table].count
     })
 
@@ -126,7 +129,7 @@ class QueryMonitor {
       averageResponseTime: totalDuration / recentMetrics.length,
       errorRate: errors.length / recentMetrics.length,
       cacheHitRate: cacheHits.length / recentMetrics.length,
-      byTable
+      byTable,
     }
   }
 
@@ -135,7 +138,7 @@ class QueryMonitor {
    */
   getSlowQueries(limit: number = 50): QueryMetrics[] {
     return this.metrics
-      .filter(m => m.duration > this.slowQueryThreshold)
+      .filter((m) => m.duration > this.slowQueryThreshold)
       .sort((a, b) => b.duration - a.duration)
       .slice(0, limit)
   }
@@ -145,7 +148,7 @@ class QueryMonitor {
    */
   getRecentErrors(limit: number = 50): QueryMetrics[] {
     return this.metrics
-      .filter(m => !m.success)
+      .filter((m) => !m.success)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, limit)
   }
@@ -165,7 +168,7 @@ class QueryMonitor {
         rate: `${(slowQueryRate * 100).toFixed(1)}%`,
         threshold: `${(this.alertThresholds.slowQueryRate * 100).toFixed(1)}%`,
         slowQueries: stats.slowQueries,
-        totalQueries: stats.totalQueries
+        totalQueries: stats.totalQueries,
       })
     }
 
@@ -173,7 +176,7 @@ class QueryMonitor {
     if (stats.errorRate > this.alertThresholds.errorRate) {
       console.error('Performance Alert: High error rate', {
         rate: `${(stats.errorRate * 100).toFixed(1)}%`,
-        threshold: `${(this.alertThresholds.errorRate * 100).toFixed(1)}%`
+        threshold: `${(this.alertThresholds.errorRate * 100).toFixed(1)}%`,
       })
     }
 
@@ -181,7 +184,7 @@ class QueryMonitor {
     if (stats.averageResponseTime > this.alertThresholds.avgResponseTime) {
       console.error('Performance Alert: High average response time', {
         current: `${stats.averageResponseTime.toFixed(0)}ms`,
-        threshold: `${this.alertThresholds.avgResponseTime}ms`
+        threshold: `${this.alertThresholds.avgResponseTime}ms`,
       })
     }
   }
@@ -190,10 +193,13 @@ class QueryMonitor {
    * Periodic cleanup of old metrics
    */
   private setupPeriodicCleanup(): void {
-    setInterval(() => {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      this.metrics = this.metrics.filter(m => m.timestamp >= oneDayAgo)
-    }, 60 * 60 * 1000) // Clean up every hour
+    setInterval(
+      () => {
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+        this.metrics = this.metrics.filter((m) => m.timestamp >= oneDayAgo)
+      },
+      60 * 60 * 1000
+    ) // Clean up every hour
   }
 
   /**
@@ -207,7 +213,7 @@ class QueryMonitor {
     return {
       stats: this.getStats(),
       slowQueries: this.getSlowQueries(20),
-      recentErrors: this.getRecentErrors(20)
+      recentErrors: this.getRecentErrors(20),
     }
   }
 
@@ -240,7 +246,7 @@ export function withQueryMonitoring<T extends any[], R>(
         operation: operationType,
         duration,
         success: true,
-        rowsAffected: Array.isArray(result) ? result.length : 1
+        rowsAffected: Array.isArray(result) ? result.length : 1,
       })
 
       return result
@@ -253,7 +259,7 @@ export function withQueryMonitoring<T extends any[], R>(
         operation: operationType,
         duration,
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       })
 
       throw error

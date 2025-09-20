@@ -10,8 +10,14 @@ interface AssumptionInputProps {
   onGetAssumptionValue?: (assumptionId: string) => string | number
 }
 
-export function AssumptionInput({ assumption, categoryId, onChange, onGetAssumptionValue }: AssumptionInputProps) {
-  const baseClasses = "w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+export function AssumptionInput({
+  assumption,
+  categoryId,
+  onChange,
+  onGetAssumptionValue,
+}: AssumptionInputProps) {
+  const baseClasses =
+    'w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring'
 
   // Special case for risk-free rate - use the specialized Treasury integration component
   if (assumption.id === 'risk_free_rate') {
@@ -34,12 +40,14 @@ export function AssumptionInput({ assumption, categoryId, onChange, onGetAssumpt
           className={baseClasses}
         >
           <option value="">Select...</option>
-          {assumption.options?.map(option => (
-            <option key={option} value={option}>{option}</option>
+          {assumption.options?.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
           ))}
         </select>
       )
-    
+
     case 'percentage':
       return (
         <div className="relative">
@@ -51,14 +59,16 @@ export function AssumptionInput({ assumption, categoryId, onChange, onGetAssumpt
             step="0.1"
             placeholder="0.0"
           />
-          <Percent className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Percent className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
         </div>
       )
-    
+
     case 'currency':
       return (
         <div className="relative">
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 transform text-muted-foreground">
+            $
+          </span>
           <input
             type="number"
             value={assumption.value}
@@ -68,7 +78,7 @@ export function AssumptionInput({ assumption, categoryId, onChange, onGetAssumpt
           />
         </div>
       )
-    
+
     case 'date':
       return (
         <input
@@ -78,7 +88,7 @@ export function AssumptionInput({ assumption, categoryId, onChange, onGetAssumpt
           className={baseClasses}
         />
       )
-    
+
     case 'number':
       return (
         <input
@@ -89,7 +99,7 @@ export function AssumptionInput({ assumption, categoryId, onChange, onGetAssumpt
           step="0.01"
         />
       )
-    
+
     default:
       return (
         <input

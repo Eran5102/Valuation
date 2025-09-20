@@ -1,58 +1,58 @@
-import { NextRequest, NextResponse } from 'next/server';
-import QueryMonitor from '@/lib/monitoring/queryMonitor';
+import { NextRequest, NextResponse } from 'next/server'
+import QueryMonitor from '@/lib/monitoring/queryMonitor'
 
 // GET /api/monitoring/performance - Get performance metrics
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const timeWindow = parseInt(searchParams.get('timeWindow') || '60'); // minutes
-    const includeDetails = searchParams.get('details') === 'true';
+    const { searchParams } = new URL(request.url)
+    const timeWindow = parseInt(searchParams.get('timeWindow') || '60') // minutes
+    const includeDetails = searchParams.get('details') === 'true'
 
-    const monitor = QueryMonitor.getInstance();
-    const stats = monitor.getStats(timeWindow);
+    const monitor = QueryMonitor.getInstance()
+    const stats = monitor.getStats(timeWindow)
 
     const response: any = {
       timeWindow: `${timeWindow} minutes`,
       stats,
-      timestamp: new Date().toISOString()
-    };
-
-    if (includeDetails) {
-      response.slowQueries = monitor.getSlowQueries(20);
-      response.recentErrors = monitor.getRecentErrors(10);
+      timestamp: new Date().toISOString(),
     }
 
-    return NextResponse.json(response);
+    if (includeDetails) {
+      response.slowQueries = monitor.getSlowQueries(20)
+      response.recentErrors = monitor.getRecentErrors(10)
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
-    console.error('Error fetching performance metrics:', error);
+    console.error('Error fetching performance metrics:', error)
     return NextResponse.json(
       {
         error: 'Internal Server Error',
-        message: 'Failed to fetch performance metrics'
+        message: 'Failed to fetch performance metrics',
       },
       { status: 500 }
-    );
+    )
   }
 }
 
 // POST /api/monitoring/performance/clear - Clear metrics (for testing)
 export async function POST() {
   try {
-    const monitor = QueryMonitor.getInstance();
-    monitor.clearMetrics();
+    const monitor = QueryMonitor.getInstance()
+    monitor.clearMetrics()
 
     return NextResponse.json({
       message: 'Metrics cleared successfully',
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+    })
   } catch (error) {
-    console.error('Error clearing metrics:', error);
+    console.error('Error clearing metrics:', error)
     return NextResponse.json(
       {
         error: 'Internal Server Error',
-        message: 'Failed to clear metrics'
+        message: 'Failed to clear metrics',
       },
       { status: 500 }
-    );
+    )
   }
 }

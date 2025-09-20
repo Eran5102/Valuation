@@ -26,7 +26,7 @@ export function SimplifiedReportForm({
   reportSettings,
   onCustomContentChange,
   onReportSettingsChange,
-  selectedValuation
+  selectedValuation,
 }: Props) {
   const [templateContent, setTemplateContent] = useState<string>('')
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(true)
@@ -45,7 +45,9 @@ export function SimplifiedReportForm({
       setTemplateError(null)
 
       // Create a complete 409A template with real data from the selected valuation
-      const fairMarketValue = (selectedValuation.value / Math.floor(selectedValuation.value / 15)).toFixed(2)
+      const fairMarketValue = (
+        selectedValuation.value / Math.floor(selectedValuation.value / 15)
+      ).toFixed(2)
       const totalShares = Math.floor(selectedValuation.value / 15)
       const valuationDate = selectedValuation.completedDate || selectedValuation.createdDate
 
@@ -145,7 +147,7 @@ export function SimplifiedReportForm({
   const updateSetting = (field: keyof ReportSettings, value: any) => {
     onReportSettingsChange({
       ...reportSettings,
-      [field]: value
+      [field]: value,
     })
   }
 
@@ -163,38 +165,39 @@ export function SimplifiedReportForm({
           <div className="space-y-2">
             <Label>Edit 409A Valuation Report</Label>
             {isLoadingTemplate ? (
-              <div className="flex items-center justify-center p-8 border rounded-md">
-                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <div className="flex items-center justify-center rounded-md border p-8">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                 <span>Loading template...</span>
               </div>
             ) : templateError ? (
-              <div className="p-4 border border-red-200 rounded-md bg-red-50">
+              <div className="rounded-md border border-red-200 bg-red-50 p-4">
                 <p className="text-red-600">{templateError}</p>
                 <button
                   onClick={loadTemplateContent}
-                  className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                  className="mt-2 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
                 >
                   Retry
                 </button>
               </div>
             ) : (
-              <div className="border rounded-md">
+              <div className="rounded-md border">
                 <textarea
                   value={customContent || templateContent}
                   onChange={(e) => handleEditorChange(e.target.value)}
-                  className="w-full h-[600px] p-4 border-0 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="h-[600px] w-full resize-none border-0 p-4 focus:outline-none focus:ring-2 focus:ring-primary/20"
                   style={{
                     fontFamily: "'Times New Roman', Times, serif",
                     fontSize: '12pt',
                     lineHeight: '1.6',
-                    color: '#333'
+                    color: '#333',
                   }}
                   placeholder="Edit the 409A report template content here..."
                 />
               </div>
             )}
             <p className="text-sm text-muted-foreground">
-              This is the complete 409A valuation report template. You can edit any section, add content, modify formatting, or customize the layout as needed.
+              This is the complete 409A valuation report template. You can edit any section, add
+              content, modify formatting, or customize the layout as needed.
             </p>
           </div>
         </CardContent>
@@ -209,7 +212,7 @@ export function SimplifiedReportForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label htmlFor="includeHeader">Include Header</Label>
@@ -235,7 +238,7 @@ export function SimplifiedReportForm({
                   id="format"
                   value={reportSettings.format}
                   onChange={(e) => updateSetting('format', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md bg-background"
+                  className="w-full rounded-md border border-gray-300 bg-background p-2"
                 >
                   <option value="A4">A4</option>
                   <option value="Letter">Letter</option>
@@ -247,7 +250,7 @@ export function SimplifiedReportForm({
                   id="orientation"
                   value={reportSettings.orientation}
                   onChange={(e) => updateSetting('orientation', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md bg-background"
+                  className="w-full rounded-md border border-gray-300 bg-background p-2"
                 >
                   <option value="portrait">Portrait</option>
                   <option value="landscape">Landscape</option>

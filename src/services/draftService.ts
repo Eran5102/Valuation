@@ -1,33 +1,33 @@
-'use client';
+'use client'
 
-import type { ReportTemplate, GeneratedReport } from '@/lib/templates/types';
+import type { ReportTemplate, GeneratedReport } from '@/lib/templates/types'
 
 export interface SavedDraft {
-  id: string;
-  name: string;
-  template: ReportTemplate;
-  data: Record<string, any>;
-  generatedHTML?: string;
-  status: 'draft' | 'final';
-  createdAt: string;
-  updatedAt: string;
-  clientName?: string;
-  description?: string;
+  id: string
+  name: string
+  template: ReportTemplate
+  data: Record<string, any>
+  generatedHTML?: string
+  status: 'draft' | 'final'
+  createdAt: string
+  updatedAt: string
+  clientName?: string
+  description?: string
 }
 
 class DraftService {
-  private readonly STORAGE_KEY = 'valuation_drafts';
+  private readonly STORAGE_KEY = 'valuation_drafts'
 
   /**
    * Get all saved drafts from localStorage
    */
   getAllDrafts(): SavedDraft[] {
     try {
-      const drafts = localStorage.getItem(this.STORAGE_KEY);
-      return drafts ? JSON.parse(drafts) : [];
+      const drafts = localStorage.getItem(this.STORAGE_KEY)
+      return drafts ? JSON.parse(drafts) : []
     } catch (error) {
-      console.error('Error loading drafts:', error);
-      return [];
+      console.error('Error loading drafts:', error)
+      return []
     }
   }
 
@@ -35,39 +35,41 @@ class DraftService {
    * Get a specific draft by ID
    */
   getDraft(id: string): SavedDraft | null {
-    const drafts = this.getAllDrafts();
-    return drafts.find(draft => draft.id === id) || null;
+    const drafts = this.getAllDrafts()
+    return drafts.find((draft) => draft.id === id) || null
   }
 
   /**
    * Save a new draft or update existing one
    */
-  saveDraft(draft: Omit<SavedDraft, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): SavedDraft {
-    const drafts = this.getAllDrafts();
-    const now = new Date().toISOString();
+  saveDraft(
+    draft: Omit<SavedDraft, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): SavedDraft {
+    const drafts = this.getAllDrafts()
+    const now = new Date().toISOString()
 
-    let savedDraft: SavedDraft;
+    let savedDraft: SavedDraft
 
     if (draft.id) {
       // Update existing draft
-      const index = drafts.findIndex(d => d.id === draft.id);
+      const index = drafts.findIndex((d) => d.id === draft.id)
       if (index !== -1) {
         savedDraft = {
           ...drafts[index],
           ...draft,
           id: draft.id,
-          updatedAt: now
-        };
-        drafts[index] = savedDraft;
+          updatedAt: now,
+        }
+        drafts[index] = savedDraft
       } else {
         // Create new if not found
         savedDraft = {
           ...draft,
           id: this.generateId(),
           createdAt: now,
-          updatedAt: now
-        };
-        drafts.unshift(savedDraft);
+          updatedAt: now,
+        }
+        drafts.unshift(savedDraft)
       }
     } else {
       // Create new draft
@@ -75,85 +77,85 @@ class DraftService {
         ...draft,
         id: this.generateId(),
         createdAt: now,
-        updatedAt: now
-      };
-      drafts.unshift(savedDraft);
+        updatedAt: now,
+      }
+      drafts.unshift(savedDraft)
     }
 
-    this.saveDrafts(drafts);
-    return savedDraft;
+    this.saveDrafts(drafts)
+    return savedDraft
   }
 
   /**
    * Delete a draft
    */
   deleteDraft(id: string): boolean {
-    const drafts = this.getAllDrafts();
-    const filteredDrafts = drafts.filter(draft => draft.id !== id);
+    const drafts = this.getAllDrafts()
+    const filteredDrafts = drafts.filter((draft) => draft.id !== id)
 
     if (filteredDrafts.length !== drafts.length) {
-      this.saveDrafts(filteredDrafts);
-      return true;
+      this.saveDrafts(filteredDrafts)
+      return true
     }
-    return false;
+    return false
   }
 
   /**
    * Duplicate a draft
    */
   duplicateDraft(id: string, newName?: string): SavedDraft | null {
-    const originalDraft = this.getDraft(id);
-    if (!originalDraft) return null;
+    const originalDraft = this.getDraft(id)
+    if (!originalDraft) return null
 
     const duplicatedDraft = {
       ...originalDraft,
       name: newName || `${originalDraft.name} (Copy)`,
-      status: 'draft' as const
-    };
+      status: 'draft' as const,
+    }
 
-    delete (duplicatedDraft as any).id;
-    return this.saveDraft(duplicatedDraft);
+    delete (duplicatedDraft as any).id
+    return this.saveDraft(duplicatedDraft)
   }
 
   /**
    * Finalize a draft (change status to final)
    */
   finalizeDraft(id: string): SavedDraft | null {
-    const draft = this.getDraft(id);
-    if (!draft) return null;
+    const draft = this.getDraft(id)
+    if (!draft) return null
 
     return this.saveDraft({
       ...draft,
-      status: 'final'
-    });
+      status: 'final',
+    })
   }
 
   /**
    * Get drafts with statistics
    */
   getDraftStatistics() {
-    const drafts = this.getAllDrafts();
+    const drafts = this.getAllDrafts()
     return {
       total: drafts.length,
-      drafts: drafts.filter(d => d.status === 'draft').length,
-      final: drafts.filter(d => d.status === 'final').length,
-      recent: drafts.filter(d => {
-        const updatedAt = new Date(d.updatedAt);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return updatedAt > weekAgo;
-      }).length
-    };
+      drafts: drafts.filter((d) => d.status === 'draft').length,
+      final: drafts.filter((d) => d.status === 'final').length,
+      recent: drafts.filter((d) => {
+        const updatedAt = new Date(d.updatedAt)
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        return updatedAt > weekAgo
+      }).length,
+    }
   }
 
   /**
    * Export draft as JSON
    */
   exportDraft(id: string): string | null {
-    const draft = this.getDraft(id);
-    if (!draft) return null;
+    const draft = this.getDraft(id)
+    if (!draft) return null
 
-    return JSON.stringify(draft, null, 2);
+    return JSON.stringify(draft, null, 2)
   }
 
   /**
@@ -161,19 +163,19 @@ class DraftService {
    */
   importDraft(jsonString: string): SavedDraft | null {
     try {
-      const draft = JSON.parse(jsonString);
+      const draft = JSON.parse(jsonString)
 
       // Validate basic structure
       if (!draft.template || !draft.name) {
-        throw new Error('Invalid draft format');
+        throw new Error('Invalid draft format')
       }
 
       // Remove ID to create as new
-      delete draft.id;
-      return this.saveDraft(draft);
+      delete draft.id
+      return this.saveDraft(draft)
     } catch (error) {
-      console.error('Error importing draft:', error);
-      return null;
+      console.error('Error importing draft:', error)
+      return null
     }
   }
 
@@ -181,7 +183,7 @@ class DraftService {
    * Clear all drafts (for cleanup)
    */
   clearAllDrafts(): void {
-    localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.STORAGE_KEY)
   }
 
   /**
@@ -189,17 +191,17 @@ class DraftService {
    */
   private saveDrafts(drafts: SavedDraft[]): void {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(drafts));
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(drafts))
     } catch (error) {
-      console.error('Error saving drafts:', error);
+      console.error('Error saving drafts:', error)
     }
   }
 
   private generateId(): string {
-    return `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 }
 
 // Export singleton instance
-export const draftService = new DraftService();
-export default draftService;
+export const draftService = new DraftService()
+export default draftService

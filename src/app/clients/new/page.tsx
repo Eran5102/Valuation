@@ -3,12 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { 
-  ArrowLeft,
-  Building2,
-  MapPin,
-  User
-} from 'lucide-react'
+import { ArrowLeft, Building2, MapPin, User } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 
 export default function NewClientPage() {
@@ -25,14 +20,16 @@ export default function NewClientPage() {
     zipCode: '',
     industry: '',
     website: '',
-    description: ''
+    description: '',
   })
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
@@ -43,10 +40,10 @@ export default function NewClientPage() {
     try {
       // In a real app, this would save to Supabase
       // TODO: Implement actual API call to save client
-      
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
       // Redirect back to clients page
       router.push('/clients')
     } catch (error) {
@@ -58,13 +55,10 @@ export default function NewClientPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center space-x-4">
-          <Link 
-            href="/clients"
-            className="p-2 hover:bg-muted rounded-md transition-colors"
-          >
+          <Link href="/clients" className="rounded-md p-2 transition-colors hover:bg-muted">
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Link>
           <div>
@@ -76,17 +70,20 @@ export default function NewClientPage() {
         </div>
 
         {/* Form */}
-        <div className="bg-card shadow rounded-lg border border-border">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div className="rounded-lg border border-border bg-card shadow">
+          <form onSubmit={handleSubmit} className="space-y-6 p-6">
             {/* Company Information */}
             <div>
-              <h3 className="text-lg font-medium text-card-foreground mb-4 flex items-center">
-                <Building2 className="h-5 w-5 mr-2" />
+              <h3 className="mb-4 flex items-center text-lg font-medium text-card-foreground">
+                <Building2 className="mr-2 h-5 w-5" />
                 Company Information
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label htmlFor="companyName" className="block text-sm font-medium text-card-foreground mb-1">
+                  <label
+                    htmlFor="companyName"
+                    className="mb-1 block text-sm font-medium text-card-foreground"
+                  >
                     Company Name *
                   </label>
                   <input
@@ -96,12 +93,15 @@ export default function NewClientPage() {
                     required
                     value={formData.companyName}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Enter company name"
                   />
                 </div>
                 <div>
-                  <label htmlFor="industry" className="block text-sm font-medium text-card-foreground mb-1">
+                  <label
+                    htmlFor="industry"
+                    className="mb-1 block text-sm font-medium text-card-foreground"
+                  >
                     Industry
                   </label>
                   <select
@@ -109,7 +109,7 @@ export default function NewClientPage() {
                     name="industry"
                     value={formData.industry}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">Select industry</option>
                     <option value="Technology">Technology</option>
@@ -121,7 +121,10 @@ export default function NewClientPage() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label htmlFor="website" className="block text-sm font-medium text-card-foreground mb-1">
+                  <label
+                    htmlFor="website"
+                    className="mb-1 block text-sm font-medium text-card-foreground"
+                  >
                     Website
                   </label>
                   <input
@@ -130,7 +133,7 @@ export default function NewClientPage() {
                     name="website"
                     value={formData.website}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="https://example.com"
                   />
                 </div>
@@ -139,13 +142,16 @@ export default function NewClientPage() {
 
             {/* Contact Information */}
             <div>
-              <h3 className="text-lg font-medium text-card-foreground mb-4 flex items-center">
-                <User className="h-5 w-5 mr-2" />
+              <h3 className="mb-4 flex items-center text-lg font-medium text-card-foreground">
+                <User className="mr-2 h-5 w-5" />
                 Primary Contact
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label htmlFor="contactName" className="block text-sm font-medium text-card-foreground mb-1">
+                  <label
+                    htmlFor="contactName"
+                    className="mb-1 block text-sm font-medium text-card-foreground"
+                  >
                     Contact Name *
                   </label>
                   <input
@@ -155,12 +161,15 @@ export default function NewClientPage() {
                     required
                     value={formData.contactName}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Enter contact name"
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-card-foreground mb-1">
+                  <label
+                    htmlFor="email"
+                    className="mb-1 block text-sm font-medium text-card-foreground"
+                  >
                     Email Address *
                   </label>
                   <input
@@ -170,12 +179,15 @@ export default function NewClientPage() {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="contact@company.com"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label htmlFor="phone" className="block text-sm font-medium text-card-foreground mb-1">
+                  <label
+                    htmlFor="phone"
+                    className="mb-1 block text-sm font-medium text-card-foreground"
+                  >
                     Phone Number
                   </label>
                   <input
@@ -184,7 +196,7 @@ export default function NewClientPage() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
@@ -193,13 +205,16 @@ export default function NewClientPage() {
 
             {/* Address Information */}
             <div>
-              <h3 className="text-lg font-medium text-card-foreground mb-4 flex items-center">
-                <MapPin className="h-5 w-5 mr-2" />
+              <h3 className="mb-4 flex items-center text-lg font-medium text-card-foreground">
+                <MapPin className="mr-2 h-5 w-5" />
                 Business Address
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-card-foreground mb-1">
+                  <label
+                    htmlFor="address"
+                    className="mb-1 block text-sm font-medium text-card-foreground"
+                  >
                     Street Address
                   </label>
                   <input
@@ -208,13 +223,16 @@ export default function NewClientPage() {
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="123 Business St"
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-card-foreground mb-1">
+                    <label
+                      htmlFor="city"
+                      className="mb-1 block text-sm font-medium text-card-foreground"
+                    >
                       City
                     </label>
                     <input
@@ -223,12 +241,15 @@ export default function NewClientPage() {
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                      className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="San Francisco"
                     />
                   </div>
                   <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-card-foreground mb-1">
+                    <label
+                      htmlFor="state"
+                      className="mb-1 block text-sm font-medium text-card-foreground"
+                    >
                       State
                     </label>
                     <input
@@ -237,12 +258,15 @@ export default function NewClientPage() {
                       name="state"
                       value={formData.state}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                      className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="CA"
                     />
                   </div>
                   <div>
-                    <label htmlFor="zipCode" className="block text-sm font-medium text-card-foreground mb-1">
+                    <label
+                      htmlFor="zipCode"
+                      className="mb-1 block text-sm font-medium text-card-foreground"
+                    >
                       ZIP Code
                     </label>
                     <input
@@ -251,7 +275,7 @@ export default function NewClientPage() {
                       name="zipCode"
                       value={formData.zipCode}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                      className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="94105"
                     />
                   </div>
@@ -261,7 +285,10 @@ export default function NewClientPage() {
 
             {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-card-foreground mb-1">
+              <label
+                htmlFor="description"
+                className="mb-1 block text-sm font-medium text-card-foreground"
+              >
                 Company Description
               </label>
               <textarea
@@ -270,23 +297,23 @@ export default function NewClientPage() {
                 rows={4}
                 value={formData.description}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-border rounded-md bg-card text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Brief description of the company and business model..."
               />
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end space-x-4 pt-4 border-t border-border">
-              <Link 
+            <div className="flex items-center justify-end space-x-4 border-t border-border pt-4">
+              <Link
                 href="/clients"
-                className="px-4 py-2 text-sm font-medium text-card-foreground bg-card border border-border rounded-md hover:bg-muted transition-colors"
+                className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-muted"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Creating...' : 'Create Client'}
               </button>

@@ -18,9 +18,7 @@ export function PageHeader({ title, description, actionButton }: PageHeaderProps
     <div className="flex items-center justify-between">
       <div>
         <h1 className="text-3xl font-bold text-foreground">{title}</h1>
-        <p className="text-muted-foreground mt-1">
-          {description}
-        </p>
+        <p className="mt-1 text-muted-foreground">{description}</p>
       </div>
       {actionButton && (
         <Link href={actionButton.href}>

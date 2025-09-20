@@ -7,14 +7,12 @@ export const reportTemplateKeys = {
   all: ['reportTemplates'] as const,
   byType: (type?: string) => [...reportTemplateKeys.all, 'byType', type] as const,
   byId: (id: string) => [...reportTemplateKeys.all, 'byId', id] as const,
-  variableMappings: (templateId: string) => [...reportTemplateKeys.all, 'variableMappings', templateId] as const,
+  variableMappings: (templateId: string) =>
+    [...reportTemplateKeys.all, 'variableMappings', templateId] as const,
 }
 
 // Template Queries
-export function useReportTemplates(
-  type?: string,
-  options?: { page?: number; limit?: number }
-) {
+export function useReportTemplates(type?: string, options?: { page?: number; limit?: number }) {
   return useQuery({
     queryKey: [...reportTemplateKeys.byType(type), { ...options }],
     queryFn: () => ReportTemplateService.loadTemplates(type, options),
@@ -71,7 +69,10 @@ export function useUpdateReportTemplate() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ templateId, updates }: {
+    mutationFn: ({
+      templateId,
+      updates,
+    }: {
       templateId: string
       updates: Partial<Omit<ReportTemplate, 'id' | 'createdAt' | 'updatedAt'>>
     }) => ReportTemplateService.updateTemplate(templateId, updates),
@@ -114,7 +115,7 @@ export function useSaveVariableMapping() {
     onSuccess: (data, variables) => {
       // Invalidate variable mappings for the template
       queryClient.invalidateQueries({
-        queryKey: reportTemplateKeys.variableMappings(variables.templateId)
+        queryKey: reportTemplateKeys.variableMappings(variables.templateId),
       })
     },
   })
@@ -129,7 +130,7 @@ export function useDeleteVariableMapping() {
     onSuccess: (_data, variables) => {
       // Invalidate variable mappings for the template
       queryClient.invalidateQueries({
-        queryKey: reportTemplateKeys.variableMappings(variables.templateId)
+        queryKey: reportTemplateKeys.variableMappings(variables.templateId),
       })
     },
   })

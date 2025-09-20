@@ -25,7 +25,7 @@ class OptimizedSupabaseClient {
         auth: {
           autoRefreshToken: true,
           persistSession: true,
-          detectSessionInUrl: true
+          detectSessionInUrl: true,
         },
         global: {
           headers: {
@@ -87,14 +87,17 @@ class OptimizedSupabaseClient {
 
   private setupCacheCleanup() {
     // Clean expired cache entries every 5 minutes
-    setInterval(() => {
-      const now = Date.now()
-      for (const [key, { timestamp, ttl }] of this.queryCache.entries()) {
-        if (now - timestamp > ttl) {
-          this.queryCache.delete(key)
+    setInterval(
+      () => {
+        const now = Date.now()
+        for (const [key, { timestamp, ttl }] of this.queryCache.entries()) {
+          if (now - timestamp > ttl) {
+            this.queryCache.delete(key)
+          }
         }
-      }
-    }, 5 * 60 * 1000)
+      },
+      5 * 60 * 1000
+    )
   }
 
   private getCacheKey(query: string, params: any): string {
@@ -119,13 +122,13 @@ class OptimizedSupabaseClient {
     if (this.queryCache.size > 1000) {
       // Remove oldest entries
       const oldestKeys = Array.from(this.queryCache.keys()).slice(0, 100)
-      oldestKeys.forEach(key => this.queryCache.delete(key))
+      oldestKeys.forEach((key) => this.queryCache.delete(key))
     }
 
     this.queryCache.set(cacheKey, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     })
   }
 
@@ -151,7 +154,7 @@ class OptimizedSupabaseClient {
       limit,
       offset,
       cache = true,
-      cacheTTL = this.defaultCacheTTL
+      cacheTTL = this.defaultCacheTTL,
     } = options
 
     const startTime = Date.now()
@@ -171,7 +174,7 @@ class OptimizedSupabaseClient {
           duration: Date.now() - startTime,
           success: true,
           cacheHit: true,
-          rowsAffected: cachedResult.data?.length || 0
+          rowsAffected: cachedResult.data?.length || 0,
         })
         return cachedResult
       }
@@ -219,7 +222,7 @@ class OptimizedSupabaseClient {
         success: !result.error,
         cacheHit: false,
         error: result.error?.message,
-        rowsAffected: result.data?.length || 0
+        rowsAffected: result.data?.length || 0,
       })
 
       // Cache successful results
@@ -239,7 +242,7 @@ class OptimizedSupabaseClient {
         duration,
         success: false,
         cacheHit: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       })
 
       console.error(`Optimized query error for ${tableName}:`, error)
@@ -311,10 +314,10 @@ class OptimizedSupabaseClient {
    * Invalidate cache entries for a specific table
    */
   private invalidateTableCache(tableName: string) {
-    const keysToDelete = Array.from(this.queryCache.keys()).filter(key =>
+    const keysToDelete = Array.from(this.queryCache.keys()).filter((key) =>
       key.startsWith(`${tableName}:`)
     )
-    keysToDelete.forEach(key => this.queryCache.delete(key))
+    keysToDelete.forEach((key) => this.queryCache.delete(key))
   }
 
   /**
@@ -338,7 +341,7 @@ class OptimizedSupabaseClient {
     return {
       size: this.queryCache.size,
       poolSize: this.connectionPool.size,
-      maxConnections: this.maxConnections
+      maxConnections: this.maxConnections,
     }
   }
 }

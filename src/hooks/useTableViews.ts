@@ -1,140 +1,145 @@
-import { useState, useEffect, useCallback } from 'react';
-import { TableViewService } from '@/services/tableViewService';
-import type { SavedTableView, SaveViewRequest } from '@/types/reports';
+import { useState, useEffect, useCallback } from 'react'
+import { TableViewService } from '@/services/tableViewService'
+import type { SavedTableView, SaveViewRequest } from '@/types/reports'
 
 interface UseTableViewsOptions {
-  tableId: string;
-  valuationId?: number;
-  autoMigrate?: boolean; // Migrate from localStorage automatically
+  tableId: string
+  valuationId?: number
+  autoMigrate?: boolean // Migrate from localStorage automatically
 }
 
-export function useTableViews({
-  tableId,
-  valuationId,
-  autoMigrate = true,
-}: UseTableViewsOptions) {
-  const [views, setViews] = useState<SavedTableView[]>([]);
-  const [currentView, setCurrentView] = useState<SavedTableView | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useTableViews({ tableId, valuationId, autoMigrate = true }: UseTableViewsOptions) {
+  const [views, setViews] = useState<SavedTableView[]>([])
+  const [currentView, setCurrentView] = useState<SavedTableView | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Load views on mount
   useEffect(() => {
-    loadViews();
-  }, [tableId, valuationId]);
+    loadViews()
+  }, [tableId, valuationId])
 
   // Auto-migrate from localStorage
   useEffect(() => {
     if (autoMigrate && tableId) {
-      TableViewService.migrateLocalViews(tableId);
+      TableViewService.migrateLocalViews(tableId)
     }
-  }, [tableId, autoMigrate]);
+  }, [tableId, autoMigrate])
 
   const loadViews = useCallback(async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const loadedViews = await TableViewService.loadViewsForTable(tableId, valuationId);
-      setViews(loadedViews);
+      setIsLoading(true)
+      setError(null)
+      const loadedViews = await TableViewService.loadViewsForTable(tableId, valuationId)
+      setViews(loadedViews)
 
       // Load default view if exists
-      const defaultView = loadedViews.find(v => v.isDefault);
+      const defaultView = loadedViews.find((v) => v.isDefault)
       if (defaultView) {
-        setCurrentView(defaultView);
+        setCurrentView(defaultView)
       }
     } catch (err) {
-      setError('Failed to load table views');
-      console.error(err);
+      setError('Failed to load table views')
+      console.error(err)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [tableId, valuationId]);
+  }, [tableId, valuationId])
 
-  const saveView = useCallback(async (request: Omit<SaveViewRequest, 'tableId'>) => {
-    try {
-      const savedView = await TableViewService.saveView({
-        ...request,
-        tableId,
-      });
+  const saveView = useCallback(
+    async (request: Omit<SaveViewRequest, 'tableId'>) => {
+      try {
+        const savedView = await TableViewService.saveView({
+          ...request,
+          tableId,
+        })
 
-      if (savedView) {
-        await loadViews(); // Reload views
-        return savedView;
+        if (savedView) {
+          await loadViews() // Reload views
+          return savedView
+        }
+        return null
+      } catch (err) {
+        setError('Failed to save view')
+        console.error(err)
+        return null
       }
-      return null;
-    } catch (err) {
-      setError('Failed to save view');
-      console.error(err);
-      return null;
-    }
-  }, [tableId, loadViews]);
+    },
+    [tableId, loadViews]
+  )
 
   const loadView = useCallback(async (viewId: string) => {
     try {
-      const view = await TableViewService.loadView(viewId);
+      const view = await TableViewService.loadView(viewId)
       if (view) {
-        setCurrentView(view);
-        return view;
+        setCurrentView(view)
+        return view
       }
-      return null;
+      return null
     } catch (err) {
-      setError('Failed to load view');
-      console.error(err);
-      return null;
+      setError('Failed to load view')
+      console.error(err)
+      return null
     }
-  }, []);
+  }, [])
 
-  const deleteView = useCallback(async (viewId: string) => {
-    try {
-      const success = await TableViewService.deleteView(viewId);
-      if (success) {
-        await loadViews(); // Reload views
-        if (currentView?.id === viewId) {
-          setCurrentView(null);
+  const deleteView = useCallback(
+    async (viewId: string) => {
+      try {
+        const success = await TableViewService.deleteView(viewId)
+        if (success) {
+          await loadViews() // Reload views
+          if (currentView?.id === viewId) {
+            setCurrentView(null)
+          }
         }
+        return success
+      } catch (err) {
+        setError('Failed to delete view')
+        console.error(err)
+        return false
       }
-      return success;
-    } catch (err) {
-      setError('Failed to delete view');
-      console.error(err);
-      return false;
-    }
-  }, [currentView, loadViews]);
+    },
+    [currentView, loadViews]
+  )
 
-  const updateView = useCallback(async (
-    viewId: string,
-    updates: Partial<SaveViewRequest>
-  ) => {
-    try {
-      const updatedView = await TableViewService.updateView(viewId, updates);
-      if (updatedView) {
-        await loadViews(); // Reload views
-        if (currentView?.id === viewId) {
-          setCurrentView(updatedView);
+  const updateView = useCallback(
+    async (viewId: string, updates: Partial<SaveViewRequest>) => {
+      try {
+        const updatedView = await TableViewService.updateView(viewId, updates)
+        if (updatedView) {
+          await loadViews() // Reload views
+          if (currentView?.id === viewId) {
+            setCurrentView(updatedView)
+          }
+          return updatedView
         }
-        return updatedView;
+        return null
+      } catch (err) {
+        setError('Failed to update view')
+        console.error(err)
+        return null
       }
-      return null;
-    } catch (err) {
-      setError('Failed to update view');
-      console.error(err);
-      return null;
-    }
-  }, [currentView, loadViews]);
+    },
+    [currentView, loadViews]
+  )
 
-  const setAsDefault = useCallback(async (viewId: string) => {
-    return updateView(viewId, { isDefault: true, tableId });
-  }, [updateView, tableId]);
+  const setAsDefault = useCallback(
+    async (viewId: string) => {
+      return updateView(viewId, { isDefault: true, tableId })
+    },
+    [updateView, tableId]
+  )
 
   const exportForReport = useCallback(async (viewId: string) => {
     try {
-      return await TableViewService.exportViewForReport(viewId);
+      return await TableViewService.exportViewForReport(viewId)
     } catch (err) {
-      setError('Failed to export view');
-      console.error(err);
-      return null;
+      setError('Failed to export view')
+      console.error(err)
+      return null
     }
-  }, []);
+  }, [])
 
   return {
     views,
@@ -148,5 +153,5 @@ export function useTableViews({
     setAsDefault,
     exportForReport,
     refresh: loadViews,
-  };
+  }
 }

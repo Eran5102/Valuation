@@ -71,9 +71,9 @@ export function TableActionButtons({
       )}
 
       {showDelete && (
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
           onClick={onDelete}
         >

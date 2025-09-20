@@ -19,7 +19,7 @@ import {
   Edit,
   Eye,
   Clock,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,8 @@ import { TabButton } from '@/components/ui/tab-button'
 import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/layout/AppLayout'
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils'
+import { LoadingSpinner, LoadingCard } from '@/components/ui/loading-spinner'
+import { BackButton, DownloadButton, DeleteButton, ButtonGroup } from '@/components/ui/action-buttons'
 
 // Lazy load heavy components to improve initial page load performance
 const ValuationAssumptions = lazy(() => import('@/components/valuation/ValuationAssumptions'))
@@ -36,27 +38,27 @@ const BreakpointsAnalysis = lazy(() => import('@/components/valuation/Breakpoint
 const ComprehensiveWaterfall = lazy(() => import('@/components/valuation/ComprehensiveWaterfall'))
 
 interface ValuationProject {
-  id: string;
-  companyId: string;
-  title: string;
-  clientName: string;
-  valuationDate: string;
-  projectType: string;
-  status: string;
-  currency: string;
-  maxProjectedYears: number;
-  discountingConvention: string;
-  taxRate: number;
-  description: string;
+  id: string
+  companyId: string
+  title: string
+  clientName: string
+  valuationDate: string
+  projectType: string
+  status: string
+  currency: string
+  maxProjectedYears: number
+  discountingConvention: string
+  taxRate: number
+  description: string
 }
 
 interface FinancialAssumption {
-  id: string;
-  category: string;
-  name: string;
-  value: string;
-  unit: string;
-  description: string;
+  id: string
+  category: string
+  name: string
+  value: string
+  unit: string
+  description: string
 }
 
 export default function ValuationDetail() {
@@ -68,15 +70,15 @@ export default function ValuationDetail() {
   const [assumptions, setAssumptions] = useState<FinancialAssumption[]>([])
   const [assumptionCategories, setAssumptionCategories] = useState<any[]>([])
   const [capTableData, setCapTableData] = useState<{
-    totalShareClasses: number;
-    totalShares: number;
-    totalInvested: number;
-    totalOptions: number;
+    totalShareClasses: number
+    totalShares: number
+    totalInvested: number
+    totalOptions: number
   }>({
     totalShareClasses: 3,
     totalShares: 950000,
     totalInvested: 5000000,
-    totalOptions: 500000
+    totalOptions: 500000,
   })
 
   // Reports data
@@ -85,26 +87,23 @@ export default function ValuationDetail() {
 
   // Store the actual cap table configuration for breakpoint calculations
   const [currentCapTableConfig, setCurrentCapTableConfig] = useState<{
-    shareClasses: any[];
-    options: any[];
+    shareClasses: any[]
+    options: any[]
   }>({
     shareClasses: [],
-    options: []
+    options: [],
   })
-
-
-
 
   const fetchValuation = async () => {
     console.log('fetchValuation called with id:', id)
     try {
       const response = await fetch(`/api/valuations/${id}`)
       console.log('API response status:', response.status)
-      
+
       if (response.ok) {
         const valuationData = await response.json()
         console.log('Valuation data received:', valuationData)
-        
+
         // Get client name - handle both snake_case and camelCase field names
         const companyId = valuationData.company_id || valuationData.companyId
         const clientResponse = companyId ? await fetch(`/api/companies/${companyId}`) : null
@@ -116,7 +115,10 @@ export default function ValuationDetail() {
           companyId: companyId ? companyId.toString() : '1',
           title: valuationData.title || 'Untitled Valuation',
           clientName: valuationData.client_name || clientData?.name || 'Unknown Client',
-          valuationDate: valuationData.valuation_date || valuationData.valuationDate || new Date().toISOString().split('T')[0],
+          valuationDate:
+            valuationData.valuation_date ||
+            valuationData.valuationDate ||
+            new Date().toISOString().split('T')[0],
           projectType: valuationData.valuation_type || valuationData.valuationType || '409a',
           status: valuationData.status || 'draft',
           currency: valuationData.currency || 'USD',
@@ -125,12 +127,12 @@ export default function ValuationDetail() {
           taxRate: valuationData.taxRate || 21,
           description: valuationData.description || '',
           purpose: valuationData.purpose,
-          reportDate: valuationData.report_date || valuationData.reportDate
+          reportDate: valuationData.report_date || valuationData.reportDate,
         }
-        
+
         console.log('Setting project with data:', projectData)
         setProject(projectData)
-        
+
         // Load cap table data and assumptions after setting project
         await loadCapTableData(id!)
         await loadAssumptionsData(id!)
@@ -149,7 +151,7 @@ export default function ValuationDetail() {
           maxProjectedYears: 5,
           discountingConvention: 'mid_year',
           taxRate: 21,
-          description: 'Example valuation project'
+          description: 'Example valuation project',
         })
       }
     } catch (error) {
@@ -163,13 +165,13 @@ export default function ValuationDetail() {
       const response = await fetch(`/api/valuations/${valuationId}/cap-table`)
       if (response.ok) {
         const capTableData = await response.json()
-        
+
         // Only update if we have actual data
         if (capTableData.shareClasses && capTableData.shareClasses.length > 0) {
           console.log('Loading saved cap table data:', capTableData)
           setCurrentCapTableConfig({
             shareClasses: capTableData.shareClasses,
-            options: capTableData.options || []
+            options: capTableData.options || [],
           })
         } else {
           console.log('No saved cap table data found, using default')
@@ -186,7 +188,7 @@ export default function ValuationDetail() {
       const response = await fetch(`/api/valuations/${valuationId}`)
       if (response.ok) {
         const valuation = await response.json()
-        
+
         // Only update if we have actual assumptions data
         if (valuation.assumptions && Object.keys(valuation.assumptions).length > 0) {
           console.log('Loading saved assumptions data:', valuation.assumptions)
@@ -201,83 +203,94 @@ export default function ValuationDetail() {
   }
 
   // Save assumptions data to the database - memoized callback
-  const saveAssumptionsData = useCallback(async (categories: any[]) => {
-    if (!id) return
+  const saveAssumptionsData = useCallback(
+    async (categories: any[]) => {
+      if (!id) return
 
-    try {
-      console.log('Saving assumptions data to database:', categories)
+      try {
+        console.log('Saving assumptions data to database:', categories)
 
-      // Convert categories array to flat object structure expected by DLOM component
-      const flatAssumptions: any = {}
-      categories.forEach(category => {
-        const categoryData: any = {}
-        category.assumptions.forEach((assumption: any) => {
-          categoryData[assumption.id] = parseFloat(assumption.value) || 0
+        // Convert categories array to flat object structure expected by DLOM component
+        const flatAssumptions: any = {}
+        categories.forEach((category) => {
+          const categoryData: any = {}
+          category.assumptions.forEach((assumption: any) => {
+            categoryData[assumption.id] = parseFloat(assumption.value) || 0
+          })
+          flatAssumptions[category.id] = categoryData
         })
-        flatAssumptions[category.id] = categoryData
-      })
 
-      console.log('Converted flat assumptions:', flatAssumptions)
+        console.log('Converted flat assumptions:', flatAssumptions)
 
-      const response = await fetch(`/api/valuations/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ assumptions: flatAssumptions })
-      })
+        const response = await fetch(`/api/valuations/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ assumptions: flatAssumptions }),
+        })
 
-      if (response.ok) {
-        const result = await response.json()
-        console.log('Assumptions saved successfully:', result)
-        setAssumptionCategories(categories)
-        setProject(prevProject => prevProject ? { ...prevProject, assumptions: flatAssumptions } : prevProject)
-      } else {
-        console.error('Failed to save assumptions data')
+        if (response.ok) {
+          const result = await response.json()
+          console.log('Assumptions saved successfully:', result)
+          setAssumptionCategories(categories)
+          setProject((prevProject) =>
+            prevProject ? { ...prevProject, assumptions: flatAssumptions } : prevProject
+          )
+        } else {
+          console.error('Failed to save assumptions data')
+        }
+      } catch (error) {
+        console.error('Error saving assumptions data:', error)
       }
-    } catch (error) {
-      console.error('Error saving assumptions data:', error)
-    }
-  }, [id])
+    },
+    [id]
+  )
 
   // Handle assumptions save - memoized callback
-  const handleAssumptionsSave = useCallback(async (categories: any[]) => {
-    console.log('Saving assumption categories:', categories);
-    setAssumptionCategories(categories);
-    await saveAssumptionsData(categories);
-  }, [saveAssumptionsData])
+  const handleAssumptionsSave = useCallback(
+    async (categories: any[]) => {
+      console.log('Saving assumption categories:', categories)
+      setAssumptionCategories(categories)
+      await saveAssumptionsData(categories)
+    },
+    [saveAssumptionsData]
+  )
 
   // Save cap table data to the database - memoized callback
-  const saveCapTableData = useCallback(async (data: { shareClasses: any[]; options: any[] }) => {
-    if (!id) return
+  const saveCapTableData = useCallback(
+    async (data: { shareClasses: any[]; options: any[] }) => {
+      if (!id) return
 
-    try {
-      console.log('Saving cap table data to database:', data)
-      const response = await fetch(`/api/valuations/${id}/cap-table`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
+      try {
+        console.log('Saving cap table data to database:', data)
+        const response = await fetch(`/api/valuations/${id}/cap-table`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        })
 
-      if (response.ok) {
-        const result = await response.json()
-        console.log('Cap table saved successfully:', result)
-      } else {
-        console.error('Failed to save cap table data')
+        if (response.ok) {
+          const result = await response.json()
+          console.log('Cap table saved successfully:', result)
+        } else {
+          console.error('Failed to save cap table data')
+        }
+      } catch (error) {
+        console.error('Error saving cap table data:', error)
       }
-    } catch (error) {
-      console.error('Error saving cap table data:', error)
-    }
-  }, [id])
+    },
+    [id]
+  )
 
   // Handle cap table save - memoized callback
   const handleCapTableSave = useCallback(async (data: { shareClasses: any[]; options: any[] }) => {
-    console.log('Saving cap table data:', data);
-    setCurrentCapTableConfig(data);
-    await saveCapTableData(data);
-    console.log('Cap table data saved and configuration updated');
+    console.log('Saving cap table data:', data)
+    setCurrentCapTableConfig(data)
+    await saveCapTableData(data)
+    console.log('Cap table data saved and configuration updated')
   }, [])
 
   // Load reports for this valuation
@@ -295,7 +308,7 @@ export default function ValuationDetail() {
           status: 'draft',
           lastModified: '2024-12-15',
           templateId: 'template-409a',
-          valuationId: id
+          valuationId: id,
         },
         {
           id: '2',
@@ -303,12 +316,12 @@ export default function ValuationDetail() {
           status: 'published',
           lastModified: '2024-12-10',
           templateId: 'template-board-summary',
-          valuationId: id
-        }
+          valuationId: id,
+        },
       ]
 
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 500))
 
       setValuationReports(mockReports)
     } catch (error) {
@@ -336,15 +349,24 @@ export default function ValuationDetail() {
   const capTableSummary = useMemo(() => {
     if (!currentCapTableConfig.shareClasses.length) return capTableData
 
-    const totalShares = currentCapTableConfig.shareClasses.reduce((sum, sc) => sum + sc.sharesOutstanding, 0)
-    const totalInvested = currentCapTableConfig.shareClasses.reduce((sum, sc) => sum + (sc.amountInvested || 0), 0)
-    const totalOptions = currentCapTableConfig.options.reduce((sum, option) => sum + option.numOptions, 0)
+    const totalShares = currentCapTableConfig.shareClasses.reduce(
+      (sum, sc) => sum + sc.sharesOutstanding,
+      0
+    )
+    const totalInvested = currentCapTableConfig.shareClasses.reduce(
+      (sum, sc) => sum + (sc.amountInvested || 0),
+      0
+    )
+    const totalOptions = currentCapTableConfig.options.reduce(
+      (sum, option) => sum + option.numOptions,
+      0
+    )
 
     return {
       totalShareClasses: currentCapTableConfig.shareClasses.length,
       totalShares,
       totalInvested,
-      totalOptions
+      totalOptions,
     }
   }, [currentCapTableConfig])
 
@@ -362,7 +384,7 @@ export default function ValuationDetail() {
         name: 'Annual Revenue Growth Rate',
         value: '25',
         unit: '%',
-        description: 'Expected annual revenue growth rate for the next 5 years'
+        description: 'Expected annual revenue growth rate for the next 5 years',
       },
       {
         id: '2',
@@ -370,7 +392,7 @@ export default function ValuationDetail() {
         name: 'EBITDA Margin',
         value: '15',
         unit: '%',
-        description: 'Target EBITDA margin at maturity'
+        description: 'Target EBITDA margin at maturity',
       },
       {
         id: '3',
@@ -378,7 +400,7 @@ export default function ValuationDetail() {
         name: 'Weighted Average Cost of Capital',
         value: '12',
         unit: '%',
-        description: 'Discount rate for DCF valuation'
+        description: 'Discount rate for DCF valuation',
       },
       {
         id: '4',
@@ -386,13 +408,17 @@ export default function ValuationDetail() {
         name: 'Terminal Growth Rate',
         value: '2.5',
         unit: '%',
-        description: 'Long-term growth rate beyond projection period'
+        description: 'Long-term growth rate beyond projection period',
       },
     ])
   }, [])
 
   const handleDeleteValuation = async () => {
-    if (confirm('Are you sure you want to delete this valuation project? This action cannot be undone.')) {
+    if (
+      confirm(
+        'Are you sure you want to delete this valuation project? This action cannot be undone.'
+      )
+    ) {
       try {
         const response = await fetch(`/api/valuations/${id}`, {
           method: 'DELETE',
@@ -413,27 +439,20 @@ export default function ValuationDetail() {
   if (!project) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-muted-foreground">Loading valuation project...</div>
-        </div>
+        <LoadingSpinner size="lg" label="Loading valuation project..." fullScreen />
       </AppLayout>
     )
   }
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/valuations')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+            <BackButton onClick={() => router.push('/valuations')}>
               Back to Valuations
-            </Button>
+            </BackButton>
             <div className="flex items-center space-x-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                 <Calculator className="h-5 w-5 text-primary" />
@@ -442,38 +461,32 @@ export default function ValuationDetail() {
                 <h1 className="text-2xl font-bold text-foreground">{project.title}</h1>
                 <div className="flex items-center space-x-3 text-sm text-muted-foreground">
                   <span className="flex items-center">
-                    <Building2 className="h-3 w-3 mr-1" />
+                    <Building2 className="mr-1 h-3 w-3" />
                     {project.clientName}
                   </span>
                   <span className="flex items-center">
-                    <Calendar className="h-3 w-3 mr-1" />
+                    <Calendar className="mr-1 h-3 w-3" />
                     {formatDate(project.valuationDate)}
                   </span>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full border ${statusStyling}`}>
+                  <span
+                    className={`rounded-full border px-2 py-1 text-xs font-medium ${statusStyling}`}
+                  >
                     {project.status.replace('_', ' ')}
                   </span>
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
+          <ButtonGroup>
+            <DownloadButton>
               Export
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleDeleteValuation}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
+            </DownloadButton>
+            <DeleteButton onClick={handleDeleteValuation} />
+          </ButtonGroup>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 p-1 bg-muted rounded-lg w-fit">
+        <div className="flex w-fit space-x-1 rounded-lg bg-muted p-1">
           <TabButton
             active={activeTab === 'overview'}
             onClick={() => setActiveTab('overview')}
@@ -575,7 +588,7 @@ export default function ValuationDetail() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-sm">Description:</span>
+                  <span className="text-sm text-muted-foreground">Description:</span>
                   <p className="mt-1">{project.description}</p>
                 </div>
               </CardContent>
@@ -583,51 +596,40 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'assumptions' && (
-            <Suspense fallback={
-              <Card>
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    <span>Loading valuation assumptions...</span>
-                  </div>
-                </CardContent>
-              </Card>
-            }>
+            <Suspense
+              fallback={
+                <LoadingCard label="Loading valuation assumptions..." />
+              }
+            >
               <ValuationAssumptions
                 valuationId={id!}
-                initialCategories={assumptionCategories.length > 0 ? assumptionCategories : undefined}
+                initialCategories={
+                  assumptionCategories.length > 0 ? assumptionCategories : undefined
+                }
                 onSave={handleAssumptionsSave}
               />
             </Suspense>
           )}
 
           {activeTab === 'captable' && (
-            <Suspense fallback={
-              <Card>
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    <span>Loading cap table...</span>
-                  </div>
-                </CardContent>
-              </Card>
-            }>
-              <ImprovedCapTable
-                valuationId={id!}
-                onSave={handleCapTableSave}
-              />
+            <Suspense
+              fallback={
+                <LoadingCard label="Loading cap table..." />
+              }
+            >
+              <ImprovedCapTable valuationId={id!} onSave={handleCapTableSave} />
             </Suspense>
           )}
 
           {activeTab === 'financial' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Revenue Projections</CardTitle>
                   <CardDescription>Historical and projected revenue data</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center text-muted-foreground py-8">
+                  <div className="py-8 text-center text-muted-foreground">
                     Financial input forms will be implemented here
                   </div>
                 </CardContent>
@@ -639,7 +641,7 @@ export default function ValuationDetail() {
                   <CardDescription>Key operating metrics and ratios</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center text-muted-foreground py-8">
+                  <div className="py-8 text-center text-muted-foreground">
                     Operating metrics inputs will be implemented here
                   </div>
                 </CardContent>
@@ -648,31 +650,21 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'dlom' && (
-            <Suspense fallback={
-              <Card>
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    <span>Loading DLOM models...</span>
-                  </div>
-                </CardContent>
-              </Card>
-            }>
+            <Suspense
+              fallback={
+                <LoadingCard label="Loading DLOM models..." />
+              }
+            >
               <DLOMModels assumptions={(project as any)?.assumptions || assumptionCategories} />
             </Suspense>
           )}
 
           {activeTab === 'breakpoints' && (
-            <Suspense fallback={
-              <Card>
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    <span>Loading breakpoints analysis...</span>
-                  </div>
-                </CardContent>
-              </Card>
-            }>
+            <Suspense
+              fallback={
+                <LoadingCard label="Loading breakpoints analysis..." />
+              }
+            >
               <BreakpointsAnalysis
                 valuationId={id!}
                 companyId={project?.companyId}
@@ -682,14 +674,14 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'analysis' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Valuation Summary</CardTitle>
                   <CardDescription>Key valuation results and metrics</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center text-muted-foreground py-8">
+                  <div className="py-8 text-center text-muted-foreground">
                     Valuation analysis results will be displayed here
                   </div>
                 </CardContent>
@@ -701,7 +693,7 @@ export default function ValuationDetail() {
                   <CardDescription>Impact of key assumptions on valuation</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center text-muted-foreground py-8">
+                  <div className="py-8 text-center text-muted-foreground">
                     Sensitivity analysis charts will be displayed here
                   </div>
                 </CardContent>
@@ -710,16 +702,11 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'waterfall' && (
-            <Suspense fallback={
-              <Card>
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    <span>Loading waterfall analysis...</span>
-                  </div>
-                </CardContent>
-              </Card>
-            }>
+            <Suspense
+              fallback={
+                <LoadingCard label="Loading waterfall analysis..." />
+              }
+            >
               <ComprehensiveWaterfall
                 companyId={parseInt(project?.companyId || '0')}
                 capTableConfig={currentCapTableConfig}
@@ -733,7 +720,7 @@ export default function ValuationDetail() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-foreground">Valuation Reports</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Create and manage reports for this valuation project
                   </p>
                 </div>
@@ -750,7 +737,7 @@ export default function ValuationDetail() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
+                    <FileText className="mr-2 h-5 w-5" />
                     Report Documents
                   </CardTitle>
                   <CardDescription>
@@ -759,13 +746,16 @@ export default function ValuationDetail() {
                 </CardHeader>
                 <CardContent>
                   {loadingReports ? (
-                    <div className="text-center py-8">
-                      <div className="text-muted-foreground">Loading reports...</div>
+                    <div className="py-8">
+                      <LoadingSpinner size="md" label="Loading reports..." className="w-full" />
                     </div>
                   ) : valuationReports.length > 0 ? (
                     <div className="space-y-3">
                       {valuationReports.map((report) => (
-                        <div key={report.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div
+                          key={report.id}
+                          className="flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
+                        >
                           <div className="flex items-center space-x-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                               <FileText className="h-5 w-5 text-primary" />
@@ -774,10 +764,12 @@ export default function ValuationDetail() {
                               <h4 className="font-medium text-foreground">{report.name}</h4>
                               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                 <span className="flex items-center">
-                                  <Clock className="h-3 w-3 mr-1" />
+                                  <Clock className="mr-1 h-3 w-3" />
                                   {formatDate(report.lastModified)}
                                 </span>
-                                <Badge variant={report.status === 'published' ? 'default' : 'secondary'}>
+                                <Badge
+                                  variant={report.status === 'published' ? 'default' : 'secondary'}
+                                >
                                   {report.status}
                                 </Badge>
                               </div>
@@ -785,15 +777,15 @@ export default function ValuationDetail() {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 mr-2" />
+                              <Eye className="mr-2 h-4 w-4" />
                               Preview
                             </Button>
                             <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-2" />
+                              <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </Button>
                             <Button variant="outline" size="sm">
-                              <Download className="h-4 w-4 mr-2" />
+                              <Download className="mr-2 h-4 w-4" />
                               Export
                             </Button>
                           </div>
@@ -801,14 +793,14 @@ export default function ValuationDetail() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12">
+                    <div className="py-12 text-center">
                       <div className="flex flex-col items-center space-y-4">
                         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                           <FileText className="h-8 w-8 text-muted-foreground" />
                         </div>
                         <div className="text-center">
                           <h3 className="text-lg font-medium text-foreground">No reports yet</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <p className="mt-1 text-sm text-muted-foreground">
                             Create your first report from a template to get started
                           </p>
                         </div>
@@ -826,40 +818,45 @@ export default function ValuationDetail() {
               </Card>
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/reports/template-library?valuationId=${id}`)}>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <Card
+                  className="cursor-pointer transition-shadow hover:shadow-md"
+                  onClick={() => router.push(`/reports/template-library?valuationId=${id}`)}
+                >
                   <CardContent className="p-6 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 mx-auto mb-4">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
                       <FileText className="h-6 w-6 text-blue-600" />
                     </div>
-                    <h3 className="font-medium text-foreground mb-2">From Template</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Choose from pre-built templates
-                    </p>
+                    <h3 className="mb-2 font-medium text-foreground">From Template</h3>
+                    <p className="text-sm text-muted-foreground">Choose from pre-built templates</p>
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/reports/generator?valuationId=${id}`)}>
+                <Card
+                  className="cursor-pointer transition-shadow hover:shadow-md"
+                  onClick={() => router.push(`/reports/generator?valuationId=${id}`)}
+                >
                   <CardContent className="p-6 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 mx-auto mb-4">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                       <Calculator className="h-6 w-6 text-green-600" />
                     </div>
-                    <h3 className="font-medium text-foreground mb-2">Custom Report</h3>
+                    <h3 className="mb-2 font-medium text-foreground">Custom Report</h3>
                     <p className="text-sm text-muted-foreground">
                       Build from scratch with data blocks
                     </p>
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/reports/field-mapping?valuationId=${id}`)}>
+                <Card
+                  className="cursor-pointer transition-shadow hover:shadow-md"
+                  onClick={() => router.push(`/reports/field-mapping?valuationId=${id}`)}
+                >
                   <CardContent className="p-6 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 mx-auto mb-4">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
                       <BarChart3 className="h-6 w-6 text-purple-600" />
                     </div>
-                    <h3 className="font-medium text-foreground mb-2">Data Mapping</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Configure data field mappings
-                    </p>
+                    <h3 className="mb-2 font-medium text-foreground">Data Mapping</h3>
+                    <p className="text-sm text-muted-foreground">Configure data field mappings</p>
                   </CardContent>
                 </Card>
               </div>

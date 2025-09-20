@@ -1,12 +1,18 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import React, { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   FileText,
   Plus,
@@ -24,17 +30,18 @@ import {
   User,
   ArrowLeft,
   Calculator,
-  Building2
-} from 'lucide-react';
-import AppLayout from '@/components/layout/AppLayout';
-import type { ReportTemplate, TemplateCategory } from '@/lib/templates/types';
+  Building2,
+} from 'lucide-react'
+import AppLayout from '@/components/layout/AppLayout'
+import type { ReportTemplate, TemplateCategory } from '@/lib/templates/types'
 
 // Sample templates data - in real app this would come from API
 const sampleTemplates: ReportTemplate[] = [
   {
     id: 'template_409a_standard',
     name: 'Standard 409A Valuation Report',
-    description: 'Comprehensive 409A valuation report template with all required sections for compliance.',
+    description:
+      'Comprehensive 409A valuation report template with all required sections for compliance.',
     category: 'financial',
     version: '2.1.0',
     sections: [],
@@ -43,13 +50,14 @@ const sampleTemplates: ReportTemplate[] = [
       createdAt: '2024-01-15T10:30:00Z',
       updatedAt: '2024-02-20T14:45:00Z',
       author: 'Value8 AI',
-      tags: ['409A', 'valuation', 'compliance', 'standard']
-    }
+      tags: ['409A', 'valuation', 'compliance', 'standard'],
+    },
   },
   {
     id: 'template_409a_startup',
     name: 'Early Stage Startup 409A Template',
-    description: 'Simplified 409A template optimized for early-stage startups with limited financial history.',
+    description:
+      'Simplified 409A template optimized for early-stage startups with limited financial history.',
     category: 'financial',
     version: '1.5.0',
     sections: [],
@@ -58,13 +66,14 @@ const sampleTemplates: ReportTemplate[] = [
       createdAt: '2024-02-01T09:15:00Z',
       updatedAt: '2024-02-28T16:20:00Z',
       author: 'Value8 AI',
-      tags: ['409A', 'startup', 'early-stage', 'simplified']
-    }
+      tags: ['409A', 'startup', 'early-stage', 'simplified'],
+    },
   },
   {
     id: 'template_board_resolutions',
     name: 'Board Resolutions Template',
-    description: 'Standard template for board resolutions related to equity transactions and corporate actions.',
+    description:
+      'Standard template for board resolutions related to equity transactions and corporate actions.',
     category: 'legal',
     version: '1.2.0',
     sections: [],
@@ -73,13 +82,14 @@ const sampleTemplates: ReportTemplate[] = [
       createdAt: '2024-01-20T11:00:00Z',
       updatedAt: '2024-02-15T13:30:00Z',
       author: 'Legal Team',
-      tags: ['legal', 'board', 'resolutions', 'equity']
-    }
+      tags: ['legal', 'board', 'resolutions', 'equity'],
+    },
   },
   {
     id: 'template_cap_table_summary',
     name: 'Cap Table Summary Report',
-    description: 'Detailed capitalization table summary with ownership percentages and dilution analysis.',
+    description:
+      'Detailed capitalization table summary with ownership percentages and dilution analysis.',
     category: 'financial',
     version: '1.8.0',
     sections: [],
@@ -88,85 +98,88 @@ const sampleTemplates: ReportTemplate[] = [
       createdAt: '2024-01-10T14:20:00Z',
       updatedAt: '2024-03-01T10:15:00Z',
       author: 'Value8 AI',
-      tags: ['cap-table', 'ownership', 'dilution', 'financial']
-    }
-  }
-];
+      tags: ['cap-table', 'ownership', 'dilution', 'financial'],
+    },
+  },
+]
 
 export default function TemplateLibraryPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const valuationId = searchParams?.get('valuationId');
-  const [templates, setTemplates] = useState<ReportTemplate[]>(sampleTemplates);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all');
-  const [filteredTemplates, setFilteredTemplates] = useState<ReportTemplate[]>(sampleTemplates);
-  const [valuationProject, setValuationProject] = useState<any>(null);
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const valuationId = searchParams?.get('valuationId')
+  const [templates, setTemplates] = useState<ReportTemplate[]>(sampleTemplates)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all')
+  const [filteredTemplates, setFilteredTemplates] = useState<ReportTemplate[]>(sampleTemplates)
+  const [valuationProject, setValuationProject] = useState<any>(null)
 
   // Load valuation details when valuationId is present
   useEffect(() => {
     if (valuationId) {
       const fetchValuationDetails = async () => {
         try {
-          const response = await fetch(`/api/valuations/${valuationId}`);
+          const response = await fetch(`/api/valuations/${valuationId}`)
           if (response.ok) {
-            const valuation = await response.json();
+            const valuation = await response.json()
 
             // Get client name
-            const clientResponse = await fetch(`/api/companies/${valuation.companyId}`);
-            const client = clientResponse.ok ? await clientResponse.json() : null;
+            const clientResponse = await fetch(`/api/companies/${valuation.companyId}`)
+            const client = clientResponse.ok ? await clientResponse.json() : null
 
             setValuationProject({
               ...valuation,
-              clientName: client?.name || 'Unknown Client'
-            });
+              clientName: client?.name || 'Unknown Client',
+            })
           }
         } catch (error) {
-          console.error('Error fetching valuation details:', error);
+          console.error('Error fetching valuation details:', error)
         }
-      };
+      }
 
-      fetchValuationDetails();
+      fetchValuationDetails()
     }
-  }, [valuationId]);
+  }, [valuationId])
 
   useEffect(() => {
-    let filtered = templates;
+    let filtered = templates
 
     // Filter by search query
     if (searchQuery.trim()) {
-      filtered = filtered.filter(template =>
-        template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.metadata?.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+      filtered = filtered.filter(
+        (template) =>
+          template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          template.metadata?.tags?.some((tag) =>
+            tag.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+      )
     }
 
     // Filter by category
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(template => template.category === selectedCategory);
+      filtered = filtered.filter((template) => template.category === selectedCategory)
     }
 
-    setFilteredTemplates(filtered);
-  }, [templates, searchQuery, selectedCategory]);
+    setFilteredTemplates(filtered)
+  }, [templates, searchQuery, selectedCategory])
 
   const handleCreateNew = () => {
-    const params = new URLSearchParams({ templateName: 'New Template' });
-    if (valuationId) params.set('valuationId', valuationId);
-    router.push(`/reports/template-editor?${params.toString()}`);
-  };
+    const params = new URLSearchParams({ templateName: 'New Template' })
+    if (valuationId) params.set('valuationId', valuationId)
+    router.push(`/reports/template-editor?${params.toString()}`)
+  }
 
   const handleEditTemplate = (templateId: string) => {
-    const params = new URLSearchParams({ templateId });
-    if (valuationId) params.set('valuationId', valuationId);
-    router.push(`/reports/template-editor?${params.toString()}`);
-  };
+    const params = new URLSearchParams({ templateId })
+    if (valuationId) params.set('valuationId', valuationId)
+    router.push(`/reports/template-editor?${params.toString()}`)
+  }
 
   const handleUseTemplate = (templateId: string) => {
-    const params = new URLSearchParams({ templateId });
-    if (valuationId) params.set('valuationId', valuationId);
-    router.push(`/reports/generator?${params.toString()}`);
-  };
+    const params = new URLSearchParams({ templateId })
+    if (valuationId) params.set('valuationId', valuationId)
+    router.push(`/reports/generator?${params.toString()}`)
+  }
 
   const handleCloneTemplate = (template: ReportTemplate) => {
     const clonedTemplate = {
@@ -176,81 +189,87 @@ export default function TemplateLibraryPage() {
       metadata: {
         ...template.metadata,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    };
+        updatedAt: new Date().toISOString(),
+      },
+    }
 
-    setTemplates(prev => [...prev, clonedTemplate]);
-    alert(`Template "${clonedTemplate.name}" has been created successfully!`);
-  };
+    setTemplates((prev) => [...prev, clonedTemplate])
+    alert(`Template "${clonedTemplate.name}" has been created successfully!`)
+  }
 
   const handleDeleteTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
-    if (!template) return;
+    const template = templates.find((t) => t.id === templateId)
+    if (!template) return
 
-    const confirmed = confirm(`Are you sure you want to delete "${template.name}"? This action cannot be undone.`);
+    const confirmed = confirm(
+      `Are you sure you want to delete "${template.name}"? This action cannot be undone.`
+    )
     if (confirmed) {
-      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId))
     }
-  };
+  }
 
   const handleExportTemplate = (template: ReportTemplate) => {
-    const dataStr = JSON.stringify(template, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_template.json`;
+    const dataStr = JSON.stringify(template, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+    const exportFileDefaultName = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_template.json`
 
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
 
   const handleImportTemplate = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
     input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
-        const reader = new FileReader();
+        const reader = new FileReader()
         reader.onload = (e) => {
           try {
-            const imported = JSON.parse(e.target?.result as string);
-            imported.id = `template_${Date.now()}`;
+            const imported = JSON.parse(e.target?.result as string)
+            imported.id = `template_${Date.now()}`
             imported.metadata = {
               ...imported.metadata,
               createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            setTemplates(prev => [...prev, imported]);
-            alert('Template imported successfully!');
+              updatedAt: new Date().toISOString(),
+            }
+            setTemplates((prev) => [...prev, imported])
+            alert('Template imported successfully!')
           } catch (error) {
-            alert('Error importing template. Please check the file format.');
+            alert('Error importing template. Please check the file format.')
           }
-        };
-        reader.readAsText(file);
+        }
+        reader.readAsText(file)
       }
-    };
-    input.click();
-  };
+    }
+    input.click()
+  }
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Unknown';
-    return new Date(dateString).toLocaleDateString();
-  };
+    if (!dateString) return 'Unknown'
+    return new Date(dateString).toLocaleDateString()
+  }
 
   const getCategoryColor = (category: TemplateCategory) => {
     switch (category) {
-      case 'financial': return 'bg-blue-100 text-blue-800';
-      case 'legal': return 'bg-green-100 text-green-800';
-      case 'operational': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'financial':
+        return 'bg-blue-100 text-blue-800'
+      case 'legal':
+        return 'bg-green-100 text-green-800'
+      case 'operational':
+        return 'bg-purple-100 text-purple-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
-  };
+  }
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         {/* Header */}
         <div className="space-y-4">
           {/* Back navigation for valuation context */}
@@ -261,7 +280,7 @@ export default function TemplateLibraryPage() {
                 size="sm"
                 onClick={() => router.push(`/valuations/${valuationId}`)}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Valuation
               </Button>
               {valuationProject && (
@@ -289,20 +308,19 @@ export default function TemplateLibraryPage() {
               <p className="text-muted-foreground">
                 {valuationId
                   ? 'Select a template to create a report for this valuation'
-                  : 'Manage and organize your report templates'
-                }
+                  : 'Manage and organize your report templates'}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               {!valuationId && (
                 <Button variant="outline" onClick={handleImportTemplate}>
-                  <Upload className="w-4 h-4 mr-2" />
+                  <Upload className="mr-2 h-4 w-4" />
                   Import
                 </Button>
               )}
               <Button onClick={handleCreateNew}>
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 {valuationId ? 'Create Custom Template' : 'Create New Template'}
               </Button>
             </div>
@@ -311,8 +329,8 @@ export default function TemplateLibraryPage() {
 
         {/* Filters */}
         <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
             <Input
               placeholder="Search templates..."
               value={searchQuery}
@@ -324,7 +342,7 @@ export default function TemplateLibraryPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="mr-2 h-4 w-4" />
                 Category: {selectedCategory === 'all' ? 'All' : selectedCategory}
               </Button>
             </DropdownMenuTrigger>
@@ -347,14 +365,14 @@ export default function TemplateLibraryPage() {
         </div>
 
         {/* Templates Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template) => (
-            <Card key={template.id} className="hover:shadow-md transition-shadow">
+            <Card key={template.id} className="transition-shadow hover:shadow-md">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate">{template.name}</CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="truncate text-lg">{template.name}</CardTitle>
+                    <div className="mt-1 flex items-center gap-2">
                       <Badge className={getCategoryColor(template.category)}>
                         {template.category}
                       </Badge>
@@ -365,20 +383,20 @@ export default function TemplateLibraryPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="w-4 h-4" />
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEditTemplate(template.id)}>
-                        <Edit2 className="w-4 h-4 mr-2" />
+                        <Edit2 className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleCloneTemplate(template)}>
-                        <Copy className="w-4 h-4 mr-2" />
+                        <Copy className="mr-2 h-4 w-4" />
                         Clone
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleExportTemplate(template)}>
-                        <Download className="w-4 h-4 mr-2" />
+                        <Download className="mr-2 h-4 w-4" />
                         Export
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -386,7 +404,7 @@ export default function TemplateLibraryPage() {
                         onClick={() => handleDeleteTemplate(template.id)}
                         className="text-destructive focus:text-destructive"
                       >
-                        <Trash2 className="w-4 h-4 mr-2" />
+                        <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -395,16 +413,14 @@ export default function TemplateLibraryPage() {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {template.description}
-                </p>
+                <p className="line-clamp-2 text-sm text-muted-foreground">{template.description}</p>
 
                 {/* Tags */}
                 {template.metadata?.tags && (
                   <div className="flex flex-wrap gap-1">
                     {template.metadata.tags.slice(0, 3).map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">
-                        <Tag className="w-3 h-3 mr-1" />
+                        <Tag className="mr-1 h-3 w-3" />
                         {tag}
                       </Badge>
                     ))}
@@ -417,13 +433,13 @@ export default function TemplateLibraryPage() {
                 )}
 
                 {/* Metadata */}
-                <div className="text-xs text-muted-foreground space-y-1">
+                <div className="space-y-1 text-xs text-muted-foreground">
                   <div className="flex items-center">
-                    <User className="w-3 h-3 mr-1" />
+                    <User className="mr-1 h-3 w-3" />
                     {template.metadata?.author || 'Unknown'}
                   </div>
                   <div className="flex items-center">
-                    <Calendar className="w-3 h-3 mr-1" />
+                    <Calendar className="mr-1 h-3 w-3" />
                     Updated {formatDate(template.metadata?.updatedAt)}
                   </div>
                 </div>
@@ -436,7 +452,7 @@ export default function TemplateLibraryPage() {
                     onClick={() => handleEditTemplate(template.id)}
                     className="flex-1"
                   >
-                    <Edit2 className="w-4 h-4 mr-1" />
+                    <Edit2 className="mr-1 h-4 w-4" />
                     Edit
                   </Button>
                   <Button
@@ -445,7 +461,7 @@ export default function TemplateLibraryPage() {
                     onClick={() => handleUseTemplate(template.id)}
                     className="flex-1"
                   >
-                    <Eye className="w-4 h-4 mr-1" />
+                    <Eye className="mr-1 h-4 w-4" />
                     {valuationId ? 'Use for Report' : 'Use Template'}
                   </Button>
                 </div>
@@ -456,17 +472,17 @@ export default function TemplateLibraryPage() {
 
         {/* Empty State */}
         {filteredTemplates.length === 0 && (
-          <div className="text-center py-12">
-            <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No templates found</h3>
-            <p className="text-muted-foreground mb-4">
+          <div className="py-12 text-center">
+            <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold">No templates found</h3>
+            <p className="mb-4 text-muted-foreground">
               {searchQuery || selectedCategory !== 'all'
                 ? 'Try adjusting your search or filter criteria.'
                 : 'Get started by creating your first template.'}
             </p>
-            {(!searchQuery && selectedCategory === 'all') && (
+            {!searchQuery && selectedCategory === 'all' && (
               <Button onClick={handleCreateNew}>
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Create New Template
               </Button>
             )}
@@ -474,5 +490,5 @@ export default function TemplateLibraryPage() {
         )}
       </div>
     </AppLayout>
-  );
+  )
 }

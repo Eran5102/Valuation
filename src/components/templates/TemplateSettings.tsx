@@ -1,41 +1,47 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Settings, FileText, Palette, Layout } from 'lucide-react';
-import type { ReportTemplate } from '@/lib/templates/types';
-import { TemplateThemeManager } from './TemplateThemeManager';
+import React from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
+import { Settings, FileText, Palette, Layout } from 'lucide-react'
+import type { ReportTemplate } from '@/lib/templates/types'
+import { TemplateThemeManager } from './TemplateThemeManager'
 
 interface TemplateSettingsProps {
-  template: ReportTemplate;
-  onChange: (template: ReportTemplate) => void;
+  template: ReportTemplate
+  onChange: (template: ReportTemplate) => void
 }
 
 export function TemplateSettings({ template, onChange }: TemplateSettingsProps) {
   const updateBasicInfo = (field: string, value: any) => {
     onChange({
       ...template,
-      [field]: value
-    });
-  };
+      [field]: value,
+    })
+  }
 
   const updateSettings = (field: string, value: any) => {
     onChange({
       ...template,
       settings: {
         ...template.settings,
-        [field]: value
-      }
-    });
-  };
+        [field]: value,
+      },
+    })
+  }
 
   const updateMargins = (side: string, value: string) => {
     onChange({
@@ -44,11 +50,11 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
         ...template.settings,
         margins: {
           ...template.settings?.margins,
-          [side]: value
-        }
-      }
-    });
-  };
+          [side]: value,
+        } as any,
+      },
+    })
+  }
 
   const updateWatermark = (field: string, value: any) => {
     onChange({
@@ -57,29 +63,29 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
         ...template.settings,
         watermark: {
           ...template.settings?.watermark,
-          [field]: value
-        }
-      }
-    });
-  };
+          [field]: value,
+        },
+      },
+    })
+  }
 
   const updateMetadata = (field: string, value: any) => {
     onChange({
       ...template,
       metadata: {
         ...template.metadata,
-        [field]: value
-      }
-    });
-  };
+        [field]: value,
+      },
+    })
+  }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       {/* Basic Information */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <FileText className="w-5 h-5 mr-2" />
+            <FileText className="mr-2 h-5 w-5" />
             Basic Information
           </CardTitle>
         </CardHeader>
@@ -139,7 +145,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Layout className="w-5 h-5 mr-2" />
+            <Layout className="mr-2 h-5 w-5" />
             Page Layout
           </CardTitle>
         </CardHeader>
@@ -179,10 +185,12 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
           </div>
 
           <div>
-            <Label className="text-sm font-medium mb-3 block">Margins</Label>
+            <Label className="mb-3 block text-sm font-medium">Margins</Label>
             <div className="grid grid-cols-4 gap-2">
               <div>
-                <Label htmlFor="marginTop" className="text-xs">Top</Label>
+                <Label htmlFor="marginTop" className="text-xs">
+                  Top
+                </Label>
                 <Input
                   id="marginTop"
                   value={template.settings?.margins?.top || '1in'}
@@ -191,7 +199,9 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
                 />
               </div>
               <div>
-                <Label htmlFor="marginRight" className="text-xs">Right</Label>
+                <Label htmlFor="marginRight" className="text-xs">
+                  Right
+                </Label>
                 <Input
                   id="marginRight"
                   value={template.settings?.margins?.right || '1in'}
@@ -200,7 +210,9 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
                 />
               </div>
               <div>
-                <Label htmlFor="marginBottom" className="text-xs">Bottom</Label>
+                <Label htmlFor="marginBottom" className="text-xs">
+                  Bottom
+                </Label>
                 <Input
                   id="marginBottom"
                   value={template.settings?.margins?.bottom || '1in'}
@@ -209,7 +221,9 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
                 />
               </div>
               <div>
-                <Label htmlFor="marginLeft" className="text-xs">Left</Label>
+                <Label htmlFor="marginLeft" className="text-xs">
+                  Left
+                </Label>
                 <Input
                   id="marginLeft"
                   value={template.settings?.margins?.left || '1in'}
@@ -226,7 +240,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Palette className="w-5 h-5 mr-2" />
+            <Palette className="mr-2 h-5 w-5" />
             Watermark
           </CardTitle>
         </CardHeader>
@@ -241,7 +255,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
           </div>
 
           {template.settings?.watermark?.enabled && (
-            <div className="space-y-4 pl-6 border-l-2 border-primary/20">
+            <div className="space-y-4 border-l-2 border-primary/20 pl-6">
               <div>
                 <Label htmlFor="watermarkText">Watermark Text</Label>
                 <Input
@@ -265,7 +279,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
                     onChange={(e) => updateWatermark('opacity', parseFloat(e.target.value))}
                     className="flex-1"
                   />
-                  <span className="text-sm text-muted-foreground w-12">
+                  <span className="w-12 text-sm text-muted-foreground">
                     {Math.round((template.settings.watermark.opacity || 0.1) * 100)}%
                   </span>
                 </div>
@@ -279,7 +293,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Settings className="w-5 h-5 mr-2" />
+            <Settings className="mr-2 h-5 w-5" />
             Metadata
           </CardTitle>
         </CardHeader>
@@ -299,12 +313,18 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
             <Input
               id="tags"
               value={template.metadata?.tags?.join(', ') || ''}
-              onChange={(e) => updateMetadata('tags', e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
+              onChange={(e) =>
+                updateMetadata(
+                  'tags',
+                  e.target.value
+                    .split(',')
+                    .map((tag) => tag.trim())
+                    .filter(Boolean)
+                )
+              }
               placeholder="tag1, tag2, tag3"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Separate tags with commas
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Separate tags with commas</p>
           </div>
 
           <Separator />
@@ -312,11 +332,19 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <Label className="text-xs text-muted-foreground">Created</Label>
-              <p>{template.metadata?.createdAt ? new Date(template.metadata.createdAt).toLocaleString() : 'Unknown'}</p>
+              <p>
+                {template.metadata?.createdAt
+                  ? new Date(template.metadata.createdAt).toLocaleString()
+                  : 'Unknown'}
+              </p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Last Updated</Label>
-              <p>{template.metadata?.updatedAt ? new Date(template.metadata.updatedAt).toLocaleString() : 'Never'}</p>
+              <p>
+                {template.metadata?.updatedAt
+                  ? new Date(template.metadata.updatedAt).toLocaleString()
+                  : 'Never'}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -348,7 +376,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {template.variables.filter(v => v.required).length}
+                {template.variables.filter((v) => v.required).length}
               </div>
               <div className="text-sm text-muted-foreground">Required</div>
             </div>
@@ -356,5 +384,5 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

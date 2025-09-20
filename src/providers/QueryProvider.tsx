@@ -5,34 +5,35 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState } from 'react'
 
 export default function QueryProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        // Cache data for 5 minutes by default
-        staleTime: 5 * 60 * 1000,
-        // Keep cached data for 10 minutes
-        gcTime: 10 * 60 * 1000,
-        // Retry failed requests 3 times
-        retry: 3,
-        // Don't refetch on window focus for better UX
-        refetchOnWindowFocus: false,
-        // Refetch on mount if data is stale
-        refetchOnMount: true,
-        // Enable background refetching
-        refetchOnReconnect: true,
-      },
-      mutations: {
-        retry: 1,
-      },
-    },
-  }))
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Cache data for 5 minutes by default
+            staleTime: 5 * 60 * 1000,
+            // Keep cached data for 10 minutes
+            gcTime: 10 * 60 * 1000,
+            // Retry failed requests 3 times
+            retry: 3,
+            // Don't refetch on window focus for better UX
+            refetchOnWindowFocus: false,
+            // Refetch on mount if data is stale
+            refetchOnMount: true,
+            // Enable background refetching
+            refetchOnReconnect: true,
+          },
+          mutations: {
+            retry: 1,
+          },
+        },
+      })
+  )
 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {process.env.NODE_ENV === 'development' && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
+      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   )
 }

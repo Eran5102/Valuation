@@ -1,24 +1,24 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Settings, Trash2 } from 'lucide-react';
-import type { TemplateSection, TemplateBlock } from '@/lib/templates/types';
+import React from 'react'
+import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Settings, Trash2 } from 'lucide-react'
+import type { TemplateSection, TemplateBlock } from '@/lib/templates/types'
 
-import { SortableBlock } from './SortableBlock';
+import { SortableBlock } from './SortableBlock'
 
 interface TemplateCanvasProps {
-  section: TemplateSection;
-  onBlockSelect: (block: TemplateBlock) => void;
-  onBlockUpdate: (blockId: string, updates: Partial<TemplateBlock>) => void;
-  onBlockDelete: (blockId: string) => void;
-  onSectionUpdate: (updates: Partial<TemplateSection>) => void;
+  section: TemplateSection
+  onBlockSelect: (block: TemplateBlock) => void
+  onBlockUpdate: (blockId: string, updates: Partial<TemplateBlock>) => void
+  onBlockDelete: (blockId: string) => void
+  onSectionUpdate: (updates: Partial<TemplateSection>) => void
 }
 
 export function TemplateCanvas({
@@ -26,18 +26,18 @@ export function TemplateCanvas({
   onBlockSelect,
   onBlockUpdate,
   onBlockDelete,
-  onSectionUpdate
+  onSectionUpdate,
 }: TemplateCanvasProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `section-${section.id}`,
     data: {
       sectionId: section.id,
-      accepts: ['block']
-    }
-  });
+      accepts: ['block'],
+    },
+  })
 
   return (
-    <div className="p-6 h-full">
+    <div className="h-full p-6">
       <Card className="h-full">
         {/* Section Header */}
         <CardHeader className="border-b border-border">
@@ -46,7 +46,7 @@ export function TemplateCanvas({
               <Input
                 value={section.title}
                 onChange={(e) => onSectionUpdate({ title: e.target.value })}
-                className="text-lg font-semibold bg-transparent border-none px-0 focus-visible:ring-0"
+                className="border-none bg-transparent px-0 text-lg font-semibold focus-visible:ring-0"
                 placeholder="Section Title"
               />
             </div>
@@ -78,31 +78,33 @@ export function TemplateCanvas({
         </CardHeader>
 
         {/* Section Content */}
-        <CardContent className="p-6 flex-1">
+        <CardContent className="flex-1 p-6">
           <div
             ref={setNodeRef}
             className={`min-h-[400px] rounded-lg border-2 border-dashed transition-colors ${
-              isOver
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-border/60'
+              isOver ? 'border-primary bg-primary/5' : 'border-border hover:border-border/60'
             }`}
           >
             {section.blocks.length === 0 ? (
               // Empty State
-              <div className="flex items-center justify-center h-full text-center">
+              <div className="flex h-full items-center justify-center text-center">
                 <div className="text-muted-foreground">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                    <Settings className="w-8 h-8" />
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                    <Settings className="h-8 w-8" />
                   </div>
-                  <h3 className="text-lg font-medium mb-2">No blocks yet</h3>
-                  <p className="text-sm max-w-sm">
-                    Drag blocks from the library on the left to start building your template section.
+                  <h3 className="mb-2 text-lg font-medium">No blocks yet</h3>
+                  <p className="max-w-sm text-sm">
+                    Drag blocks from the library on the left to start building your template
+                    section.
                   </p>
                 </div>
               </div>
             ) : (
               // Blocks List
-              <SortableContext items={section.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext
+                items={section.blocks.map((b) => b.id)}
+                strategy={verticalListSortingStrategy}
+              >
                 <div className="space-y-4 p-4">
                   {section.blocks.map((block, index) => (
                     <SortableBlock
@@ -126,5 +128,5 @@ export function TemplateCanvas({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

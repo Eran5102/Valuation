@@ -109,348 +109,69 @@
       "purpose": "Stock Option Grants",
       "createdAt": "2024-01-08T10:00:00Z",
       "updatedAt": "2024-01-10T15:30:00Z",
-      "assumptions": [
-        {
-          "id": "general",
-          "name": "General Information",
-          "icon": {},
-          "assumptions": [
-            {
-              "id": "company_name",
-              "name": "Company Name",
-              "value": "",
-              "type": "text",
-              "required": true
-            },
-            {
-              "id": "valuation_date",
-              "name": "Valuation Date",
-              "value": "",
-              "type": "date",
-              "required": true
-            },
-            {
-              "id": "fiscal_year_end",
-              "name": "Fiscal Year End",
-              "value": "12/31",
-              "type": "text"
-            },
-            {
-              "id": "industry",
-              "name": "Industry",
-              "value": "",
-              "type": "select",
-              "options": [
-                "Technology",
-                "Healthcare",
-                "Financial Services",
-                "Consumer",
-                "Industrial"
-              ]
-            },
-            {
-              "id": "stage",
-              "name": "Company Stage",
-              "value": "",
-              "type": "select",
-              "options": [
-                "Seed",
-                "Series A",
-                "Series B",
-                "Series C",
-                "Series D+",
-                "Pre-IPO"
-              ]
-            },
-            {
-              "id": "years_in_operation",
-              "name": "Years in Operation",
-              "value": "",
-              "type": "number"
-            }
-          ]
+      "assumptions": {
+        "general": {
+          "company_name": 0,
+          "valuation_date": 2025,
+          "fiscal_year_end": 12,
+          "industry": 0,
+          "stage": 0,
+          "years_in_operation": 0
         },
-        {
-          "id": "financial_metrics",
-          "name": "Financial Metrics",
-          "icon": {},
-          "assumptions": [
-            {
-              "id": "revenue_current",
-              "name": "Current Year Revenue",
-              "value": "",
-              "type": "currency",
-              "required": true
-            },
-            {
-              "id": "revenue_prior",
-              "name": "Prior Year Revenue",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "ebitda_current",
-              "name": "Current EBITDA",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "burn_rate",
-              "name": "Monthly Burn Rate",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "cash_balance",
-              "name": "Cash Balance",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "debt_outstanding",
-              "name": "Total Debt Outstanding",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "runway_months",
-              "name": "Cash Runway (Months)",
-              "value": "",
-              "type": "number"
-            }
-          ]
+        "financial_metrics": {
+          "revenue_current": 2500000,
+          "revenue_prior": 1800000,
+          "ebitda_current": -500000,
+          "gross_margin": 75,
+          "operating_margin": -15,
+          "burn_rate": 150000,
+          "cash_balance": 3200000,
+          "debt_outstanding": 0,
+          "runway_months": 21
         },
-        {
-          "id": "growth_assumptions",
-          "name": "Growth Assumptions",
-          "icon": {},
-          "assumptions": [
-            {
-              "id": "revenue_growth_y1",
-              "name": "Year 1 Revenue Growth",
-              "value": "25",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "revenue_growth_y2",
-              "name": "Year 2 Revenue Growth",
-              "value": "20",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "revenue_growth_y3",
-              "name": "Year 3 Revenue Growth",
-              "value": "15",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "revenue_growth_y4",
-              "name": "Year 4 Revenue Growth",
-              "value": "12",
-              "type": "percentage"
-            },
-            {
-              "id": "revenue_growth_y5",
-              "name": "Year 5 Revenue Growth",
-              "value": "10",
-              "type": "percentage"
-            },
-            {
-              "id": "terminal_growth_rate",
-              "name": "Terminal Growth Rate",
-              "value": "2.5",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "target_ebitda_margin",
-              "name": "Target EBITDA Margin",
-              "value": "15",
-              "type": "percentage"
-            }
-          ]
+        "growth_assumptions": {
+          "revenue_growth_y1": 25,
+          "revenue_growth_y2": 20,
+          "revenue_growth_y3": 15,
+          "revenue_growth_y4": 12,
+          "revenue_growth_y5": 10,
+          "terminal_growth_rate": 2.5,
+          "target_ebitda_margin": 15
         },
-        {
-          "id": "discount_rates",
-          "name": "Discount Rates",
-          "icon": {},
-          "assumptions": [
-            {
-              "id": "wacc",
-              "name": "Weighted Average Cost of Capital (WACC)",
-              "value": "12",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "cost_of_equity",
-              "name": "Cost of Equity",
-              "value": "15",
-              "type": "percentage"
-            },
-            {
-              "id": "cost_of_debt",
-              "name": "Cost of Debt",
-              "value": "6",
-              "type": "percentage"
-            },
-            {
-              "id": "tax_rate",
-              "name": "Tax Rate",
-              "value": "21",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "risk_free_rate",
-              "name": "Risk-Free Rate",
-              "value": "3.84",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "market_risk_premium",
-              "name": "Market Risk Premium",
-              "value": "7",
-              "type": "percentage"
-            },
-            {
-              "id": "size_premium",
-              "name": "Size Premium",
-              "value": "3.2",
-              "type": "percentage"
-            },
-            {
-              "id": "company_specific_premium",
-              "name": "Company-Specific Risk Premium",
-              "value": "2",
-              "type": "percentage"
-            }
-          ]
+        "discount_rates": {
+          "wacc": 12,
+          "cost_of_equity": 15,
+          "cost_of_debt": 6,
+          "tax_rate": 21,
+          "risk_free_rate": 3.63,
+          "market_risk_premium": 7,
+          "size_premium": 3,
+          "company_specific_premium": 2,
+          "minority_interest_discount": 15
         },
-        {
-          "id": "volatility_assumptions",
-          "name": "Volatility & Option Pricing",
-          "icon": {},
-          "assumptions": [
-            {
-              "id": "equity_volatility",
-              "name": "Equity Volatility",
-              "value": "55.6",
-              "type": "percentage",
-              "required": true
-            },
-            {
-              "id": "asset_volatility",
-              "name": "Asset Volatility",
-              "value": "45",
-              "type": "percentage"
-            },
-            {
-              "id": "time_to_liquidity",
-              "name": "Expected Time to Liquidity (Years)",
-              "value": "5",
-              "type": "number",
-              "required": true
-            },
-            {
-              "id": "probability_ipo",
-              "name": "Probability of IPO",
-              "value": "10",
-              "type": "percentage"
-            },
-            {
-              "id": "probability_ma",
-              "name": "Probability of M&A",
-              "value": "30",
-              "type": "percentage"
-            },
-            {
-              "id": "probability_dissolution",
-              "name": "Probability of Dissolution",
-              "value": "5",
-              "type": "percentage"
-            }
-          ]
+        "volatility_assumptions": {
+          "equity_volatility": 60,
+          "asset_volatility": 45,
+          "time_to_liquidity": 5,
+          "probability_ipo": 10,
+          "probability_ma": 30,
+          "probability_dissolution": 5
         },
-        {
-          "id": "market_approach",
-          "name": "Market Approach",
-          "icon": {},
-          "assumptions": [
-            {
-              "id": "revenue_multiple",
-              "name": "Revenue Multiple (EV/Revenue)",
-              "value": "3.5",
-              "type": "number"
-            },
-            {
-              "id": "ebitda_multiple",
-              "name": "EBITDA Multiple (EV/EBITDA)",
-              "value": "12",
-              "type": "number"
-            },
-            {
-              "id": "ps_ratio",
-              "name": "Price-to-Sales Ratio",
-              "value": "4",
-              "type": "number"
-            },
-            {
-              "id": "market_approach_weight",
-              "name": "Market Approach Weight",
-              "value": "30",
-              "type": "percentage"
-            },
-            {
-              "id": "income_approach_weight",
-              "name": "Income Approach Weight",
-              "value": "70",
-              "type": "percentage"
-            }
-          ]
+        "market_approach": {
+          "revenue_multiple": 3.5,
+          "ebitda_multiple": 12,
+          "ps_ratio": 4,
+          "market_approach_weight": 30,
+          "income_approach_weight": 70
         },
-        {
-          "id": "backsolve",
-          "name": "Backsolve / Recent Transaction",
-          "icon": {},
-          "assumptions": [
-            {
-              "id": "last_round_date",
-              "name": "Last Funding Round Date",
-              "value": "",
-              "type": "date"
-            },
-            {
-              "id": "last_round_amount",
-              "name": "Last Round Amount Raised",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "last_round_premoney",
-              "name": "Last Round Pre-Money Valuation",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "last_round_price",
-              "name": "Last Round Price per Share",
-              "value": "",
-              "type": "currency"
-            },
-            {
-              "id": "backsolve_volatility",
-              "name": "Implied Volatility from Backsolve",
-              "value": "55",
-              "type": "percentage"
-            }
-          ]
+        "backsolve": {
+          "last_round_date": "2024-03-15",
+          "last_round_amount": 6000000,
+          "last_round_premoney": 20000000,
+          "last_round_price": 4.00,
+          "backsolve_volatility": 55
         }
-      ],
+      },
       "cap_table": {
         "shareClasses": [
           {
@@ -536,7 +257,7 @@
         ],
         "updated_at": "2025-09-14T13:39:24.660Z"
       },
-      "updated_at": "2025-09-14T13:39:24.660Z"
+      "updated_at": "2025-09-18T19:20:49.871Z"
     },
     {
       "id": 2,

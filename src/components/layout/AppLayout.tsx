@@ -21,7 +21,7 @@ import {
   Settings,
   Database,
   Calendar,
-  Activity
+  Activity,
 } from 'lucide-react'
 
 const navigation = [
@@ -36,8 +36,8 @@ const navigation = [
       { name: 'All Reports', href: '/reports', icon: FileText },
       { name: 'Template Library', href: '/reports/template-library', icon: Library },
       { name: 'Template Editor', href: '/reports/template-editor', icon: Settings },
-      { name: 'Field Mapping', href: '/reports/field-mapping', icon: Database }
-    ]
+      { name: 'Field Mapping', href: '/reports/field-mapping', icon: Database },
+    ],
   },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Activity', href: '/activity', icon: Activity },
@@ -47,8 +47,8 @@ const navigation = [
     icon: HelpCircle,
     submenu: [
       { name: 'Field Mapping Help', href: '/help/field-mapping', icon: HelpCircle },
-      { name: 'Field Mappings Admin', href: '/admin/field-mappings', icon: Settings }
-    ]
+      { name: 'Field Mappings Admin', href: '/admin/field-mappings', icon: Settings },
+    ],
   },
 ]
 
@@ -62,19 +62,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname()
 
   const toggleSubmenu = (itemName: string) => {
-    setExpandedMenus(prev =>
-      prev.includes(itemName)
-        ? prev.filter(name => name !== itemName)
-        : [...prev, itemName]
+    setExpandedMenus((prev) =>
+      prev.includes(itemName) ? prev.filter((name) => name !== itemName) : [...prev, itemName]
     )
   }
 
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar with white background */}
-      <div className={`${isSidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 bg-sidebar border-r border-sidebar-border shadow-lg flex flex-col`}>
+      <div
+        className={`${isSidebarOpen ? 'w-64' : 'w-16'} flex flex-col border-r border-sidebar-border bg-sidebar shadow-lg transition-all duration-300`}
+      >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-sidebar-border">
+        <div className="border-b border-sidebar-border p-4">
           <div className="flex items-center justify-between">
             {isSidebarOpen && (
               <div className="flex items-center space-x-3">
@@ -89,61 +89,53 @@ export default function AppLayout({ children }: AppLayoutProps) {
             )}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-1.5 rounded-md text-sidebar-foreground hover:bg-muted transition-colors"
+              className="rounded-md p-1.5 text-sidebar-foreground transition-colors hover:bg-muted"
             >
-              {isSidebarOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+              {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 space-y-1 p-4">
           {navigation.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
             const hasSubmenu = 'submenu' in item && item.submenu
             const isExpanded = expandedMenus.includes(item.name)
-            const isSubmenuActive = hasSubmenu && item.submenu?.some(subItem => pathname === subItem.href)
+            const isSubmenuActive =
+              hasSubmenu && item.submenu?.some((subItem) => pathname === subItem.href)
 
             return (
               <div key={item.name}>
                 {hasSubmenu ? (
                   <button
                     onClick={() => toggleSubmenu(item.name)}
-                    className={`
-                      flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
-                      ${isActive || isSubmenuActive
+                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                      isActive || isSubmenuActive
                         ? 'bg-primary text-primary-foreground shadow-md'
                         : 'text-sidebar-foreground hover:bg-accent/10 hover:text-accent'
-                      }
-                    `}
+                    } `}
                   >
                     <div className="flex items-center">
                       <Icon className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
                       {isSidebarOpen && <span>{item.name}</span>}
                     </div>
-                    {isSidebarOpen && (
-                      isExpanded ? (
+                    {isSidebarOpen &&
+                      (isExpanded ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (
                         <ChevronRight className="h-4 w-4" />
-                      )
-                    )}
+                      ))}
                   </button>
                 ) : (
                   <Link
                     href={item.href}
-                    className={`
-                      flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
-                      ${isActive
+                    className={`flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                      isActive
                         ? 'bg-primary text-primary-foreground shadow-md'
                         : 'text-sidebar-foreground hover:bg-accent/10 hover:text-accent'
-                      }
-                    `}
+                    } `}
                   >
                     <Icon className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
                     {isSidebarOpen && <span>{item.name}</span>}
@@ -160,15 +152,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
                         <Link
                           key={subItem.name}
                           href={subItem.href}
-                          className={`
-                            flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
-                            ${isSubActive
-                              ? 'bg-primary/20 text-primary border-l-2 border-primary'
+                          className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                            isSubActive
+                              ? 'border-l-2 border-primary bg-primary/20 text-primary'
                               : 'text-muted-foreground hover:bg-accent/10 hover:text-accent'
-                            }
-                          `}
+                          } `}
                         >
-                          <SubIcon className="h-4 w-4 mr-3" />
+                          <SubIcon className="mr-3 h-4 w-4" />
                           <span>{subItem.name}</span>
                         </Link>
                       )
@@ -181,15 +171,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="border-t border-sidebar-border p-4">
           {isSidebarOpen && (
-            <div className="text-xs text-muted-foreground mb-3">
-              Professional 409A Valuations
-            </div>
+            <div className="mb-3 text-xs text-muted-foreground">Professional 409A Valuations</div>
           )}
-          <button
-            className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-sidebar-foreground rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
-          >
+          <button className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
             <LogOut className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
             {isSidebarOpen && <span>Sign Out</span>}
           </button>
@@ -197,9 +183,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-background">
-        {children}
-      </div>
+      <div className="flex-1 overflow-auto bg-background">{children}</div>
     </div>
   )
 }

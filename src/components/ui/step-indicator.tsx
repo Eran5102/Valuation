@@ -24,18 +24,20 @@ export function StepIndicator({ steps, currentStep, completedSteps }: StepIndica
 
           return (
             <React.Fragment key={stepInfo.key}>
-              <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : isCompleted
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-muted text-muted-foreground'
-              }`}>
-                <Icon className="w-4 h-4" />
+              <div
+                className={`flex items-center space-x-2 rounded-lg px-4 py-2 transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : isCompleted
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
                 <span className="text-sm font-medium">{stepInfo.label}</span>
               </div>
               {index < array.length - 1 && (
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               )}
             </React.Fragment>
           )

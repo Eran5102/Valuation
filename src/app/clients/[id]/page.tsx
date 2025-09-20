@@ -3,7 +3,17 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Edit, Calculator, FileText, Mail, Phone, MapPin, Building2, Calendar } from 'lucide-react'
+import {
+  ArrowLeft,
+  Edit,
+  Calculator,
+  FileText,
+  Mail,
+  Phone,
+  MapPin,
+  Building2,
+  Calendar,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -12,16 +22,16 @@ import { getStatusColor, formatDate } from '@/lib/utils'
 import { StatusSelector } from '@/components/ui/status-selector'
 
 interface Client {
-  id: number;
-  name: string;
-  industry?: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  contactPerson?: string;
-  status: 'active' | 'inactive' | 'prospect';
-  createdAt: string;
-  updatedAt?: string;
+  id: number
+  name: string
+  industry?: string
+  location?: string
+  email?: string
+  phone?: string
+  contactPerson?: string
+  status: 'active' | 'inactive' | 'prospect'
+  createdAt: string
+  updatedAt?: string
 }
 
 export default function ClientDetailPage() {
@@ -54,7 +64,7 @@ export default function ClientDetailPage() {
           contactPerson: data.contact_person || 'John Smith',
           status: data.status || 'active',
           createdAt: data.created_at || new Date().toISOString(),
-          updatedAt: data.updated_at
+          updatedAt: data.updated_at,
         }
         setClient(transformedClient)
       } else if (response.status === 404) {
@@ -84,7 +94,11 @@ export default function ClientDetailPage() {
 
       if (response.ok) {
         const updatedClient = await response.json()
-        setClient(prev => prev ? { ...prev, status: updatedClient.status, updatedAt: updatedClient.updated_at } : null)
+        setClient((prev) =>
+          prev
+            ? { ...prev, status: updatedClient.status, updatedAt: updatedClient.updated_at }
+            : null
+        )
       } else {
         throw new Error('Failed to update status')
       }
@@ -97,7 +111,7 @@ export default function ClientDetailPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <div className="text-lg text-muted-foreground">Loading client details...</div>
         </div>
       </AppLayout>
@@ -108,7 +122,7 @@ export default function ClientDetailPage() {
     return (
       <AppLayout>
         <div className="p-6">
-          <div className="flex items-center space-x-4 mb-6">
+          <div className="mb-6 flex items-center space-x-4">
             <Button variant="outline" size="icon" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -129,21 +143,21 @@ export default function ClientDetailPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button variant="outline" onClick={() => router.push('/clients')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Clients
             </Button>
             <div className="flex items-center space-x-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 <Building2 className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">{client.name}</h1>
-                <div className="flex items-center mt-1 space-x-2">
+                <div className="mt-1 flex items-center space-x-2">
                   <StatusSelector
                     currentStatus={client.status}
                     statusType="client"
@@ -157,13 +171,13 @@ export default function ClientDetailPage() {
           <div className="flex items-center space-x-2">
             <Link href={`/clients/${client.id}/edit`}>
               <Button variant="outline">
-                <Edit className="h-4 w-4 mr-2" />
+                <Edit className="mr-2 h-4 w-4" />
                 Edit Client
               </Button>
             </Link>
             <Link href={`/valuations?client=${client.id}`}>
               <Button>
-                <Calculator className="h-4 w-4 mr-2" />
+                <Calculator className="mr-2 h-4 w-4" />
                 View Valuations
               </Button>
             </Link>
@@ -171,12 +185,12 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Client Information */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Contact Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Mail className="h-5 w-5 mr-2" />
+                <Mail className="mr-2 h-5 w-5" />
                 Contact Information
               </CardTitle>
             </CardHeader>
@@ -218,7 +232,7 @@ export default function ClientDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
+                <FileText className="mr-2 h-5 w-5" />
                 Account Details
               </CardTitle>
             </CardHeader>
@@ -259,18 +273,18 @@ export default function ClientDetailPage() {
             <div className="flex flex-wrap gap-3">
               <Link href={`/valuations/new?client=${client.id}`}>
                 <Button variant="outline">
-                  <Calculator className="h-4 w-4 mr-2" />
+                  <Calculator className="mr-2 h-4 w-4" />
                   Create New Valuation
                 </Button>
               </Link>
               <Link href={`/reports?client=${client.id}`}>
                 <Button variant="outline">
-                  <FileText className="h-4 w-4 mr-2" />
+                  <FileText className="mr-2 h-4 w-4" />
                   View Reports
                 </Button>
               </Link>
               <Button variant="outline" onClick={() => window.open(`mailto:${client.email}`)}>
-                <Mail className="h-4 w-4 mr-2" />
+                <Mail className="mr-2 h-4 w-4" />
                 Send Email
               </Button>
             </div>
