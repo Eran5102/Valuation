@@ -58,23 +58,23 @@ export default function ClientsPage() {
     try {
       const response = await fetch('/api/companies')
       if (response.ok) {
-        const data = await response.json()
+        const result = await response.json()
+        // The API returns { data: [], pagination: {} }, so we need to access result.data
+        const companies = result.data || []
 
-        // Transform the data to include additional client information
-        const transformedClients: Client[] = data.map((company: any) => ({
+        // Transform the data to use actual database values
+        const transformedClients: Client[] = companies.map((company: any) => ({
           id: company.id,
           name: company.name,
-          industry: company.industry || 'Technology',
-          location: company.location || 'San Francisco, CA',
-          email: company.email || `contact@${company.name.toLowerCase().replace(/\s+/g, '')}.com`,
-          phone: company.phone || '+1 (555) 123-4567',
-          contactPerson: company.contact_person || 'John Smith',
-          valuationCount: Math.floor(Math.random() * 5) + 1,
-          reportCount: Math.floor(Math.random() * 3) + 1,
-          lastActivity: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split('T')[0],
-          status: company.status || 'active', // Use actual status from database, fallback to active
+          industry: company.industry,
+          location: company.city && company.state ? `${company.city}, ${company.state}` : company.location,
+          email: company.email,
+          phone: company.phone,
+          contactPerson: company.contact_name,
+          valuationCount: company.valuation_count || 0,
+          reportCount: company.report_count || 0,
+          lastActivity: company.updated_at || company.created_at,
+          status: company.status || 'active',
           createdAt: company.created_at || new Date().toISOString(),
         }))
 

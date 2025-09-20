@@ -38,16 +38,43 @@ export default function NewClientPage() {
     setLoading(true)
 
     try {
-      // In a real app, this would save to Supabase
-      // TODO: Implement actual API call to save client
+      // Prepare data for API - map ALL form fields to company schema
+      const companyData = {
+        name: formData.companyName,
+        legal_name: formData.companyName, // Use company name as legal name for now
+        contact_name: formData.contactName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zipCode,
+        industry: formData.industry,
+        website: formData.website,
+        description: formData.description,
+        state_of_incorporation: formData.state || null,
+        location: formData.city || null, // Also store city in location field for compatibility
+      }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call API to create company
+      const response = await fetch('/api/companies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(companyData),
+      })
 
-      // Redirect back to clients page
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to create client')
+      }
+
+      // Redirect back to clients page on success
       router.push('/clients')
     } catch (error) {
-      // TODO: Implement user notification for failed save
+      console.error('Error creating client:', error)
+      alert(error instanceof Error ? error.message : 'Failed to create client. Please try again.')
     } finally {
       setLoading(false)
     }
