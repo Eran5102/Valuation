@@ -35,6 +35,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### 2. Database Setup
 
 1. **Create Supabase Project**
+
    ```bash
    # Install Supabase CLI
    npm install -g supabase
@@ -44,6 +45,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    ```
 
 2. **Run Migrations**
+
    ```bash
    # Apply all migrations
    supabase db push
@@ -64,11 +66,13 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### Option 1: Vercel (Recommended)
 
 1. **Install Vercel CLI**
+
    ```bash
    npm i -g vercel
    ```
 
 2. **Deploy**
+
    ```bash
    # Production deployment
    vercel --prod
@@ -89,11 +93,13 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### Option 2: Docker
 
 1. **Build Docker Image**
+
    ```bash
    docker build -t 409a-platform .
    ```
 
 2. **Run Container**
+
    ```bash
    docker run -p 3000:3000 \
      -e NEXT_PUBLIC_SUPABASE_URL=your-url \
@@ -108,7 +114,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
      app:
        build: .
        ports:
-         - "3000:3000"
+         - '3000:3000'
        env_file:
          - .env.production
        restart: unless-stopped
@@ -117,6 +123,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 ### Option 3: Traditional VPS
 
 1. **Setup Server**
+
    ```bash
    # Update system
    sudo apt update && sudo apt upgrade -y
@@ -130,6 +137,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    ```
 
 2. **Clone and Build**
+
    ```bash
    # Clone repository
    git clone https://github.com/your-repo/409a-platform.git
@@ -143,6 +151,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    ```
 
 3. **Run with PM2**
+
    ```bash
    # Start application
    pm2 start npm --name "409a-platform" -- start
@@ -153,6 +162,7 @@ NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
    ```
 
 4. **Setup Nginx**
+
    ```nginx
    server {
        listen 80;
@@ -255,6 +265,7 @@ jobs:
 ### Quick Rollback
 
 1. **Vercel**
+
    ```bash
    # List deployments
    vercel ls
@@ -264,6 +275,7 @@ jobs:
    ```
 
 2. **Manual Rollback**
+
    ```bash
    # Revert to previous commit
    git revert HEAD
@@ -302,13 +314,16 @@ export async function GET() {
     return Response.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version
+      version: process.env.npm_package_version,
     })
   } catch (error) {
-    return Response.json({
-      status: 'unhealthy',
-      error: error.message
-    }, { status: 503 })
+    return Response.json(
+      {
+        status: 'unhealthy',
+        error: error.message,
+      },
+      { status: 503 }
+    )
   }
 }
 ```
@@ -320,6 +335,7 @@ export async function GET() {
    - Send email notifications to active users
 
 2. **Maintenance Mode**
+
    ```typescript
    // middleware.ts
    export function middleware(request: NextRequest) {
@@ -330,6 +346,7 @@ export async function GET() {
    ```
 
 3. **Database Maintenance**
+
    ```sql
    -- Vacuum and analyze tables
    VACUUM ANALYZE companies;
@@ -397,6 +414,7 @@ LOG_LEVEL=verbose
 ## Post-Deployment
 
 1. **Verify Deployment**
+
    ```bash
    # Check application health
    curl https://your-domain.com/api/health

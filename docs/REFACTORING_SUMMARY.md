@@ -90,12 +90,12 @@ This breaks down the 1131-line ImprovedCapTable component into manageable, reusa
 ```typescript
 interface ApiErrorResponse {
   error: {
-    code: string;
-    message: string;
-    details?: ValidationError[] | Record<string, unknown>;
-  };
-  status: number;
-  timestamp: string;
+    code: string
+    message: string
+    details?: ValidationError[] | Record<string, unknown>
+  }
+  status: number
+  timestamp: string
 }
 ```
 
@@ -106,20 +106,13 @@ interface ApiErrorResponse {
 #### PageHeader
 
 ```tsx
-import { PageHeader } from '@/components/common';
+import { PageHeader } from '@/components/common'
 
-<PageHeader
+;<PageHeader
   title="Valuations"
   description="Manage your 409A valuations"
-  breadcrumbs={[
-    { label: 'Dashboard', href: '/' },
-    { label: 'Valuations' }
-  ]}
-  actions={
-    <Button onClick={handleCreateNew}>
-      Create New Valuation
-    </Button>
-  }
+  breadcrumbs={[{ label: 'Dashboard', href: '/' }, { label: 'Valuations' }]}
+  actions={<Button onClick={handleCreateNew}>Create New Valuation</Button>}
 />
 ```
 
@@ -135,19 +128,19 @@ import { StatusBadge } from '@/components/common';
 #### Error Handling
 
 ```tsx
-import { useApiErrorHandler } from '@/hooks/useErrorHandler';
+import { useApiErrorHandler } from '@/hooks/useErrorHandler'
 
 function MyComponent() {
-  const { error, executeWithRetry, formatError } = useApiErrorHandler();
+  const { error, executeWithRetry, formatError } = useApiErrorHandler()
 
   const handleSave = async () => {
     try {
-      await executeWithRetry(() => api.saveData(data));
+      await executeWithRetry(() => api.saveData(data))
     } catch (err) {
       // Error is automatically handled and displayed
-      console.error(formatError(err));
+      console.error(formatError(err))
     }
-  };
+  }
 }
 ```
 
@@ -156,22 +149,22 @@ function MyComponent() {
 #### API Calls
 
 ```typescript
-import { ApiResponse, CompanyCreateRequest } from '@/types';
+import { ApiResponse, CompanyCreateRequest } from '@/types'
 
 const createCompany = async (data: CompanyCreateRequest): Promise<ApiResponse<Company>> => {
   const response = await fetch('/api/companies', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  return response.json();
-};
+    body: JSON.stringify(data),
+  })
+  return response.json()
+}
 ```
 
 #### Form Components
 
 ```typescript
-import { FormFieldProps } from '@/types';
+import { FormFieldProps } from '@/types'
 
 function CustomInput<T>({ label, value, onChange, error }: FormFieldProps<T>) {
   // Properly typed form field component

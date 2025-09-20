@@ -5,6 +5,7 @@ A professional-grade web application for managing 409A valuations, cap tables, a
 ## 🚀 Features
 
 ### Core Functionality
+
 - **409A Valuations**: Complete valuation workflow with 100+ configurable assumption fields
 - **Cap Table Management**: Dynamic cap table with multiple share classes and option pools
 - **Waterfall Analysis**: Advanced liquidation preference calculations with participation rights
@@ -14,6 +15,7 @@ A professional-grade web application for managing 409A valuations, cap tables, a
 - **Field Mapping System**: Flexible configuration for different valuation methodologies
 
 ### Technical Features
+
 - **Real-time Data Sync**: Powered by Supabase PostgreSQL with JSONB for flexible data
 - **Type-Safe Development**: Full TypeScript implementation with strict mode
 - **Performance Optimized**:
@@ -45,23 +47,28 @@ A professional-grade web application for managing 409A valuations, cap tables, a
 ## 🔧 Installation
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/yourusername/409a-valuation-app.git
 cd 409a-valuation-app
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 3. Configure Environment Variables
+
 Copy the example environment file:
+
 ```bash
 cp .env.example .env.local
 ```
 
 Edit `.env.local` with your Supabase credentials:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -69,13 +76,16 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 ### 4. Set Up Database
+
 Run the migrations in your Supabase SQL editor:
+
 ```bash
 # Navigate to supabase/migrations directory
 # Run each .sql file in order through Supabase dashboard
 ```
 
 ### 5. Start Development Server
+
 ```bash
 npm run dev
 ```
@@ -108,16 +118,19 @@ Visit [http://localhost:4000](http://localhost:4000) to see the application.
 ## 🧪 Testing
 
 ### Run All Tests
+
 ```bash
 npm test
 ```
 
 ### Run with Coverage
+
 ```bash
 npm run test:coverage
 ```
 
 ### Run Specific Test Suite
+
 ```bash
 npm run test:unit        # Unit tests only
 npm run test:integration # Integration tests only
@@ -126,16 +139,19 @@ npm run test:integration # Integration tests only
 ## 🚀 Deployment
 
 ### Build for Production
+
 ```bash
 npm run build
 ```
 
 ### Run Production Build Locally
+
 ```bash
 npm start
 ```
 
 ### Deploy to Vercel
+
 ```bash
 vercel deploy
 ```
@@ -175,6 +191,7 @@ vercel deploy
 5. Open a Pull Request
 
 ### Code Style Guidelines
+
 - Follow the existing code patterns
 - Use TypeScript strict mode
 - Write tests for new features
@@ -186,17 +203,20 @@ vercel deploy
 ### Common Issues
 
 #### Port Already in Use
+
 ```bash
 # Kill process on port 4000
 npx kill-port 4000
 ```
 
 #### Database Connection Issues
+
 - Verify Supabase URL and keys in `.env.local`
 - Check if RLS policies are properly configured
 - Ensure migrations have been run
 
 #### Build Errors
+
 ```bash
 # Clear Next.js cache
 rm -rf .next
@@ -210,6 +230,7 @@ This project is proprietary software. All rights reserved.
 ## 📞 Support
 
 For issues, questions, or suggestions:
+
 - Open an issue on GitHub
 - Contact: support@yourcompany.com
 

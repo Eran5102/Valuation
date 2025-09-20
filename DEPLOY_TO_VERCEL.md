@@ -37,6 +37,7 @@ Set the following environment variables in your Vercel dashboard:
 ## Build Configuration
 
 The project is configured with:
+
 - Next.js 15.5.3
 - Automatic optimization for production
 - TypeScript with relaxed checking for faster builds
@@ -53,11 +54,13 @@ The project is configured with:
 ## Troubleshooting
 
 ### Build Errors
+
 - The project has TypeScript errors ignored in production builds
 - If build fails, check `vercel.json` configuration
 - Ensure all environment variables are set
 
 ### Runtime Errors
+
 - Check Vercel Functions logs
 - Verify Supabase connection
 - Check API route timeouts
@@ -65,6 +68,7 @@ The project is configured with:
 ## Performance Optimization
 
 The app is optimized for Vercel with:
+
 - Static generation where possible
 - Dynamic imports for code splitting
 - Image optimization
@@ -74,6 +78,7 @@ The app is optimized for Vercel with:
 ## Support
 
 For issues, check:
+
 - Vercel documentation: https://vercel.com/docs
 - Next.js documentation: https://nextjs.org/docs
 - Supabase documentation: https://supabase.com/docs

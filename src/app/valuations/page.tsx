@@ -34,14 +34,17 @@ import { PageHeader } from '@/components/ui/page-header'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
 
 interface Valuation {
-  id: number
+  id: string | number
   clientName: string
-  valuationType: '409A' | 'Pre-Money' | 'Post-Money'
+  valuationType: string
   status: 'draft' | 'in_progress' | 'completed' | 'review'
   value: number
   createdDate: string
   completedDate?: string
   nextReview?: string
+  title?: string
+  purpose?: string
+  methodology?: string
 }
 
 export default function ValuationsPage() {
@@ -56,59 +59,42 @@ export default function ValuationsPage() {
 
   const fetchValuations = async () => {
     try {
-      // Mock data - in a real app this would fetch from Supabase
-      const mockValuations: Valuation[] = [
-        {
-          id: 1,
-          clientName: 'TechStart Inc.',
-          valuationType: '409A',
-          status: 'completed',
-          value: 15000000,
-          createdDate: '2024-01-01',
-          completedDate: '2024-01-10',
-          nextReview: '2024-04-01',
-        },
-        {
-          id: 2,
-          clientName: 'InnovateCorp',
-          valuationType: 'Pre-Money',
-          status: 'in_progress',
-          value: 8500000,
-          createdDate: '2024-01-05',
-          nextReview: '2024-02-15',
-        },
-        {
-          id: 3,
-          clientName: 'StartupXYZ',
-          valuationType: '409A',
-          status: 'review',
-          value: 3200000,
-          createdDate: '2023-12-10',
-          completedDate: '2023-12-20',
-          nextReview: '2024-03-20',
-        },
-        {
-          id: 4,
-          clientName: 'NextGen Solutions',
-          valuationType: 'Post-Money',
-          status: 'draft',
-          value: 0,
-          createdDate: '2024-01-12',
-        },
-        {
-          id: 5,
-          clientName: 'TechStart Inc.',
-          valuationType: '409A',
-          status: 'completed',
-          value: 12000000,
-          createdDate: '2023-10-01',
-          completedDate: '2023-10-15',
-          nextReview: '2024-01-15',
-        },
-      ]
-      setValuations(mockValuations)
+      // Fetch real valuations from the API
+      const response = await fetch('/api/valuations')
+      if (response.ok) {
+        const result = await response.json()
+        const dbValuations = result.data || []
+
+        // Also fetch companies to get their names
+        const companiesResponse = await fetch('/api/companies')
+        const companiesData = await companiesResponse.json()
+        const companies = companiesData.data || []
+        const companyMap = new Map(companies.map((c: any) => [c.id, c.name]))
+
+        // Transform database valuations to match the interface
+        const transformedValuations: Valuation[] = dbValuations.map((val: any) => ({
+          id: val.id,
+          clientName: companyMap.get(val.company_id) || val.client_name || 'Unknown Client',
+          valuationType: val.valuation_type || val.project_type || '409A',
+          status: val.status || 'draft',
+          value: val.value || val.equity_value || val.enterprise_value || 0,
+          createdDate: val.valuation_date ? new Date(val.valuation_date).toISOString().split('T')[0] : val.created_at ? new Date(val.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          completedDate: val.completed_at ? new Date(val.completed_at).toISOString().split('T')[0] : undefined,
+          nextReview: val.next_review ? new Date(val.next_review).toISOString().split('T')[0] : undefined,
+          title: val.title,
+          purpose: val.purpose,
+          methodology: val.methodology,
+        }))
+
+        setValuations(transformedValuations)
+      } else {
+        // Fallback to empty array if API fails
+        setValuations([])
+      }
     } catch (error) {
-      // Error handled with mock data
+      console.error('Error fetching valuations:', error)
+      // Set empty array on error
+      setValuations([])
     } finally {
       setLoading(false)
     }

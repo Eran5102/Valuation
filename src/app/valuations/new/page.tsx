@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Calculator, FileText, DollarSign } from 'lucide-react'
@@ -20,8 +20,9 @@ import { Button } from '@/components/ui/button'
 export default function NewValuationPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
   const [formData, setFormData] = useState({
-    clientName: '',
+    companyId: '',
     valuationType: '409A',
     valuationDate: '',
     purpose: '',
@@ -41,33 +42,77 @@ export default function NewValuationPage() {
     }))
   }
 
+  // Fetch companies on component mount
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const response = await fetch('/api/companies')
+        if (response.ok) {
+          const data = await response.json()
+          setCompanies(data.data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch companies:', error)
+      }
+    }
+    fetchCompanies()
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // In a real app, this would save to Supabase
-      console.log('Saving valuation:', formData)
+      // Prepare valuation data for API - save all fields directly to database
+      const valuationData: any = {
+        company_id: formData.companyId,
+        valuation_type: formData.valuationType,
+        valuation_date: formData.valuationDate,
+        purpose: formData.purpose,
+        methodology: formData.methodology,
+        status: 'draft',
+        title: `${formData.valuationType} Valuation - ${new Date(formData.valuationDate).toLocaleDateString()}`,
+        notes: formData.notes,
+        shares: formData.shares ? parseFloat(formData.shares) : null,
+        preferences: formData.preferences,
+        // Also store in assumptions for backward compatibility
+        assumptions: {
+          shares: formData.shares,
+          preferences: formData.preferences,
+          notes: formData.notes,
+        },
+      }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call API to create valuation
+      const response = await fetch('/api/valuations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(valuationData),
+      })
 
-      // Redirect back to valuations page
-      router.push('/valuations')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to create valuation')
+      }
+
+      const result = await response.json()
+      // Redirect to the new valuation page
+      router.push(`/valuations/${result.data.id}`)
     } catch (error) {
       console.error('Failed to save valuation:', error)
+      alert(error instanceof Error ? error.message : 'Failed to create valuation. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  // Options for form selects
-  const clientOptions = [
-    { value: 'TechStart Inc.', label: 'TechStart Inc.' },
-    { value: 'InnovateCorp', label: 'InnovateCorp' },
-    { value: 'StartupXYZ', label: 'StartupXYZ' },
-    { value: 'NextGen Solutions', label: 'NextGen Solutions' }
-  ]
+  // Prepare company options from fetched data
+  const companyOptions = companies.map((company) => ({
+    value: company.id,
+    label: company.name,
+  }))
 
   const valuationTypeOptions = [
     { value: '409A', label: '409A Valuation' },
@@ -103,11 +148,11 @@ export default function NewValuationPage() {
             <FormGrid columns={2}>
               <FormSelect
                 label="Client/Company"
-                id="clientName"
-                name="clientName"
-                value={formData.clientName}
+                id="companyId"
+                name="companyId"
+                value={formData.companyId}
                 onChange={handleInputChange}
-                options={clientOptions}
+                options={companyOptions}
                 placeholder="Select client"
                 required
               />

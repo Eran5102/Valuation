@@ -49,29 +49,29 @@ All template variables use the format `{{VARIABLE_NAME}}`. Key categories:
 ### 1. Basic Setup
 
 ```javascript
-import { TINYMCE_CONFIG, replaceTemplateVariables } from './409a-template-helpers.js';
+import { TINYMCE_CONFIG, replaceTemplateVariables } from './409a-template-helpers.js'
 
 // Initialize TinyMCE with 409A template configuration
 tinymce.init({
   ...TINYMCE_CONFIG,
   selector: '#report-editor',
-  setup: function(editor) {
+  setup: function (editor) {
     // Add custom button for variable insertion
     editor.ui.registry.addButton('insertvariable', {
       text: 'Insert Variable',
-      onAction: function() {
+      onAction: function () {
         // Show variable picker dialog
-        showVariablePicker(editor);
-      }
-    });
-  }
-});
+        showVariablePicker(editor)
+      },
+    })
+  },
+})
 
 // Load template into editor
 async function loadTemplate() {
-  const response = await fetch('./409a-valuation-template.html');
-  const template = await response.text();
-  tinymce.get('report-editor').setContent(template);
+  const response = await fetch('./409a-valuation-template.html')
+  const template = await response.text()
+  tinymce.get('report-editor').setContent(template)
 }
 ```
 
@@ -82,40 +82,40 @@ async function loadTemplate() {
 const report = create409AReport({
   COMPANY_NAME: 'TechCorp Inc.',
   VALUATION_DATE: 'December 31, 2023',
-  FMV: '$3.25'
-});
+  FMV: '$3.25',
+})
 
 // Update template variables
 report.setData({
   DESIGNEE_FIRST_NAME: 'John',
   DESIGNEE_LAST_NAME: 'Smith',
-  BUSINESS_DESCRIPTION: 'AI-powered SaaS platform'
-});
+  BUSINESS_DESCRIPTION: 'AI-powered SaaS platform',
+})
 
 // Generate HTML with variables replaced
-const htmlContent = tinymce.get('report-editor').getContent();
-const populatedHTML = replaceTemplateVariables(htmlContent, report.getData());
+const htmlContent = tinymce.get('report-editor').getContent()
+const populatedHTML = replaceTemplateVariables(htmlContent, report.getData())
 ```
 
 ### 3. Variable Picker Component (React Example)
 
 ```jsx
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 
 const VariablePicker = ({ onInsert, onClose }) => {
-  const [selectedCategory, setSelectedCategory] = useState('company');
+  const [selectedCategory, setSelectedCategory] = useState('company')
 
   const variableCategories = {
     company: ['COMPANY_NAME', 'SECURITY', 'VALUATION_DATE'],
     contact: ['DESIGNEE_FIRST_NAME', 'DESIGNEE_LAST_NAME'],
     business: ['BUSINESS_DESCRIPTION', 'PRODUCTS'],
-    valuation: ['FMV', 'BACKSOLVE_EQUITY_VALUE']
-  };
+    valuation: ['FMV', 'BACKSOLVE_EQUITY_VALUE'],
+  }
 
   return (
     <div className="variable-picker">
       <div className="categories">
-        {Object.keys(variableCategories).map(category => (
+        {Object.keys(variableCategories).map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
@@ -127,19 +127,15 @@ const VariablePicker = ({ onInsert, onClose }) => {
       </div>
 
       <div className="variables">
-        {variableCategories[selectedCategory].map(variable => (
-          <div
-            key={variable}
-            className="variable-item"
-            onClick={() => onInsert(`{{${variable}}}`)}
-          >
+        {variableCategories[selectedCategory].map((variable) => (
+          <div key={variable} className="variable-item" onClick={() => onInsert(`{{${variable}}}`)}>
             {variable}
           </div>
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 ```
 
 ## PDF Generation with Puppeteer
@@ -147,26 +143,26 @@ const VariablePicker = ({ onInsert, onClose }) => {
 ### 1. Server-side Implementation (Node.js)
 
 ```javascript
-const puppeteer = require('puppeteer');
-const { replaceTemplateVariables } = require('./409a-template-helpers.js');
-const fs = require('fs').promises;
+const puppeteer = require('puppeteer')
+const { replaceTemplateVariables } = require('./409a-template-helpers.js')
+const fs = require('fs').promises
 
 async function generate409APDF(reportData, outputPath) {
   try {
     // Load HTML template
-    const templateHTML = await fs.readFile('./409a-valuation-template.html', 'utf8');
+    const templateHTML = await fs.readFile('./409a-valuation-template.html', 'utf8')
 
     // Replace template variables
-    const populatedHTML = replaceTemplateVariables(templateHTML, reportData);
+    const populatedHTML = replaceTemplateVariables(templateHTML, reportData)
 
     // Launch Puppeteer
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
+    const browser = await puppeteer.launch()
+    const page = await browser.newPage()
 
     // Set content and generate PDF
     await page.setContent(populatedHTML, {
-      waitUntil: 'networkidle0'
-    });
+      waitUntil: 'networkidle0',
+    })
 
     const pdf = await page.pdf({
       format: 'A4',
@@ -174,7 +170,7 @@ async function generate409APDF(reportData, outputPath) {
         top: '1in',
         right: '1in',
         bottom: '1in',
-        left: '1in'
+        left: '1in',
       },
       printBackground: true,
       displayHeaderFooter: true,
@@ -182,19 +178,18 @@ async function generate409APDF(reportData, outputPath) {
         <div style="font-size: 10px; text-align: center; width: 100%; margin: 0 1in;">
           <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
         </div>
-      `
-    });
+      `,
+    })
 
-    await browser.close();
+    await browser.close()
 
     // Save PDF
-    await fs.writeFile(outputPath, pdf);
+    await fs.writeFile(outputPath, pdf)
 
-    return { success: true, path: outputPath };
-
+    return { success: true, path: outputPath }
   } catch (error) {
-    console.error('PDF generation failed:', error);
-    return { success: false, error: error.message };
+    console.error('PDF generation failed:', error)
+    return { success: false, error: error.message }
   }
 }
 
@@ -204,50 +199,49 @@ const reportData = {
   VALUATION_DATE: 'December 31, 2023',
   FMV: '$3.25',
   // ... other variables
-};
+}
 
-generate409APDF(reportData, './output/valuation-report.pdf');
+generate409APDF(reportData, './output/valuation-report.pdf')
 ```
 
 ### 2. API Endpoint (Express.js)
 
 ```javascript
-const express = require('express');
-const app = express();
+const express = require('express')
+const app = express()
 
 app.post('/api/generate-409a-report', async (req, res) => {
   try {
-    const reportData = req.body;
+    const reportData = req.body
 
     // Validate required fields
-    const validation = validateTemplateVariables(reportData);
+    const validation = validateTemplateVariables(reportData)
     if (!validation.isValid) {
       return res.status(400).json({
         error: 'Missing required variables',
-        missingVariables: validation.missingVariables
-      });
+        missingVariables: validation.missingVariables,
+      })
     }
 
     // Generate PDF
-    const result = await generate409APDF(reportData, `./temp/report-${Date.now()}.pdf`);
+    const result = await generate409APDF(reportData, `./temp/report-${Date.now()}.pdf`)
 
     if (result.success) {
       // Send PDF file
       res.download(result.path, '409a-valuation-report.pdf', (err) => {
         if (err) {
-          console.error('Download error:', err);
+          console.error('Download error:', err)
         }
         // Clean up temp file
-        fs.unlink(result.path).catch(console.error);
-      });
+        fs.unlink(result.path).catch(console.error)
+      })
     } else {
-      res.status(500).json({ error: result.error });
+      res.status(500).json({ error: result.error })
     }
-
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 ```
 
 ## Next.js Integration
@@ -256,32 +250,31 @@ app.post('/api/generate-409a-report', async (req, res) => {
 
 ```javascript
 // pages/api/generate-report.js
-import { generate409APDF, validateTemplateVariables } from '../../lib/409a-helpers';
+import { generate409APDF, validateTemplateVariables } from '../../lib/409a-helpers'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ message: 'Method not allowed' })
   }
 
   try {
-    const reportData = req.body;
+    const reportData = req.body
 
-    const validation = validateTemplateVariables(reportData);
+    const validation = validateTemplateVariables(reportData)
     if (!validation.isValid) {
       return res.status(400).json({
         error: 'Validation failed',
-        missing: validation.missingVariables
-      });
+        missing: validation.missingVariables,
+      })
     }
 
-    const pdfBuffer = await generate409APDF(reportData);
+    const pdfBuffer = await generate409APDF(reportData)
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=409a-report.pdf');
-    res.send(pdfBuffer);
-
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', 'attachment; filename=409a-report.pdf')
+    res.send(pdfBuffer)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
 }
 ```
@@ -290,53 +283,50 @@ export default async function handler(req, res) {
 
 ```jsx
 // components/ReportEditor.jsx
-import { useEffect, useRef, useState } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
-import { create409AReport, TINYMCE_CONFIG } from '../lib/409a-helpers';
+import { useEffect, useRef, useState } from 'react'
+import { Editor } from '@tinymce/tinymce-react'
+import { create409AReport, TINYMCE_CONFIG } from '../lib/409a-helpers'
 
 export default function ReportEditor() {
-  const editorRef = useRef(null);
-  const [reportData, setReportData] = useState({});
-  const [isGenerating, setIsGenerating] = useState(false);
+  const editorRef = useRef(null)
+  const [reportData, setReportData] = useState({})
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const handleGeneratePDF = async () => {
-    setIsGenerating(true);
+    setIsGenerating(true)
 
     try {
-      const editorContent = editorRef.current.getContent();
+      const editorContent = editorRef.current.getContent()
 
       const response = await fetch('/api/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...reportData,
-          htmlContent: editorContent
-        })
-      });
+          htmlContent: editorContent,
+        }),
+      })
 
       if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = '409a-valuation-report.pdf';
-        a.click();
-        window.URL.revokeObjectURL(url);
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = '409a-valuation-report.pdf'
+        a.click()
+        window.URL.revokeObjectURL(url)
       }
     } catch (error) {
-      console.error('PDF generation failed:', error);
+      console.error('PDF generation failed:', error)
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
   return (
     <div className="report-editor">
       <div className="toolbar">
-        <button
-          onClick={handleGeneratePDF}
-          disabled={isGenerating}
-        >
+        <button onClick={handleGeneratePDF} disabled={isGenerating}>
           {isGenerating ? 'Generating...' : 'Generate PDF'}
         </button>
       </div>
@@ -345,11 +335,11 @@ export default function ReportEditor() {
         ref={editorRef}
         init={{
           ...TINYMCE_CONFIG,
-          height: 600
+          height: 600,
         }}
       />
     </div>
-  );
+  )
 }
 ```
 
@@ -411,8 +401,8 @@ Variables are highlighted in the editor for easy identification:
 
 ```javascript
 // Enable debug mode for template variable tracking
-const debugHTML = replaceTemplateVariables(template, data, { debug: true });
-console.log('Unreplaced variables:', extractTemplateVariables(debugHTML));
+const debugHTML = replaceTemplateVariables(template, data, { debug: true })
+console.log('Unreplaced variables:', extractTemplateVariables(debugHTML))
 ```
 
 This integration provides a complete solution for editing and generating professional 409A valuation reports using TinyMCE and Puppeteer.

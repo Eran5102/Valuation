@@ -1,6 +1,7 @@
 # Testing Documentation
 
 ## Overview
+
 The 409A Valuation Platform has comprehensive test coverage across unit, integration, and end-to-end tests.
 
 ## Test Structure
@@ -24,6 +25,7 @@ src/
 ## Running Tests
 
 ### Unit Tests
+
 ```bash
 # Run all unit tests
 npm test
@@ -39,6 +41,7 @@ npm run test:debug
 ```
 
 ### Integration Tests
+
 ```bash
 # Run API integration tests
 npm run test:integration
@@ -48,6 +51,7 @@ npm run test:api
 ```
 
 ### End-to-End Tests
+
 ```bash
 # Install Playwright browsers (first time)
 npx playwright install
@@ -68,12 +72,14 @@ npm run test:e2e:report
 ## Test Coverage
 
 ### Current Coverage Targets
+
 - **Branches**: 50%
 - **Functions**: 50%
 - **Lines**: 60%
 - **Statements**: 60%
 
 ### View Coverage Report
+
 ```bash
 # Generate coverage report
 npm run test:coverage
@@ -85,17 +91,20 @@ open coverage/index.html
 ### Coverage Areas
 
 #### High Priority (80%+ coverage)
+
 - Business logic (`lib/capTableCalculations.ts`)
 - API route handlers
 - Critical UI components
 - Validation utilities
 
 #### Medium Priority (60%+ coverage)
+
 - Form components
 - Data transformations
 - Error handling
 
 #### Low Priority (40%+ coverage)
+
 - UI utilities
 - Style helpers
 - Dev tools
@@ -103,6 +112,7 @@ open coverage/index.html
 ## Writing Tests
 
 ### Unit Test Example
+
 ```typescript
 import { calculateAmountInvested } from '@/lib/capTableCalculations'
 
@@ -110,7 +120,7 @@ describe('calculateAmountInvested', () => {
   it('should calculate correctly', () => {
     const shareClass = {
       sharesOutstanding: 1000,
-      pricePerShare: 10
+      pricePerShare: 10,
     }
 
     expect(calculateAmountInvested(shareClass)).toBe(10000)
@@ -119,6 +129,7 @@ describe('calculateAmountInvested', () => {
 ```
 
 ### Component Test Example
+
 ```typescript
 import { render, screen } from '@testing-library/react'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -136,6 +147,7 @@ describe('LoadingSpinner', () => {
 ```
 
 ### API Test Example
+
 ```typescript
 import { GET } from '@/app/api/valuations/route'
 
@@ -151,6 +163,7 @@ describe('GET /api/valuations', () => {
 ```
 
 ### E2E Test Example
+
 ```typescript
 import { test, expect } from '@playwright/test'
 
@@ -166,13 +179,17 @@ test('should create valuation', async ({ page }) => {
 ## Test Data Management
 
 ### Fixtures
+
 Test data is stored in `tests/fixtures/`:
+
 - `companies.json` - Sample company data
 - `valuations.json` - Sample valuation data
 - `users.json` - Test user accounts
 
 ### Database Seeding
+
 For integration tests:
+
 ```bash
 # Seed test database
 npm run db:seed:test
@@ -184,28 +201,31 @@ npm run db:reset:test
 ## Mocking
 
 ### Supabase Client
+
 ```typescript
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn().mockReturnValue({
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     // ... other methods
-  })
+  }),
 }))
 ```
 
 ### External APIs
+
 ```typescript
 jest.mock('@/lib/external-api', () => ({
   fetchTreasuryRates: jest.fn().mockResolvedValue({
-    rates: [2.5, 3.0, 3.5]
-  })
+    rates: [2.5, 3.0, 3.5],
+  }),
 }))
 ```
 
 ## CI/CD Integration
 
 ### GitHub Actions
+
 ```yaml
 name: Tests
 on: [push, pull_request]
@@ -222,6 +242,7 @@ jobs:
 ```
 
 ### Pre-commit Hooks
+
 ```json
 {
   "husky": {
@@ -235,6 +256,7 @@ jobs:
 ## Performance Testing
 
 ### Load Testing
+
 ```bash
 # Run load tests
 npm run test:load
@@ -244,6 +266,7 @@ npm run test:stress
 ```
 
 ### Performance Metrics
+
 - Page load time: < 3s
 - API response time: < 500ms
 - Virtual scroll FPS: > 30
@@ -251,6 +274,7 @@ npm run test:stress
 ## Debugging Tests
 
 ### VS Code Configuration
+
 ```json
 {
   "type": "node",
@@ -263,6 +287,7 @@ npm run test:stress
 ```
 
 ### Chrome DevTools
+
 ```bash
 # Debug with Chrome DevTools
 node --inspect-brk ./node_modules/.bin/jest --runInBand
@@ -284,18 +309,22 @@ node --inspect-brk ./node_modules/.bin/jest --runInBand
 ### Common Issues
 
 #### Tests Timing Out
+
 - Increase timeout: `jest.setTimeout(10000)`
 - Check async operations are properly awaited
 
 #### Module Resolution Errors
+
 - Check `moduleNameMapper` in jest.config.js
 - Ensure paths match tsconfig.json
 
 #### Coverage Not Updating
+
 - Clear cache: `npm run test:debug`
 - Check `collectCoverageFrom` patterns
 
 #### E2E Tests Failing
+
 - Ensure dev server is running
 - Check Playwright browsers are installed
 - Verify selectors are correct

@@ -38,23 +38,30 @@ export default function NewClientPage() {
     setLoading(true)
 
     try {
-      // Prepare data for API - map ALL form fields to company schema
-      const companyData = {
+      // Prepare data for API - check if new columns exist
+      // Temporarily store extra data in location field until migrations are applied
+      const locationInfo = [formData.address, formData.city, formData.state, formData.zipCode]
+        .filter(Boolean)
+        .join(', ')
+
+      const companyData: any = {
         name: formData.companyName,
-        legal_name: formData.companyName, // Use company name as legal name for now
-        contact_name: formData.contactName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zip_code: formData.zipCode,
+        legal_name: formData.companyName,
         industry: formData.industry,
-        website: formData.website,
-        description: formData.description,
         state_of_incorporation: formData.state || null,
-        location: formData.city || null, // Also store city in location field for compatibility
+        location: locationInfo || null,
       }
+
+      // Only add new fields if they're not empty (will work after migration)
+      if (formData.contactName) companyData.contact_name = formData.contactName
+      if (formData.email) companyData.email = formData.email
+      if (formData.phone) companyData.phone = formData.phone
+      if (formData.website) companyData.website = formData.website
+      if (formData.description) companyData.description = formData.description
+      if (formData.address) companyData.address = formData.address
+      if (formData.city) companyData.city = formData.city
+      if (formData.state) companyData.state = formData.state
+      if (formData.zipCode) companyData.zip_code = formData.zipCode
 
       // Call API to create company
       const response = await fetch('/api/companies', {

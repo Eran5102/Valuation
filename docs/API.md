@@ -1,6 +1,7 @@
 # API Documentation
 
 ## Base URL
+
 ```
 Production: https://api.409avaluation.com
 Staging: https://staging-api.409avaluation.com
@@ -8,13 +9,17 @@ Development: http://localhost:3000
 ```
 
 ## Authentication
+
 All API requests require authentication via Supabase JWT token:
+
 ```
 Authorization: Bearer <token>
 ```
 
 ## Response Format
+
 All responses follow this format:
+
 ```json
 {
   "data": {},
@@ -27,7 +32,9 @@ All responses follow this format:
 ```
 
 ## Error Handling
+
 Error responses:
+
 ```json
 {
   "data": null,
@@ -44,9 +51,11 @@ Error responses:
 ### Valuations
 
 #### GET /api/valuations
+
 Retrieve all valuations
 
 **Query Parameters:**
+
 - `company_id` (string): Filter by company
 - `status` (string): Filter by status (draft|in_progress|completed)
 - `from_date` (string): Start date range
@@ -55,6 +64,7 @@ Retrieve all valuations
 - `limit` (number): Results per page (default: 20)
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -76,9 +86,11 @@ Retrieve all valuations
 ```
 
 #### POST /api/valuations
+
 Create a new valuation
 
 **Request Body:**
+
 ```json
 {
   "company_id": "uuid",
@@ -90,6 +102,7 @@ Create a new valuation
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -103,9 +116,11 @@ Create a new valuation
 ```
 
 #### GET /api/valuations/{id}
+
 Retrieve a specific valuation
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -128,9 +143,11 @@ Retrieve a specific valuation
 ```
 
 #### PUT /api/valuations/{id}
+
 Update a valuation
 
 **Request Body:**
+
 ```json
 {
   "status": "in_progress",
@@ -141,9 +158,11 @@ Update a valuation
 ```
 
 #### DELETE /api/valuations/{id}
+
 Delete a valuation
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -155,9 +174,11 @@ Delete a valuation
 ### Assumptions
 
 #### GET /api/valuations/{id}/assumptions
+
 Get valuation assumptions
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -179,9 +200,11 @@ Get valuation assumptions
 ```
 
 #### PUT /api/valuations/{id}/assumptions
+
 Update valuation assumptions
 
 **Request Body:**
+
 ```json
 {
   "financial": {
@@ -193,9 +216,11 @@ Update valuation assumptions
 ### Cap Table
 
 #### GET /api/valuations/{id}/cap-table
+
 Get cap table data
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -213,7 +238,7 @@ Get cap table data
       "shareType": "preferred",
       "shareClassName": "Series A",
       "sharesOutstanding": 2000000,
-      "pricePerShare": 1.00,
+      "pricePerShare": 1.0,
       "lpMultiple": 1,
       "amountInvested": 2000000,
       "ownershipPercentage": 20
@@ -227,15 +252,17 @@ Get cap table data
 ```
 
 #### POST /api/valuations/{id}/cap-table
+
 Add share class to cap table
 
 **Request Body:**
+
 ```json
 {
   "shareType": "preferred",
   "shareClassName": "Series B",
   "sharesOutstanding": 1000000,
-  "pricePerShare": 2.00,
+  "pricePerShare": 2.0,
   "lpMultiple": 1.5,
   "conversionRatio": 1,
   "dividendsDeclared": false
@@ -243,20 +270,25 @@ Add share class to cap table
 ```
 
 #### PUT /api/valuations/{id}/cap-table/{shareId}
+
 Update share class
 
 #### DELETE /api/valuations/{id}/cap-table/{shareId}
+
 Remove share class
 
 ### Waterfall Analysis
 
 #### GET /api/valuations/{id}/waterfall
+
 Calculate waterfall distribution
 
 **Query Parameters:**
+
 - `exit_value` (number): Exit valuation amount
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -289,14 +321,17 @@ Calculate waterfall distribution
 ### Breakpoints
 
 #### GET /api/valuations/{id}/breakpoints
+
 Generate breakpoint analysis
 
 **Query Parameters:**
+
 - `min_value` (number): Minimum valuation
 - `max_value` (number): Maximum valuation
 - `step` (number): Step increment
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -320,9 +355,11 @@ Generate breakpoint analysis
 ### Companies
 
 #### GET /api/companies
+
 List all companies
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -343,9 +380,11 @@ List all companies
 ```
 
 #### POST /api/companies
+
 Create a new company
 
 **Request Body:**
+
 ```json
 {
   "name": "New Company Inc.",
@@ -356,20 +395,25 @@ Create a new company
 ```
 
 #### GET /api/companies/{id}
+
 Get company details
 
 #### PUT /api/companies/{id}
+
 Update company
 
 #### DELETE /api/companies/{id}
+
 Delete company
 
 ### Field Mappings
 
 #### GET /api/field-mappings
+
 Get field mapping configuration
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -387,9 +431,11 @@ Get field mapping configuration
 ### External Data
 
 #### GET /api/external/treasury-yield-curve
+
 Get current treasury rates
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -397,7 +443,7 @@ Get current treasury rates
     "rates": {
       "1M": 5.43,
       "3M": 5.39,
-      "6M": 5.30,
+      "6M": 5.3,
       "1Y": 4.95,
       "2Y": 4.62,
       "3Y": 4.43,
@@ -413,9 +459,11 @@ Get current treasury rates
 ### Reports
 
 #### POST /api/valuations/{id}/generate-report
+
 Generate 409A report
 
 **Request Body:**
+
 ```json
 {
   "template": "standard_409a",
@@ -431,6 +479,7 @@ Generate 409A report
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -442,9 +491,11 @@ Generate 409A report
 ```
 
 #### GET /api/reports/{id}/status
+
 Check report generation status
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -456,9 +507,11 @@ Check report generation status
 ```
 
 #### GET /api/reports/{id}/download
+
 Download generated report
 
 ## Rate Limiting
+
 - 100 requests per minute per API key
 - 1000 requests per hour per API key
 - 10000 requests per day per API key
@@ -466,6 +519,7 @@ Download generated report
 ## Webhooks
 
 ### Available Events
+
 - `valuation.created`
 - `valuation.updated`
 - `valuation.completed`
@@ -473,6 +527,7 @@ Download generated report
 - `company.created`
 
 ### Webhook Payload
+
 ```json
 {
   "event": "valuation.completed",
@@ -485,6 +540,7 @@ Download generated report
 ```
 
 ## Status Codes
+
 - `200` - Success
 - `201` - Created
 - `204` - No Content
@@ -501,28 +557,30 @@ Download generated report
 ## SDK Examples
 
 ### JavaScript/TypeScript
+
 ```typescript
 import { ValuationAPI } from '@409a/sdk'
 
 const api = new ValuationAPI({
   apiKey: 'your-api-key',
-  baseUrl: 'https://api.409avaluation.com'
+  baseUrl: 'https://api.409avaluation.com',
 })
 
 // Get valuations
 const valuations = await api.valuations.list({
   companyId: 'uuid',
-  status: 'completed'
+  status: 'completed',
 })
 
 // Create valuation
 const valuation = await api.valuations.create({
   companyId: 'uuid',
-  valuationDate: '2024-03-01'
+  valuationDate: '2024-03-01',
 })
 ```
 
 ### Python
+
 ```python
 from valuation_api import ValuationAPI
 
@@ -545,6 +603,7 @@ valuation = api.valuations.create(
 ```
 
 ### cURL
+
 ```bash
 # Get valuations
 curl -X GET \
