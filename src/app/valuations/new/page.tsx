@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Calculator, FileText, DollarSign } from 'lucide-react'
+import { ArrowLeft, Calculator, FileText } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import {
   FormCard,
@@ -24,11 +24,7 @@ export default function NewValuationPage() {
   const [formData, setFormData] = useState({
     companyId: '',
     valuationType: '409A',
-    valuationDate: '',
     purpose: '',
-    methodology: 'DCF',
-    shares: '',
-    preferences: '',
     notes: '',
   })
 
@@ -63,22 +59,17 @@ export default function NewValuationPage() {
     setLoading(true)
 
     try {
-      // Prepare valuation data for API - save all fields directly to database
+      // Prepare valuation data for API - only basic fields
       const valuationData: any = {
         company_id: formData.companyId,
         valuation_type: formData.valuationType,
-        valuation_date: formData.valuationDate,
         purpose: formData.purpose,
-        methodology: formData.methodology,
         status: 'draft',
-        title: `${formData.valuationType} Valuation - ${new Date(formData.valuationDate).toLocaleDateString()}`,
+        title: `${formData.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
         notes: formData.notes,
-        shares: formData.shares ? parseFloat(formData.shares) : null,
-        preferences: formData.preferences,
-        // Also store in assumptions for backward compatibility
+        valuation_date: new Date().toISOString().split('T')[0], // Default to today, will be set in assumptions tab
+        // Store notes in assumptions for backward compatibility
         assumptions: {
-          shares: formData.shares,
-          preferences: formData.preferences,
           notes: formData.notes,
         },
       }
@@ -116,17 +107,10 @@ export default function NewValuationPage() {
 
   const valuationTypeOptions = [
     { value: '409A', label: '409A Valuation' },
-    { value: 'Pre-Money', label: 'Pre-Money Valuation' },
-    { value: 'Post-Money', label: 'Post-Money Valuation' },
-    { value: 'Fairness Opinion', label: 'Fairness Opinion' }
+    { value: 'Company Valuation', label: 'Company Valuation' },
+    { value: 'Other', label: 'Other' }
   ]
 
-  const methodologyOptions = [
-    { value: 'DCF', label: 'Discounted Cash Flow' },
-    { value: 'Market', label: 'Market Approach' },
-    { value: 'Asset', label: 'Asset Approach' },
-    { value: 'Hybrid', label: 'Hybrid Approach' }
-  ]
 
   return (
     <AppLayout>
@@ -166,26 +150,6 @@ export default function NewValuationPage() {
                 options={valuationTypeOptions}
                 required
               />
-
-              <FormField
-                label="Valuation Date"
-                id="valuationDate"
-                name="valuationDate"
-                type="text"
-                value={formData.valuationDate}
-                onChange={handleInputChange}
-                placeholder="2024-01-15"
-                required
-              />
-
-              <FormSelect
-                label="Methodology"
-                id="methodology"
-                name="methodology"
-                value={formData.methodology}
-                onChange={handleInputChange}
-                options={methodologyOptions}
-              />
             </FormGrid>
           </FormSection>
 
@@ -209,29 +173,6 @@ export default function NewValuationPage() {
                 onChange={handleInputChange}
                 placeholder="Any additional notes or comments..."
                 rows={4}
-              />
-            </FormGrid>
-          </FormSection>
-
-          <FormSection title="Share Structure" icon={DollarSign}>
-            <FormGrid columns={2}>
-              <FormField
-                label="Outstanding Shares"
-                id="shares"
-                name="shares"
-                type="number"
-                value={formData.shares}
-                onChange={handleInputChange}
-                placeholder="1000000"
-              />
-
-              <FormField
-                label="Liquidation Preferences"
-                id="preferences"
-                name="preferences"
-                value={formData.preferences}
-                onChange={handleInputChange}
-                placeholder="1x non-participating"
               />
             </FormGrid>
           </FormSection>

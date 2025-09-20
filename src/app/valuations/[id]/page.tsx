@@ -189,10 +189,21 @@ export default function ValuationDetail() {
       if (response.ok) {
         const valuation = await response.json()
 
-        // Only update if we have actual assumptions data
-        if (valuation.assumptions && Object.keys(valuation.assumptions).length > 0) {
-          console.log('Loading saved assumptions data:', valuation.assumptions)
-          setAssumptionCategories(valuation.assumptions)
+        // Check if we have assumptions data (could be array or object)
+        if (valuation.assumptions) {
+          // If it's an array (our new format), use it directly
+          if (Array.isArray(valuation.assumptions) && valuation.assumptions.length > 0) {
+            console.log('Loading saved assumptions data (array):', valuation.assumptions)
+            setAssumptionCategories(valuation.assumptions)
+          }
+          // If it's an object (old format), check if it has keys
+          else if (typeof valuation.assumptions === 'object' && Object.keys(valuation.assumptions).length > 0) {
+            console.log('Loading saved assumptions data (object):', valuation.assumptions)
+            // For backward compatibility, if it's the old flat format, don't use it
+            // as it won't match the expected structure
+          } else {
+            console.log('No valid assumptions data found, using defaults')
+          }
         } else {
           console.log('No saved assumptions data found, using defaults')
         }
@@ -210,24 +221,13 @@ export default function ValuationDetail() {
       try {
         console.log('Saving assumptions data to database:', categories)
 
-        // Convert categories array to flat object structure expected by DLOM component
-        const flatAssumptions: any = {}
-        categories.forEach((category) => {
-          const categoryData: any = {}
-          category.assumptions.forEach((assumption: any) => {
-            categoryData[assumption.id] = parseFloat(assumption.value) || 0
-          })
-          flatAssumptions[category.id] = categoryData
-        })
-
-        console.log('Converted flat assumptions:', flatAssumptions)
-
+        // Store the full categories structure to preserve all data
         const response = await fetch(`/api/valuations/${id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ assumptions: flatAssumptions }),
+          body: JSON.stringify({ assumptions: categories }),
         })
 
         if (response.ok) {
@@ -235,7 +235,7 @@ export default function ValuationDetail() {
           console.log('Assumptions saved successfully:', result)
           setAssumptionCategories(categories)
           setProject((prevProject) =>
-            prevProject ? { ...prevProject, assumptions: flatAssumptions } : prevProject
+            prevProject ? { ...prevProject, assumptions: categories } : prevProject
           )
         } else {
           console.error('Failed to save assumptions data')

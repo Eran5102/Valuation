@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Settings,
   TrendingUp,
@@ -48,7 +48,6 @@ const defaultAssumptionCategories: AssumptionCategory[] = [
     assumptions: [
       { id: 'company_name', name: 'Company Name', value: '', type: 'text' },
       { id: 'company_address', name: 'Company Address', value: '', type: 'text' },
-      { id: 'company_ein', name: 'EIN (Tax ID)', value: '', type: 'text' },
       {
         id: 'company_state',
         name: 'State of Incorporation',
@@ -79,7 +78,21 @@ const defaultAssumptionCategories: AssumptionCategory[] = [
         name: 'Company Stage',
         value: '',
         type: 'select',
-        options: ['Pre-Seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D+', 'Pre-IPO'],
+        options: [
+          'Stage 1: Ideation',
+          'Stage 2: Product Development',
+          'Stage 3: Development Progress',
+          'Stage 4: Early Revenue',
+          'Stage 5: Revenue Generation',
+          'Stage 6: Established Operations',
+        ],
+      },
+      {
+        id: 'stage_description',
+        name: 'Stage Description',
+        value: '',
+        type: 'textarea',
+        description: 'Describe the company\'s current position within the selected stage',
       },
       { id: 'company_employees', name: 'Number of Employees', value: '', type: 'number' },
       { id: 'years_in_operation', name: 'Years in Operation', value: '', type: 'number' },
@@ -170,71 +183,6 @@ const defaultAssumptionCategories: AssumptionCategory[] = [
       { id: 'total_liabilities', name: 'Total Liabilities', value: '', type: 'currency' },
       { id: 'debt_outstanding', name: 'Total Debt Outstanding', value: '', type: 'currency' },
       { id: 'runway_months', name: 'Cash Runway (Months)', value: '', type: 'number' },
-    ],
-  },
-  {
-    id: 'funding',
-    name: 'Funding & Investment',
-    icon: CreditCard,
-    priority: 5,
-    assumptions: [
-      { id: 'total_funding', name: 'Total Funding Raised', value: '', type: 'currency' },
-      { id: 'number_of_rounds', name: 'Number of Funding Rounds', value: '', type: 'number' },
-      { id: 'last_round_date', name: 'Last Funding Round Date', value: '', type: 'date' },
-      { id: 'last_round_amount', name: 'Last Round Amount Raised', value: '', type: 'currency' },
-      {
-        id: 'last_round_premoney',
-        name: 'Last Round Pre-Money Valuation',
-        value: '',
-        type: 'currency',
-      },
-      {
-        id: 'last_round_postmoney',
-        name: 'Last Round Post-Money Valuation',
-        value: '',
-        type: 'currency',
-      },
-      { id: 'last_round_price', name: 'Last Round Price per Share', value: '', type: 'currency' },
-      {
-        id: 'preferred_liquidation',
-        name: 'Total Liquidation Preference',
-        value: '',
-        type: 'currency',
-      },
-      { id: 'participation_cap', name: 'Participation Cap (if any)', value: '', type: 'currency' },
-      { id: 'dividend_rate', name: 'Cumulative Dividend Rate', value: '', type: 'percentage' },
-    ],
-  },
-  {
-    id: 'shares',
-    name: 'Capitalization & Shares',
-    icon: Share2,
-    priority: 6,
-    assumptions: [
-      {
-        id: 'common_shares_outstanding',
-        name: 'Common Shares Outstanding',
-        value: '',
-        type: 'number',
-      },
-      {
-        id: 'preferred_shares_outstanding',
-        name: 'Preferred Shares Outstanding',
-        value: '',
-        type: 'number',
-      },
-      { id: 'options_outstanding', name: 'Options Outstanding', value: '', type: 'number' },
-      { id: 'unvested_options', name: 'Unvested Options', value: '', type: 'number' },
-      { id: 'warrants_outstanding', name: 'Warrants Outstanding', value: '', type: 'number' },
-      {
-        id: 'convertible_notes',
-        name: 'Convertible Notes Outstanding',
-        value: '',
-        type: 'currency',
-      },
-      { id: 'fully_diluted_shares', name: 'Fully Diluted Shares', value: '', type: 'number' },
-      { id: 'option_pool_size', name: 'Option Pool Size (%)', value: '', type: 'percentage' },
-      { id: 'option_pool_available', name: 'Available Options in Pool', value: '', type: 'number' },
     ],
   },
   {
@@ -567,40 +515,67 @@ export default function ValuationAssumptions({
     }
   }, [initialCategories])
 
-  const handleAssumptionChange = (
+  const handleAssumptionChange = useCallback((
     categoryId: string,
     assumptionId: string,
     value: string | number
   ) => {
     const updatedCategories = categories.map((cat) => {
       if (cat.id === categoryId) {
+        let updatedAssumptions = cat.assumptions.map((assumption) =>
+          assumption.id === assumptionId ? { ...assumption, value } : assumption
+        )
+
+        // Auto-populate stage description when stage is selected
+        if (assumptionId === 'stage' && value) {
+          const stageDescriptions: Record<string, string> = {
+            'Stage 1: Ideation': 'The Idea - Ideation and Initial Concept: No tangible product exists. Management team typically incomplete. Initial funding from founders, friends, and family. No product revenue and limited expense history. Valuation highly subjective; Backsolve Method most reliable if recent transaction occurred.',
+            'Stage 2: Product Development': 'The Plan - Formalization and Early Development: Product development actively underway, business challenges better understood. Management team being assembled. First or second round of financing (preferred stock) to fund development. No product revenue but substantive expense history. Backsolve Method remains primary valuation tool.',
+            'Stage 3: Development Progress': 'The Product - Nearing Completion: Key development milestones met, product nearing completion with alpha/beta testing. More complete management team in place. Continued financing through preferred stock. Generally no product revenue yet. Valuation approaches expanded to include DCF and market comparables.',
+            'Stage 4: Early Revenue': 'The Market - Initial Commercialization: Key milestones achieved (first customer orders/initial revenue). Management team largely in place, focused on commercialization. Mezzanine financing rounds for market expansion. Some product revenue but operating at a loss. More reliable financial forecasts enable lower DCF discount rates.',
+            'Stage 5: Revenue Generation': 'The Breakthrough - Achieving Financial Viability: Product established in market, focus on scaling and penetration. Management fully operational and growth-focused. Potential liquidity event (IPO or sale). Achieved operating profitability, break-even, or positive cash flows. Lower discount rate for DCF due to increased forecast reliability.',
+            'Stage 6: Established Operations': 'The Maturity - Established and Profitable: Well-established product/service in market. Stable, experienced management team. May remain private or pursue IPO. Established history of profitable operations and positive cash flows. Most reliable forecasts result in lowest discount rates for DCF analysis.',
+          }
+
+          const description = stageDescriptions[value as string] || ''
+          updatedAssumptions = updatedAssumptions.map((assumption) =>
+            assumption.id === 'stage_description' ? { ...assumption, value: description } : assumption
+          )
+        }
+
         return {
           ...cat,
-          assumptions: cat.assumptions.map((assumption) =>
-            assumption.id === assumptionId ? { ...assumption, value } : assumption
-          ),
+          assumptions: updatedAssumptions,
         }
       }
       return cat
     })
 
     setCategories(updatedCategories)
+    // Don't save immediately - wait for blur event
+  }, [categories])
 
-    // Auto-save changes to parent component
+  const handleAssumptionBlur = useCallback(() => {
+    // Save when user exits a field
     if (onSave) {
-      onSave(updatedCategories)
+      onSave(categories)
     }
-  }
+  }, [categories, onSave])
 
-  const getAssumptionValue = (assumptionId: string): string | number => {
-    for (const category of categories) {
-      const assumption = category.assumptions.find((a) => a.id === assumptionId)
-      if (assumption) {
-        return assumption.value
+  // Get the value of a specific assumption by ID
+  const getAssumptionValue = useCallback(
+    (assumptionId: string): string | number => {
+      for (const category of categories) {
+        const assumption = category.assumptions.find((a) => a.id === assumptionId)
+        if (assumption) {
+          return assumption.value || ''
+        }
       }
-    }
-    return ''
-  }
+      return ''
+    },
+    [categories]
+  )
+
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) =>
@@ -696,18 +671,6 @@ export default function ValuationAssumptions({
               style={{ width: `${(stats.completed / stats.total) * 100}%` }}
             />
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Required Fields</span>
-            <span className="font-medium text-red-600">
-              {stats.requiredCompleted} / {stats.required} required fields completed
-            </span>
-          </div>
-          <div className="h-2 w-full rounded-full bg-gray-200">
-            <div
-              className={`${stats.requiredCompleted === stats.required ? 'bg-green-500' : 'bg-red-500'} h-2 rounded-full transition-all duration-300`}
-              style={{ width: `${(stats.requiredCompleted / stats.required) * 100}%` }}
-            />
-          </div>
         </div>
 
         {/* Search Bar */}
@@ -733,9 +696,9 @@ export default function ValuationAssumptions({
             category={category}
             isExpanded={expandedCategories.includes(category.id)}
             onToggle={() => toggleCategory(category.id)}
-            onAssumptionChange={(assumptionId, value) =>
-              handleAssumptionChange(category.id, assumptionId, value)
-            }
+            onAssumptionChange={handleAssumptionChange}
+            onAssumptionBlur={handleAssumptionBlur}
+            onGetAssumptionValue={getAssumptionValue}
             searchQuery={searchQuery}
           />
         ))}

@@ -7,6 +7,7 @@ interface AssumptionInputProps {
   assumption: Assumption
   categoryId: string
   onChange: (categoryId: string, assumptionId: string, value: string | number) => void
+  onBlur?: () => void
   onGetAssumptionValue?: (assumptionId: string) => string | number
 }
 
@@ -14,19 +15,28 @@ export function AssumptionInput({
   assumption,
   categoryId,
   onChange,
+  onBlur,
   onGetAssumptionValue,
 }: AssumptionInputProps) {
   const baseClasses =
-    'w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring'
+    'w-full px-2 py-1.5 text-sm border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring'
 
   // Special case for risk-free rate - use the specialized Treasury integration component
   if (assumption.id === 'risk_free_rate') {
+    // Get valuation date and time to liquidity from other assumptions
+    const valuationDate = onGetAssumptionValue?.('valuation_date') as string
+    const timeToLiquidity = onGetAssumptionValue?.('time_to_liquidity')
+      ? Number(onGetAssumptionValue('time_to_liquidity'))
+      : undefined
+
     return (
       <RiskFreeRateInput
         assumption={assumption}
         categoryId={categoryId}
         onChange={onChange}
         onGetAssumptionValue={onGetAssumptionValue}
+        valuationDate={valuationDate}
+        timeToLiquidity={timeToLiquidity}
       />
     )
   }
@@ -35,8 +45,9 @@ export function AssumptionInput({
     case 'select':
       return (
         <select
-          value={assumption.value}
+          value={assumption.value || ''}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
+          onBlur={onBlur}
           className={baseClasses}
         >
           <option value="">Select...</option>
@@ -53,8 +64,9 @@ export function AssumptionInput({
         <div className="relative">
           <input
             type="number"
-            value={assumption.value}
+            value={assumption.value || ''}
             onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
+            onBlur={onBlur}
             className={`${baseClasses} pr-8`}
             step="0.1"
             placeholder="0.0"
@@ -71,8 +83,9 @@ export function AssumptionInput({
           </span>
           <input
             type="number"
-            value={assumption.value}
+            value={assumption.value || ''}
             onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
+            onBlur={onBlur}
             className={`${baseClasses} pl-8`}
             placeholder="0"
           />
@@ -83,8 +96,9 @@ export function AssumptionInput({
       return (
         <input
           type="date"
-          value={assumption.value}
+          value={assumption.value || ''}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
+          onBlur={onBlur}
           className={baseClasses}
         />
       )
@@ -93,10 +107,23 @@ export function AssumptionInput({
       return (
         <input
           type="number"
-          value={assumption.value}
+          value={assumption.value || ''}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
+          onBlur={onBlur}
           className={baseClasses}
           step="0.01"
+        />
+      )
+
+    case 'textarea':
+      return (
+        <textarea
+          value={assumption.value || ''}
+          onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
+          onBlur={onBlur}
+          className={`${baseClasses} min-h-[80px] resize-y`}
+          rows={3}
+          placeholder={assumption.id === 'stage_description' ? 'Select a stage to auto-populate or enter custom description' : ''}
         />
       )
 
@@ -104,8 +131,9 @@ export function AssumptionInput({
       return (
         <input
           type="text"
-          value={assumption.value}
+          value={assumption.value || ''}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
+          onBlur={onBlur}
           className={baseClasses}
         />
       )

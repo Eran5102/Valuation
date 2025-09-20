@@ -8,7 +8,9 @@ interface AssumptionCategoryProps {
   isExpanded: boolean
   onToggle: (categoryId: string) => void
   onAssumptionChange: (categoryId: string, assumptionId: string, value: string | number) => void
+  onAssumptionBlur?: () => void
   onGetAssumptionValue?: (assumptionId: string) => string | number
+  searchQuery?: string
 }
 
 export function AssumptionCategory({
@@ -16,6 +18,7 @@ export function AssumptionCategory({
   isExpanded,
   onToggle,
   onAssumptionChange,
+  onAssumptionBlur,
   onGetAssumptionValue,
 }: AssumptionCategoryProps) {
   const Icon = category.icon || (() => null)
@@ -56,10 +59,10 @@ export function AssumptionCategory({
 
       {isExpanded && (
         <CardContent className="pt-0">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {category.assumptions.map((assumption) => (
               <div key={assumption.id} className="space-y-1">
-                <label className="block text-sm font-medium text-foreground">
+                <label className="block text-xs font-medium text-foreground">
                   {assumption.name}
                   {assumption.required && <span className="ml-1 text-destructive">*</span>}
                 </label>
@@ -67,6 +70,7 @@ export function AssumptionCategory({
                   assumption={assumption}
                   categoryId={category.id}
                   onChange={onAssumptionChange}
+                  onBlur={onAssumptionBlur}
                   onGetAssumptionValue={onGetAssumptionValue}
                 />
                 {assumption.description && (
