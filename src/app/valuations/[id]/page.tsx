@@ -36,7 +36,11 @@ import {
 } from '@/components/ui/action-buttons'
 
 // Lazy load heavy components to improve initial page load performance
-const ValuationAssumptions = lazy(() => import('@/components/valuation/ValuationAssumptions'))
+const ValuationAssumptions = lazy(() =>
+  import('@/components/valuation/ValuationAssumptionsRedesigned').then((module) => ({
+    default: module.ValuationAssumptionsRedesigned,
+  }))
+)
 const ImprovedCapTable = lazy(() => import('@/components/valuation/ImprovedCapTable'))
 const DLOMModels = lazy(() => import('@/components/valuation/DLOMModels'))
 const BreakpointsAnalysis = lazy(() => import('@/components/valuation/BreakpointsAnalysis'))
