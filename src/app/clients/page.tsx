@@ -67,7 +67,8 @@ export default function ClientsPage() {
           id: company.id,
           name: company.name,
           industry: company.industry,
-          location: company.city && company.state ? `${company.city}, ${company.state}` : company.location,
+          location:
+            company.city && company.state ? `${company.city}, ${company.state}` : company.location,
           email: company.email,
           phone: company.phone,
           contactPerson: company.contact_name,
@@ -417,10 +418,14 @@ export default function ClientsPage() {
               enableSorting
               enableColumnVisibility
               enableColumnReordering
+              enableColumnPinning
               enableRowReordering
               onRowReorder={(fromIndex, toIndex) => {
-                // TODO: Implement actual row reordering logic
-                // Handle row reordering logic here
+                // Reorder the clients array
+                const reorderedClients = [...filteredClients]
+                const [movedClient] = reorderedClients.splice(fromIndex, 1)
+                reorderedClients.splice(toIndex, 0, movedClient)
+                setClients(reorderedClients)
               }}
             />
           </CardContent>

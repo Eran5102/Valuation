@@ -343,13 +343,23 @@ export function OptimizedDataTable<TData, TValue>({
   onStateChange,
   initialState,
 }: OptimizedDataTableProps<TData, TValue>) {
+  // Ensure all columns have IDs
+  const columnsWithIds = useMemo(
+    () =>
+      columns.map((col, index) => ({
+        ...col,
+        id: col.id || `column_${index}`,
+      })),
+    [columns]
+  )
+
   // Initialize state with useReducer for better performance
   const [state, dispatch] = useReducer(tableReducer, {
     sorting: initialState?.sorting || [],
     columnFilters: initialState?.columnFilters || [],
     columnVisibility: initialState?.columnVisibility || {},
     rowSelection: {},
-    columnOrder: initialState?.columnOrder || columns.map((col) => col.id || ''),
+    columnOrder: initialState?.columnOrder || columnsWithIds.map((col) => col.id || ''),
     pinnedColumns: initialState?.pinnedColumns || { left: [], right: [] },
     globalFilter: '',
     views: [],
@@ -377,7 +387,7 @@ export function OptimizedDataTable<TData, TValue>({
   const orderedColumns = useMemo(() => {
     const columnOrderArray = Array.isArray(state.columnOrder)
       ? state.columnOrder
-      : columns.map((col) => col.id || '')
+      : columnsWithIds.map((col) => col.id || '')
     const leftPinned = state.pinnedColumns?.left || []
     const rightPinned = state.pinnedColumns?.right || []
     const pinned = [...leftPinned, ...rightPinned]
@@ -385,19 +395,29 @@ export function OptimizedDataTable<TData, TValue>({
     const finalOrder = [...leftPinned, ...unpinned, ...rightPinned]
 
     return finalOrder
-      .map((id) => columns.find((col) => col.id === id))
+      .map((id) => columnsWithIds.find((col) => col.id === id))
       .filter(Boolean) as ColumnDef<TData, TValue>[]
-  }, [columns, state.columnOrder, state.pinnedColumns])
+  }, [columnsWithIds, state.columnOrder, state.pinnedColumns])
 
-  // Debounced localStorage operations
-  const debouncedSaveToLocalStorage = useCallback(
-    useDebounce((views: TableView[]) => {
+  // Save to localStorage function
+  const saveToLocalStorage = useCallback(
+    (views: TableView[]) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem(`table-views-${tableId}`, JSON.stringify(views))
       }
-    }, 500),
+    },
     [tableId]
   )
+
+  // Use debounce for localStorage operations
+  const [pendingViews, setPendingViews] = useState<TableView[] | null>(null)
+  const debouncedViews = useDebounce(pendingViews, 500)
+
+  useEffect(() => {
+    if (debouncedViews) {
+      saveToLocalStorage(debouncedViews)
+    }
+  }, [debouncedViews, saveToLocalStorage])
 
   // Load views from localStorage on mount
   useEffect(() => {
@@ -527,17 +547,17 @@ export function OptimizedDataTable<TData, TValue>({
       const { active, over } = event
 
       if (active.id !== over?.id) {
+        const currentOrder = state.columnOrder
+        const oldIndex = currentOrder.indexOf(active.id as string)
+        const newIndex = currentOrder.indexOf(over?.id as string)
+        const newOrder = arrayMove(currentOrder, oldIndex, newIndex)
         dispatch({
           type: 'SET_COLUMN_ORDER',
-          payload: (items) => {
-            const oldIndex = items.indexOf(active.id as string)
-            const newIndex = items.indexOf(over?.id as string)
-            return arrayMove(items, oldIndex, newIndex)
-          },
+          payload: newOrder,
         })
       }
     },
-    [dispatch]
+    [state.columnOrder]
   )
 
   // Handle row reordering
@@ -550,49 +570,56 @@ export function OptimizedDataTable<TData, TValue>({
         const overIndex = parseInt(over?.id as string)
 
         if (!isNaN(activeIndex) && !isNaN(overIndex)) {
+          const currentOrder = state.rowOrder
+          const oldIndex = currentOrder.indexOf(activeIndex.toString())
+          const newIndex = currentOrder.indexOf(overIndex.toString())
+          const newOrder = arrayMove(currentOrder, oldIndex, newIndex)
           dispatch({
             type: 'SET_ROW_ORDER',
-            payload: (items) => {
-              const oldIndex = items.indexOf(activeIndex.toString())
-              const newIndex = items.indexOf(overIndex.toString())
-              return arrayMove(items, oldIndex, newIndex)
-            },
+            payload: newOrder,
           })
           onRowReorder(activeIndex, overIndex)
         }
       }
     },
-    [dispatch, onRowReorder]
+    [state.rowOrder, onRowReorder]
   )
 
   // Pin/unpin column
-  const toggleColumnPin = useCallback((columnId: string, side: 'left' | 'right') => {
-    dispatch({
-      type: 'SET_PINNED_COLUMNS',
-      payload: (prev) => {
-        const isCurrentlyPinned = prev.left.includes(columnId) || prev.right.includes(columnId)
+  const toggleColumnPin = useCallback(
+    (columnId: string, side: 'left' | 'right') => {
+      const currentPinned = state.pinnedColumns
+      const isCurrentlyPinned =
+        currentPinned.left.includes(columnId) || currentPinned.right.includes(columnId)
 
-        if (isCurrentlyPinned) {
-          return {
-            left: prev.left.filter((id) => id !== columnId),
-            right: prev.right.filter((id) => id !== columnId),
+      let newPinnedColumns: { left: string[]; right: string[] }
+
+      if (isCurrentlyPinned) {
+        newPinnedColumns = {
+          left: currentPinned.left.filter((id) => id !== columnId),
+          right: currentPinned.right.filter((id) => id !== columnId),
+        }
+      } else {
+        if (side === 'left') {
+          newPinnedColumns = {
+            ...currentPinned,
+            left: [...currentPinned.left, columnId],
           }
         } else {
-          if (side === 'left') {
-            return {
-              ...prev,
-              left: [...prev.left, columnId],
-            }
-          } else {
-            return {
-              ...prev,
-              right: [...prev.right, columnId],
-            }
+          newPinnedColumns = {
+            ...currentPinned,
+            right: [...currentPinned.right, columnId],
           }
         }
-      },
-    })
-  }, [])
+      }
+
+      dispatch({
+        type: 'SET_PINNED_COLUMNS',
+        payload: newPinnedColumns,
+      })
+    },
+    [state.pinnedColumns]
+  )
 
   const isPinnedColumn = useCallback(
     (columnId: string) => {
@@ -627,7 +654,7 @@ export function OptimizedDataTable<TData, TValue>({
 
       dispatch({ type: 'SET_VIEWS', payload: updatedViews })
       dispatch({ type: 'SET_CURRENT_VIEW', payload: newView })
-      debouncedSaveToLocalStorage(updatedViews)
+      setPendingViews(updatedViews)
     },
     [
       state.columnVisibility,
@@ -637,7 +664,6 @@ export function OptimizedDataTable<TData, TValue>({
       state.columnFilters,
       table,
       state.views,
-      debouncedSaveToLocalStorage,
     ]
   )
 
@@ -653,13 +679,13 @@ export function OptimizedDataTable<TData, TValue>({
     (viewId: string) => {
       const updatedViews = state.views.filter((v) => v.id !== viewId)
       dispatch({ type: 'SET_VIEWS', payload: updatedViews })
-      debouncedSaveToLocalStorage(updatedViews)
+      setPendingViews(updatedViews)
 
       if (state.currentView?.id === viewId) {
         dispatch({ type: 'SET_CURRENT_VIEW', payload: null })
       }
     },
-    [state.views, state.currentView, debouncedSaveToLocalStorage]
+    [state.views, state.currentView]
   )
 
   // Lazy-loaded export function
