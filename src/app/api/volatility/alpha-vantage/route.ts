@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     for (const ticker of tickers) {
       try {
-        const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${ticker}&apikey=${apiKey}&outputsize=full`
+        const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&apikey=${apiKey}&outputsize=full`
 
         const response = await fetch(url)
         const data = await response.json()
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
           results.push({
             date,
-            close: parseFloat(values['5. adjusted close'] || values['4. close']),
+            close: parseFloat(values['4. close']),
           })
         }
 
