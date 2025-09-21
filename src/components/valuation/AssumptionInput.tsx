@@ -2,6 +2,7 @@ import React from 'react'
 import { Percent } from 'lucide-react'
 import { Assumption } from './ValuationAssumptions'
 import { RiskFreeRateInput } from './RiskFreeRateInput'
+import { VolatilityInput } from './VolatilityInput'
 
 interface AssumptionInputProps {
   assumption: Assumption
@@ -36,6 +37,26 @@ export function AssumptionInput({
         onChange={onChange}
         onGetAssumptionValue={onGetAssumptionValue}
         valuationDate={valuationDate}
+        timeToLiquidity={timeToLiquidity}
+      />
+    )
+  }
+
+  // Special case for equity volatility - use the specialized volatility input component
+  if (assumption.id === 'equity_volatility') {
+    // Get industry and time to liquidity from other assumptions
+    const industry = onGetAssumptionValue?.('industry') as string
+    const timeToLiquidity = onGetAssumptionValue?.('time_to_liquidity')
+      ? Number(onGetAssumptionValue('time_to_liquidity'))
+      : undefined
+
+    return (
+      <VolatilityInput
+        assumption={assumption}
+        categoryId={categoryId}
+        onChange={onChange}
+        onGetAssumptionValue={onGetAssumptionValue}
+        industry={industry}
         timeToLiquidity={timeToLiquidity}
       />
     )
@@ -123,7 +144,11 @@ export function AssumptionInput({
           onBlur={onBlur}
           className={`${baseClasses} min-h-[80px] resize-y`}
           rows={3}
-          placeholder={assumption.id === 'stage_description' ? 'Select a stage to auto-populate or enter custom description' : ''}
+          placeholder={
+            assumption.id === 'stage_description'
+              ? 'Select a stage to auto-populate or enter custom description'
+              : ''
+          }
         />
       )
 

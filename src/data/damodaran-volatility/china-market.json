@@ -1,0 +1,554 @@
+[
+  {
+    "industry": "Advertising",
+    "numberOfFirms": 59,
+    "standardDeviation": 6118,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Aerospace/Defense",
+    "numberOfFirms": 67,
+    "standardDeviation": 4005,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Air Transport",
+    "numberOfFirms": 15,
+    "standardDeviation": 3139,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Apparel",
+    "numberOfFirms": 129,
+    "standardDeviation": 3932,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Auto & Truck",
+    "numberOfFirms": 33,
+    "standardDeviation": 4665,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Auto Parts",
+    "numberOfFirms": 207,
+    "standardDeviation": 4159,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Bank (Money Center)",
+    "numberOfFirms": 22,
+    "standardDeviation": 2112,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Banks (Regional)",
+    "numberOfFirms": 36,
+    "standardDeviation": 2083,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Beverage (Alcoholic)",
+    "numberOfFirms": 39,
+    "standardDeviation": 3560,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Beverage (Soft)",
+    "numberOfFirms": 3,
+    "standardDeviation": 2580,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Broadcasting",
+    "numberOfFirms": 4,
+    "standardDeviation": 3501,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Brokerage & Investment Banking",
+    "numberOfFirms": 57,
+    "standardDeviation": 3218,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Building Materials",
+    "numberOfFirms": 59,
+    "standardDeviation": 3850,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Business & Consumer Services",
+    "numberOfFirms": 87,
+    "standardDeviation": 4415,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Cable TV",
+    "numberOfFirms": 11,
+    "standardDeviation": 3779,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Chemical (Basic)",
+    "numberOfFirms": 281,
+    "standardDeviation": 3608,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Chemical (Diversified)",
+    "numberOfFirms": 5,
+    "standardDeviation": 3937,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Chemical (Specialty)",
+    "numberOfFirms": 242,
+    "standardDeviation": 3669,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Coal & Related Energy",
+    "numberOfFirms": 29,
+    "standardDeviation": 3013,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Computer Services",
+    "numberOfFirms": 112,
+    "standardDeviation": 4864,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Computers/Peripherals",
+    "numberOfFirms": 51,
+    "standardDeviation": 5164,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Construction Supplies",
+    "numberOfFirms": 147,
+    "standardDeviation": 3652,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Diversified",
+    "numberOfFirms": 7,
+    "standardDeviation": 3150,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Drugs (Biotechnology)",
+    "numberOfFirms": 125,
+    "standardDeviation": 4758,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Drugs (Pharmaceutical)",
+    "numberOfFirms": 246,
+    "standardDeviation": 3683,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Education",
+    "numberOfFirms": 45,
+    "standardDeviation": 5018,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Electrical Equipment",
+    "numberOfFirms": 326,
+    "standardDeviation": 4003,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Electronics (Consumer & Office)",
+    "numberOfFirms": 22,
+    "standardDeviation": 5173,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Electronics (General)",
+    "numberOfFirms": 397,
+    "standardDeviation": 4453,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Engineering/Construction",
+    "numberOfFirms": 131,
+    "standardDeviation": 3864,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Entertainment",
+    "numberOfFirms": 89,
+    "standardDeviation": 5558,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Environmental & Waste Services",
+    "numberOfFirms": 103,
+    "standardDeviation": 3814,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Farming/Agriculture",
+    "numberOfFirms": 47,
+    "standardDeviation": 3689,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Financial Svcs. (Non-bank & Insurance)",
+    "numberOfFirms": 40,
+    "standardDeviation": 4569,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Food Processing",
+    "numberOfFirms": 166,
+    "standardDeviation": 3498,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Food Wholesalers",
+    "numberOfFirms": 3,
+    "standardDeviation": 3651,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Furn/Home Furnishings",
+    "numberOfFirms": 86,
+    "standardDeviation": 3743,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Green & Renewable Energy",
+    "numberOfFirms": 32,
+    "standardDeviation": 2955,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Healthcare Products",
+    "numberOfFirms": 136,
+    "standardDeviation": 3874,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Healthcare Support Services",
+    "numberOfFirms": 57,
+    "standardDeviation": 3817,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Heathcare Information and Technology",
+    "numberOfFirms": 51,
+    "standardDeviation": 4682,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Homebuilding",
+    "numberOfFirms": 1,
+    "standardDeviation": 4819,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Hospitals/Healthcare Facilities",
+    "numberOfFirms": 21,
+    "standardDeviation": 4054,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Hotel/Gaming",
+    "numberOfFirms": 29,
+    "standardDeviation": 3778,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Household Products",
+    "numberOfFirms": 63,
+    "standardDeviation": 4054,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Information Services",
+    "numberOfFirms": 2,
+    "standardDeviation": 5756,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Insurance (General)",
+    "numberOfFirms": 6,
+    "standardDeviation": 7142,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Insurance (Life)",
+    "numberOfFirms": 4,
+    "standardDeviation": 3762,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Insurance (Prop/Cas.)",
+    "numberOfFirms": 2,
+    "standardDeviation": 2547,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Investments & Asset Management",
+    "numberOfFirms": 15,
+    "standardDeviation": 4121,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Machinery",
+    "numberOfFirms": 419,
+    "standardDeviation": 4143,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Metals & Mining",
+    "numberOfFirms": 118,
+    "standardDeviation": 3529,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Office Equipment & Services",
+    "numberOfFirms": 11,
+    "standardDeviation": 4394,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Oil/Gas (Integrated)",
+    "numberOfFirms": 4,
+    "standardDeviation": 2681,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Oil/Gas (Production and Exploration)",
+    "numberOfFirms": 5,
+    "standardDeviation": 3211,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Oil/Gas Distribution",
+    "numberOfFirms": 15,
+    "standardDeviation": 2894,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Oilfield Svcs/Equip.",
+    "numberOfFirms": 49,
+    "standardDeviation": 3777,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Packaging & Container",
+    "numberOfFirms": 58,
+    "standardDeviation": 3576,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Paper/Forest Products",
+    "numberOfFirms": 38,
+    "standardDeviation": 3615,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Power",
+    "numberOfFirms": 83,
+    "standardDeviation": 2801,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Precious Metals",
+    "numberOfFirms": 14,
+    "standardDeviation": 3173,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Publishing & Newspapers",
+    "numberOfFirms": 39,
+    "standardDeviation": 4786,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Real Estate (Development)",
+    "numberOfFirms": 129,
+    "standardDeviation": 5411,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Real Estate (General/Diversified)",
+    "numberOfFirms": 25,
+    "standardDeviation": 4057,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Real Estate (Operations & Services)",
+    "numberOfFirms": 74,
+    "standardDeviation": 4833,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Recreation",
+    "numberOfFirms": 44,
+    "standardDeviation": 4612,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Reinsurance",
+    "numberOfFirms": 1,
+    "standardDeviation": 4233,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Restaurant/Dining",
+    "numberOfFirms": 18,
+    "standardDeviation": 5134,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Retail (Automotive)",
+    "numberOfFirms": 25,
+    "standardDeviation": 6037,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Retail (Building Supply)",
+    "numberOfFirms": 4,
+    "standardDeviation": 1969,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Retail (Distributors)",
+    "numberOfFirms": 71,
+    "standardDeviation": 4127,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Retail (General)",
+    "numberOfFirms": 47,
+    "standardDeviation": 4234,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Retail (Grocery and Food)",
+    "numberOfFirms": 21,
+    "standardDeviation": 5224,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Retail (Special Lines)",
+    "numberOfFirms": 41,
+    "standardDeviation": 4639,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Rubber& Tires",
+    "numberOfFirms": 15,
+    "standardDeviation": 3151,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Semiconductor",
+    "numberOfFirms": 171,
+    "standardDeviation": 4568,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Semiconductor Equip",
+    "numberOfFirms": 61,
+    "standardDeviation": 4531,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Shipbuilding & Marine",
+    "numberOfFirms": 41,
+    "standardDeviation": 2873,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Shoe",
+    "numberOfFirms": 11,
+    "standardDeviation": 4454,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Software (Entertainment)",
+    "numberOfFirms": 26,
+    "standardDeviation": 5787,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Software (Internet)",
+    "numberOfFirms": 20,
+    "standardDeviation": 4765,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Software (System & Application)",
+    "numberOfFirms": 178,
+    "standardDeviation": 5121,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Steel",
+    "numberOfFirms": 102,
+    "standardDeviation": 3463,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Telecom (Wireless)",
+    "numberOfFirms": 4,
+    "standardDeviation": 4080,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Telecom. Equipment",
+    "numberOfFirms": 113,
+    "standardDeviation": 4861,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Telecom. Services",
+    "numberOfFirms": 10,
+    "standardDeviation": 4729,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Tobacco",
+    "numberOfFirms": 2,
+    "standardDeviation": 4435,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Transportation",
+    "numberOfFirms": 77,
+    "standardDeviation": 3617,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Transportation (Railroads)",
+    "numberOfFirms": 9,
+    "standardDeviation": 2802,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Trucking",
+    "numberOfFirms": 7,
+    "standardDeviation": 5117,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Utility (General)",
+    "numberOfFirms": 3,
+    "standardDeviation": 4050,
+    "region": "CHINA"
+  },
+  {
+    "industry": "Utility (Water)",
+    "numberOfFirms": 33,
+    "standardDeviation": 3307,
+    "region": "CHINA"
+  }
+]

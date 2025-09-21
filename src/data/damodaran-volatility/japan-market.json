@@ -1,0 +1,542 @@
+[
+  {
+    "industry": "Advertising",
+    "numberOfFirms": 84,
+    "standardDeviation": 3694,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Aerospace/Defense",
+    "numberOfFirms": 5,
+    "standardDeviation": 5697,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Air Transport",
+    "numberOfFirms": 6,
+    "standardDeviation": 1754,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Apparel",
+    "numberOfFirms": 60,
+    "standardDeviation": 2281,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Auto & Truck",
+    "numberOfFirms": 10,
+    "standardDeviation": 2667,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Auto Parts",
+    "numberOfFirms": 102,
+    "standardDeviation": 2537,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Bank (Money Center)",
+    "numberOfFirms": 8,
+    "standardDeviation": 2731,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Banks (Regional)",
+    "numberOfFirms": 75,
+    "standardDeviation": 2368,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Beverage (Alcoholic)",
+    "numberOfFirms": 6,
+    "standardDeviation": 1786,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Beverage (Soft)",
+    "numberOfFirms": 6,
+    "standardDeviation": 2269,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Broadcasting",
+    "numberOfFirms": 11,
+    "standardDeviation": 1839,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Brokerage & Investment Banking",
+    "numberOfFirms": 38,
+    "standardDeviation": 2962,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Building Materials",
+    "numberOfFirms": 60,
+    "standardDeviation": 2190,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Business & Consumer Services",
+    "numberOfFirms": 224,
+    "standardDeviation": 2962,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Cable TV",
+    "numberOfFirms": 1,
+    "standardDeviation": 2538,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Chemical (Basic)",
+    "numberOfFirms": 66,
+    "standardDeviation": 2330,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Chemical (Diversified)",
+    "numberOfFirms": 22,
+    "standardDeviation": 2349,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Chemical (Specialty)",
+    "numberOfFirms": 70,
+    "standardDeviation": 2236,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Coal & Related Energy",
+    "numberOfFirms": 1,
+    "standardDeviation": 3499,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Computer Services",
+    "numberOfFirms": 244,
+    "standardDeviation": 3287,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Computers/Peripherals",
+    "numberOfFirms": 25,
+    "standardDeviation": 2788,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Construction Supplies",
+    "numberOfFirms": 51,
+    "standardDeviation": 3021,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Diversified",
+    "numberOfFirms": 16,
+    "standardDeviation": 2414,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Drugs (Biotechnology)",
+    "numberOfFirms": 33,
+    "standardDeviation": 5466,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Drugs (Pharmaceutical)",
+    "numberOfFirms": 41,
+    "standardDeviation": 2642,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Education",
+    "numberOfFirms": 39,
+    "standardDeviation": 2385,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Electrical Equipment",
+    "numberOfFirms": 53,
+    "standardDeviation": 2550,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Electronics (Consumer & Office)",
+    "numberOfFirms": 10,
+    "standardDeviation": 2814,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Electronics (General)",
+    "numberOfFirms": 136,
+    "standardDeviation": 2824,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Engineering/Construction",
+    "numberOfFirms": 156,
+    "standardDeviation": 2140,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Entertainment",
+    "numberOfFirms": 74,
+    "standardDeviation": 3170,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Environmental & Waste Services",
+    "numberOfFirms": 38,
+    "standardDeviation": 2542,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Farming/Agriculture",
+    "numberOfFirms": 11,
+    "standardDeviation": 2240,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Financial Svcs. (Non-bank & Insurance)",
+    "numberOfFirms": 50,
+    "standardDeviation": 2589,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Food Processing",
+    "numberOfFirms": 121,
+    "standardDeviation": 1796,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Food Wholesalers",
+    "numberOfFirms": 37,
+    "standardDeviation": 2586,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Furn/Home Furnishings",
+    "numberOfFirms": 19,
+    "standardDeviation": 1952,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Green & Renewable Energy",
+    "numberOfFirms": 8,
+    "standardDeviation": 6302,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Healthcare Products",
+    "numberOfFirms": 40,
+    "standardDeviation": 2306,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Healthcare Support Services",
+    "numberOfFirms": 48,
+    "standardDeviation": 2630,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Heathcare Information and Technology",
+    "numberOfFirms": 37,
+    "standardDeviation": 4081,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Homebuilding",
+    "numberOfFirms": 51,
+    "standardDeviation": 2405,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Hospitals/Healthcare Facilities",
+    "numberOfFirms": 11,
+    "standardDeviation": 2804,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Hotel/Gaming",
+    "numberOfFirms": 33,
+    "standardDeviation": 3154,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Household Products",
+    "numberOfFirms": 41,
+    "standardDeviation": 2395,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Information Services",
+    "numberOfFirms": 14,
+    "standardDeviation": 2415,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Insurance (General)",
+    "numberOfFirms": 6,
+    "standardDeviation": 3293,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Insurance (Life)",
+    "numberOfFirms": 5,
+    "standardDeviation": 2661,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Insurance (Prop/Cas.)",
+    "numberOfFirms": 7,
+    "standardDeviation": 2693,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Investments & Asset Management",
+    "numberOfFirms": 14,
+    "standardDeviation": 3554,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Machinery",
+    "numberOfFirms": 226,
+    "standardDeviation": 2588,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Metals & Mining",
+    "numberOfFirms": 20,
+    "standardDeviation": 2550,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Office Equipment & Services",
+    "numberOfFirms": 26,
+    "standardDeviation": 2192,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Oil/Gas (Production and Exploration)",
+    "numberOfFirms": 2,
+    "standardDeviation": 2653,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Oil/Gas Distribution",
+    "numberOfFirms": 3,
+    "standardDeviation": 2164,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Oilfield Svcs/Equip.",
+    "numberOfFirms": 19,
+    "standardDeviation": 2597,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Packaging & Container",
+    "numberOfFirms": 29,
+    "standardDeviation": 1969,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Paper/Forest Products",
+    "numberOfFirms": 15,
+    "standardDeviation": 3142,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Power",
+    "numberOfFirms": 25,
+    "standardDeviation": 2880,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Precious Metals",
+    "numberOfFirms": 2,
+    "standardDeviation": 1756,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Publishing & Newspapers",
+    "numberOfFirms": 53,
+    "standardDeviation": 2469,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "R.E.I.T.",
+    "numberOfFirms": 53,
+    "standardDeviation": 1237,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Real Estate (Development)",
+    "numberOfFirms": 17,
+    "standardDeviation": 2636,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Real Estate (General/Diversified)",
+    "numberOfFirms": 52,
+    "standardDeviation": 2764,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Real Estate (Operations & Services)",
+    "numberOfFirms": 43,
+    "standardDeviation": 3147,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Recreation",
+    "numberOfFirms": 51,
+    "standardDeviation": 2649,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Restaurant/Dining",
+    "numberOfFirms": 109,
+    "standardDeviation": 2178,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Retail (Automotive)",
+    "numberOfFirms": 27,
+    "standardDeviation": 2298,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Retail (Building Supply)",
+    "numberOfFirms": 18,
+    "standardDeviation": 1842,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Retail (Distributors)",
+    "numberOfFirms": 141,
+    "standardDeviation": 2374,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Retail (General)",
+    "numberOfFirms": 43,
+    "standardDeviation": 2854,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Retail (Grocery and Food)",
+    "numberOfFirms": 52,
+    "standardDeviation": 2191,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Retail (REITs)",
+    "numberOfFirms": 4,
+    "standardDeviation": 987,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Retail (Special Lines)",
+    "numberOfFirms": 133,
+    "standardDeviation": 2636,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Rubber& Tires",
+    "numberOfFirms": 6,
+    "standardDeviation": 2138,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Semiconductor",
+    "numberOfFirms": 23,
+    "standardDeviation": 3518,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Semiconductor Equip",
+    "numberOfFirms": 35,
+    "standardDeviation": 4307,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Shipbuilding & Marine",
+    "numberOfFirms": 29,
+    "standardDeviation": 2513,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Shoe",
+    "numberOfFirms": 3,
+    "standardDeviation": 1758,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Software (Entertainment)",
+    "numberOfFirms": 74,
+    "standardDeviation": 3596,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Software (Internet)",
+    "numberOfFirms": 26,
+    "standardDeviation": 3991,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Software (System & Application)",
+    "numberOfFirms": 182,
+    "standardDeviation": 3784,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Steel",
+    "numberOfFirms": 42,
+    "standardDeviation": 2445,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Telecom (Wireless)",
+    "numberOfFirms": 8,
+    "standardDeviation": 2286,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Telecom. Equipment",
+    "numberOfFirms": 15,
+    "standardDeviation": 2850,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Telecom. Services",
+    "numberOfFirms": 20,
+    "standardDeviation": 3214,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Tobacco",
+    "numberOfFirms": 1,
+    "standardDeviation": 1319,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Transportation",
+    "numberOfFirms": 33,
+    "standardDeviation": 1945,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Transportation (Railroads)",
+    "numberOfFirms": 22,
+    "standardDeviation": 1781,
+    "region": "JAPAN"
+  },
+  {
+    "industry": "Trucking",
+    "numberOfFirms": 17,
+    "standardDeviation": 2065,
+    "region": "JAPAN"
+  }
+]

@@ -1,0 +1,566 @@
+[
+  {
+    "industry": "Advertising",
+    "numberOfFirms": 179,
+    "standardDeviation": 5351,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Aerospace/Defense",
+    "numberOfFirms": 142,
+    "standardDeviation": 3956,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Air Transport",
+    "numberOfFirms": 79,
+    "standardDeviation": 2989,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Apparel",
+    "numberOfFirms": 981,
+    "standardDeviation": 3950,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Auto & Truck",
+    "numberOfFirms": 83,
+    "standardDeviation": 4299,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Auto Parts",
+    "numberOfFirms": 571,
+    "standardDeviation": 3776,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Bank (Money Center)",
+    "numberOfFirms": 471,
+    "standardDeviation": 2265,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Banks (Regional)",
+    "numberOfFirms": 102,
+    "standardDeviation": 2509,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Beverage (Alcoholic)",
+    "numberOfFirms": 130,
+    "standardDeviation": 3172,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Beverage (Soft)",
+    "numberOfFirms": 42,
+    "standardDeviation": 2448,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Broadcasting",
+    "numberOfFirms": 62,
+    "standardDeviation": 4228,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Brokerage & Investment Banking",
+    "numberOfFirms": 444,
+    "standardDeviation": 3912,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Building Materials",
+    "numberOfFirms": 267,
+    "standardDeviation": 3524,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Business & Consumer Services",
+    "numberOfFirms": 356,
+    "standardDeviation": 4293,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Cable TV",
+    "numberOfFirms": 31,
+    "standardDeviation": 3564,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Chemical (Basic)",
+    "numberOfFirms": 722,
+    "standardDeviation": 3425,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Chemical (Diversified)",
+    "numberOfFirms": 30,
+    "standardDeviation": 2942,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Chemical (Specialty)",
+    "numberOfFirms": 672,
+    "standardDeviation": 3627,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Coal & Related Energy",
+    "numberOfFirms": 99,
+    "standardDeviation": 3916,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Computer Services",
+    "numberOfFirms": 645,
+    "standardDeviation": 4257,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Computers/Peripherals",
+    "numberOfFirms": 237,
+    "standardDeviation": 4054,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Construction Supplies",
+    "numberOfFirms": 572,
+    "standardDeviation": 3467,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Diversified",
+    "numberOfFirms": 220,
+    "standardDeviation": 2819,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Drugs (Biotechnology)",
+    "numberOfFirms": 348,
+    "standardDeviation": 4780,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Drugs (Pharmaceutical)",
+    "numberOfFirms": 735,
+    "standardDeviation": 3614,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Education",
+    "numberOfFirms": 169,
+    "standardDeviation": 4431,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Electrical Equipment",
+    "numberOfFirms": 761,
+    "standardDeviation": 4013,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Electronics (Consumer & Office)",
+    "numberOfFirms": 78,
+    "standardDeviation": 4305,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Electronics (General)",
+    "numberOfFirms": 1031,
+    "standardDeviation": 4081,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Engineering/Construction",
+    "numberOfFirms": 936,
+    "standardDeviation": 4085,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Entertainment",
+    "numberOfFirms": 345,
+    "standardDeviation": 4910,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Environmental & Waste Services",
+    "numberOfFirms": 218,
+    "standardDeviation": 4159,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Farming/Agriculture",
+    "numberOfFirms": 309,
+    "standardDeviation": 3452,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Financial Svcs. (Non-bank & Insurance)",
+    "numberOfFirms": 682,
+    "standardDeviation": 4160,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Food Processing",
+    "numberOfFirms": 993,
+    "standardDeviation": 3316,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Food Wholesalers",
+    "numberOfFirms": 118,
+    "standardDeviation": 4361,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Furn/Home Furnishings",
+    "numberOfFirms": 276,
+    "standardDeviation": 3475,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Green & Renewable Energy",
+    "numberOfFirms": 148,
+    "standardDeviation": 3292,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Healthcare Products",
+    "numberOfFirms": 367,
+    "standardDeviation": 4027,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Healthcare Support Services",
+    "numberOfFirms": 245,
+    "standardDeviation": 3943,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Heathcare Information and Technology",
+    "numberOfFirms": 138,
+    "standardDeviation": 4731,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Homebuilding",
+    "numberOfFirms": 43,
+    "standardDeviation": 4185,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Hospitals/Healthcare Facilities",
+    "numberOfFirms": 159,
+    "standardDeviation": 3263,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Hotel/Gaming",
+    "numberOfFirms": 425,
+    "standardDeviation": 3531,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Household Products",
+    "numberOfFirms": 311,
+    "standardDeviation": 3690,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Information Services",
+    "numberOfFirms": 47,
+    "standardDeviation": 4435,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Insurance (General)",
+    "numberOfFirms": 131,
+    "standardDeviation": 2899,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Insurance (Life)",
+    "numberOfFirms": 86,
+    "standardDeviation": 3159,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Insurance (Prop/Cas.)",
+    "numberOfFirms": 153,
+    "standardDeviation": 2908,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Investments & Asset Management",
+    "numberOfFirms": 484,
+    "standardDeviation": 4234,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Machinery",
+    "numberOfFirms": 970,
+    "standardDeviation": 3961,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Metals & Mining",
+    "numberOfFirms": 342,
+    "standardDeviation": 3996,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Office Equipment & Services",
+    "numberOfFirms": 80,
+    "standardDeviation": 3974,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Oil/Gas (Integrated)",
+    "numberOfFirms": 16,
+    "standardDeviation": 3265,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Oil/Gas (Production and Exploration)",
+    "numberOfFirms": 107,
+    "standardDeviation": 3641,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Oil/Gas Distribution",
+    "numberOfFirms": 114,
+    "standardDeviation": 2775,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Oilfield Svcs/Equip.",
+    "numberOfFirms": 231,
+    "standardDeviation": 3780,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Packaging & Container",
+    "numberOfFirms": 333,
+    "standardDeviation": 3400,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Paper/Forest Products",
+    "numberOfFirms": 193,
+    "standardDeviation": 3305,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Power",
+    "numberOfFirms": 328,
+    "standardDeviation": 2821,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Precious Metals",
+    "numberOfFirms": 61,
+    "standardDeviation": 4485,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Publishing & Newspapers",
+    "numberOfFirms": 171,
+    "standardDeviation": 4062,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "R.E.I.T.",
+    "numberOfFirms": 206,
+    "standardDeviation": 1992,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Real Estate (Development)",
+    "numberOfFirms": 774,
+    "standardDeviation": 4203,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Real Estate (General/Diversified)",
+    "numberOfFirms": 203,
+    "standardDeviation": 3237,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Real Estate (Operations & Services)",
+    "numberOfFirms": 386,
+    "standardDeviation": 3718,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Recreation",
+    "numberOfFirms": 147,
+    "standardDeviation": 3729,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Reinsurance",
+    "numberOfFirms": 28,
+    "standardDeviation": 3344,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Restaurant/Dining",
+    "numberOfFirms": 170,
+    "standardDeviation": 4035,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Retail (Automotive)",
+    "numberOfFirms": 116,
+    "standardDeviation": 3627,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Retail (Building Supply)",
+    "numberOfFirms": 49,
+    "standardDeviation": 3391,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Retail (Distributors)",
+    "numberOfFirms": 679,
+    "standardDeviation": 4233,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Retail (General)",
+    "numberOfFirms": 145,
+    "standardDeviation": 3428,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Retail (Grocery and Food)",
+    "numberOfFirms": 89,
+    "standardDeviation": 3402,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Retail (REITs)",
+    "numberOfFirms": 41,
+    "standardDeviation": 1922,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Retail (Special Lines)",
+    "numberOfFirms": 261,
+    "standardDeviation": 3791,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Rubber& Tires",
+    "numberOfFirms": 74,
+    "standardDeviation": 2906,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Semiconductor",
+    "numberOfFirms": 534,
+    "standardDeviation": 4039,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Semiconductor Equip",
+    "numberOfFirms": 286,
+    "standardDeviation": 4303,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Shipbuilding & Marine",
+    "numberOfFirms": 249,
+    "standardDeviation": 3452,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Shoe",
+    "numberOfFirms": 58,
+    "standardDeviation": 3244,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Software (Entertainment)",
+    "numberOfFirms": 63,
+    "standardDeviation": 5290,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Software (Internet)",
+    "numberOfFirms": 48,
+    "standardDeviation": 4359,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Software (System & Application)",
+    "numberOfFirms": 536,
+    "standardDeviation": 4909,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Steel",
+    "numberOfFirms": 546,
+    "standardDeviation": 3573,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Telecom (Wireless)",
+    "numberOfFirms": 65,
+    "standardDeviation": 2630,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Telecom. Equipment",
+    "numberOfFirms": 295,
+    "standardDeviation": 4437,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Telecom. Services",
+    "numberOfFirms": 137,
+    "standardDeviation": 3265,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Tobacco",
+    "numberOfFirms": 33,
+    "standardDeviation": 3502,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Transportation",
+    "numberOfFirms": 319,
+    "standardDeviation": 3611,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Transportation (Railroads)",
+    "numberOfFirms": 17,
+    "standardDeviation": 2528,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Trucking",
+    "numberOfFirms": 62,
+    "standardDeviation": 4221,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Utility (General)",
+    "numberOfFirms": 14,
+    "standardDeviation": 2901,
+    "region": "EMERGING"
+  },
+  {
+    "industry": "Utility (Water)",
+    "numberOfFirms": 74,
+    "standardDeviation": 3036,
+    "region": "EMERGING"
+  }
+]

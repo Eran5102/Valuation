@@ -1,0 +1,530 @@
+[
+  {
+    "industry": "Advertising",
+    "numberOfFirms": 12,
+    "standardDeviation": 5629,
+    "region": "REST"
+  },
+  {
+    "industry": "Aerospace/Defense",
+    "numberOfFirms": 19,
+    "standardDeviation": 5975,
+    "region": "REST"
+  },
+  {
+    "industry": "Air Transport",
+    "numberOfFirms": 9,
+    "standardDeviation": 2442,
+    "region": "REST"
+  },
+  {
+    "industry": "Apparel",
+    "numberOfFirms": 9,
+    "standardDeviation": 4554,
+    "region": "REST"
+  },
+  {
+    "industry": "Auto & Truck",
+    "numberOfFirms": 3,
+    "standardDeviation": 4864,
+    "region": "REST"
+  },
+  {
+    "industry": "Auto Parts",
+    "numberOfFirms": 14,
+    "standardDeviation": 3519,
+    "region": "REST"
+  },
+  {
+    "industry": "Bank (Money Center)",
+    "numberOfFirms": 13,
+    "standardDeviation": 1967,
+    "region": "REST"
+  },
+  {
+    "industry": "Banks (Regional)",
+    "numberOfFirms": 8,
+    "standardDeviation": 2761,
+    "region": "REST"
+  },
+  {
+    "industry": "Beverage (Alcoholic)",
+    "numberOfFirms": 12,
+    "standardDeviation": 3460,
+    "region": "REST"
+  },
+  {
+    "industry": "Beverage (Soft)",
+    "numberOfFirms": 9,
+    "standardDeviation": 9760,
+    "region": "REST"
+  },
+  {
+    "industry": "Broadcasting",
+    "numberOfFirms": 10,
+    "standardDeviation": 4650,
+    "region": "REST"
+  },
+  {
+    "industry": "Brokerage & Investment Banking",
+    "numberOfFirms": 19,
+    "standardDeviation": 5508,
+    "region": "REST"
+  },
+  {
+    "industry": "Building Materials",
+    "numberOfFirms": 8,
+    "standardDeviation": 2866,
+    "region": "REST"
+  },
+  {
+    "industry": "Business & Consumer Services",
+    "numberOfFirms": 59,
+    "standardDeviation": 4297,
+    "region": "REST"
+  },
+  {
+    "industry": "Chemical (Basic)",
+    "numberOfFirms": 16,
+    "standardDeviation": 5960,
+    "region": "REST"
+  },
+  {
+    "industry": "Chemical (Diversified)",
+    "numberOfFirms": 1,
+    "standardDeviation": 1784,
+    "region": "REST"
+  },
+  {
+    "industry": "Chemical (Specialty)",
+    "numberOfFirms": 51,
+    "standardDeviation": 6628,
+    "region": "REST"
+  },
+  {
+    "industry": "Coal & Related Energy",
+    "numberOfFirms": 86,
+    "standardDeviation": 7570,
+    "region": "REST"
+  },
+  {
+    "industry": "Computer Services",
+    "numberOfFirms": 17,
+    "standardDeviation": 4831,
+    "region": "REST"
+  },
+  {
+    "industry": "Construction Supplies",
+    "numberOfFirms": 17,
+    "standardDeviation": 5087,
+    "region": "REST"
+  },
+  {
+    "industry": "Diversified",
+    "numberOfFirms": 6,
+    "standardDeviation": 2957,
+    "region": "REST"
+  },
+  {
+    "industry": "Drugs (Biotechnology)",
+    "numberOfFirms": 88,
+    "standardDeviation": 7089,
+    "region": "REST"
+  },
+  {
+    "industry": "Drugs (Pharmaceutical)",
+    "numberOfFirms": 141,
+    "standardDeviation": 8197,
+    "region": "REST"
+  },
+  {
+    "industry": "Education",
+    "numberOfFirms": 15,
+    "standardDeviation": 4216,
+    "region": "REST"
+  },
+  {
+    "industry": "Electrical Equipment",
+    "numberOfFirms": 35,
+    "standardDeviation": 6954,
+    "region": "REST"
+  },
+  {
+    "industry": "Electronics (Consumer & Office)",
+    "numberOfFirms": 6,
+    "standardDeviation": 8383,
+    "region": "REST"
+  },
+  {
+    "industry": "Electronics (General)",
+    "numberOfFirms": 40,
+    "standardDeviation": 6597,
+    "region": "REST"
+  },
+  {
+    "industry": "Engineering/Construction",
+    "numberOfFirms": 35,
+    "standardDeviation": 3282,
+    "region": "REST"
+  },
+  {
+    "industry": "Entertainment",
+    "numberOfFirms": 32,
+    "standardDeviation": 5447,
+    "region": "REST"
+  },
+  {
+    "industry": "Environmental & Waste Services",
+    "numberOfFirms": 34,
+    "standardDeviation": 6427,
+    "region": "REST"
+  },
+  {
+    "industry": "Farming/Agriculture",
+    "numberOfFirms": 26,
+    "standardDeviation": 4668,
+    "region": "REST"
+  },
+  {
+    "industry": "Financial Svcs. (Non-bank & Insurance)",
+    "numberOfFirms": 72,
+    "standardDeviation": 4813,
+    "region": "REST"
+  },
+  {
+    "industry": "Food Processing",
+    "numberOfFirms": 55,
+    "standardDeviation": 5398,
+    "region": "REST"
+  },
+  {
+    "industry": "Food Wholesalers",
+    "numberOfFirms": 7,
+    "standardDeviation": 2430,
+    "region": "REST"
+  },
+  {
+    "industry": "Furn/Home Furnishings",
+    "numberOfFirms": 5,
+    "standardDeviation": 4129,
+    "region": "REST"
+  },
+  {
+    "industry": "Green & Renewable Energy",
+    "numberOfFirms": 23,
+    "standardDeviation": 5671,
+    "region": "REST"
+  },
+  {
+    "industry": "Healthcare Products",
+    "numberOfFirms": 53,
+    "standardDeviation": 5752,
+    "region": "REST"
+  },
+  {
+    "industry": "Healthcare Support Services",
+    "numberOfFirms": 31,
+    "standardDeviation": 5283,
+    "region": "REST"
+  },
+  {
+    "industry": "Heathcare Information and Technology",
+    "numberOfFirms": 50,
+    "standardDeviation": 7166,
+    "region": "REST"
+  },
+  {
+    "industry": "Homebuilding",
+    "numberOfFirms": 3,
+    "standardDeviation": 4587,
+    "region": "REST"
+  },
+  {
+    "industry": "Hospitals/Healthcare Facilities",
+    "numberOfFirms": 14,
+    "standardDeviation": 2480,
+    "region": "REST"
+  },
+  {
+    "industry": "Hotel/Gaming",
+    "numberOfFirms": 31,
+    "standardDeviation": 4079,
+    "region": "REST"
+  },
+  {
+    "industry": "Household Products",
+    "numberOfFirms": 32,
+    "standardDeviation": 6891,
+    "region": "REST"
+  },
+  {
+    "industry": "Information Services",
+    "numberOfFirms": 3,
+    "standardDeviation": 7138,
+    "region": "REST"
+  },
+  {
+    "industry": "Insurance (General)",
+    "numberOfFirms": 3,
+    "standardDeviation": 2951,
+    "region": "REST"
+  },
+  {
+    "industry": "Insurance (Life)",
+    "numberOfFirms": 11,
+    "standardDeviation": 2163,
+    "region": "REST"
+  },
+  {
+    "industry": "Insurance (Prop/Cas.)",
+    "numberOfFirms": 8,
+    "standardDeviation": 1947,
+    "region": "REST"
+  },
+  {
+    "industry": "Investments & Asset Management",
+    "numberOfFirms": 208,
+    "standardDeviation": 4557,
+    "region": "REST"
+  },
+  {
+    "industry": "Machinery",
+    "numberOfFirms": 28,
+    "standardDeviation": 5183,
+    "region": "REST"
+  },
+  {
+    "industry": "Metals & Mining",
+    "numberOfFirms": 1289,
+    "standardDeviation": 8320,
+    "region": "REST"
+  },
+  {
+    "industry": "Oil/Gas (Integrated)",
+    "numberOfFirms": 4,
+    "standardDeviation": 3804,
+    "region": "REST"
+  },
+  {
+    "industry": "Oil/Gas (Production and Exploration)",
+    "numberOfFirms": 210,
+    "standardDeviation": 5878,
+    "region": "REST"
+  },
+  {
+    "industry": "Oil/Gas Distribution",
+    "numberOfFirms": 9,
+    "standardDeviation": 2884,
+    "region": "REST"
+  },
+  {
+    "industry": "Oilfield Svcs/Equip.",
+    "numberOfFirms": 30,
+    "standardDeviation": 4649,
+    "region": "REST"
+  },
+  {
+    "industry": "Packaging & Container",
+    "numberOfFirms": 10,
+    "standardDeviation": 4581,
+    "region": "REST"
+  },
+  {
+    "industry": "Paper/Forest Products",
+    "numberOfFirms": 18,
+    "standardDeviation": 4745,
+    "region": "REST"
+  },
+  {
+    "industry": "Power",
+    "numberOfFirms": 20,
+    "standardDeviation": 3755,
+    "region": "REST"
+  },
+  {
+    "industry": "Precious Metals",
+    "numberOfFirms": 658,
+    "standardDeviation": 7453,
+    "region": "REST"
+  },
+  {
+    "industry": "Publishing & Newspapers",
+    "numberOfFirms": 8,
+    "standardDeviation": 7539,
+    "region": "REST"
+  },
+  {
+    "industry": "R.E.I.T.",
+    "numberOfFirms": 58,
+    "standardDeviation": 2825,
+    "region": "REST"
+  },
+  {
+    "industry": "Real Estate (Development)",
+    "numberOfFirms": 13,
+    "standardDeviation": 2900,
+    "region": "REST"
+  },
+  {
+    "industry": "Real Estate (General/Diversified)",
+    "numberOfFirms": 1,
+    "standardDeviation": 4333,
+    "region": "REST"
+  },
+  {
+    "industry": "Real Estate (Operations & Services)",
+    "numberOfFirms": 33,
+    "standardDeviation": 3709,
+    "region": "REST"
+  },
+  {
+    "industry": "Recreation",
+    "numberOfFirms": 15,
+    "standardDeviation": 4179,
+    "region": "REST"
+  },
+  {
+    "industry": "Restaurant/Dining",
+    "numberOfFirms": 19,
+    "standardDeviation": 2790,
+    "region": "REST"
+  },
+  {
+    "industry": "Retail (Automotive)",
+    "numberOfFirms": 10,
+    "standardDeviation": 3716,
+    "region": "REST"
+  },
+  {
+    "industry": "Retail (Building Supply)",
+    "numberOfFirms": 9,
+    "standardDeviation": 4295,
+    "region": "REST"
+  },
+  {
+    "industry": "Retail (Distributors)",
+    "numberOfFirms": 34,
+    "standardDeviation": 3477,
+    "region": "REST"
+  },
+  {
+    "industry": "Retail (General)",
+    "numberOfFirms": 10,
+    "standardDeviation": 3344,
+    "region": "REST"
+  },
+  {
+    "industry": "Retail (Grocery and Food)",
+    "numberOfFirms": 13,
+    "standardDeviation": 2787,
+    "region": "REST"
+  },
+  {
+    "industry": "Retail (REITs)",
+    "numberOfFirms": 16,
+    "standardDeviation": 1721,
+    "region": "REST"
+  },
+  {
+    "industry": "Retail (Special Lines)",
+    "numberOfFirms": 35,
+    "standardDeviation": 5222,
+    "region": "REST"
+  },
+  {
+    "industry": "Semiconductor",
+    "numberOfFirms": 8,
+    "standardDeviation": 8725,
+    "region": "REST"
+  },
+  {
+    "industry": "Semiconductor Equip",
+    "numberOfFirms": 2,
+    "standardDeviation": 7043,
+    "region": "REST"
+  },
+  {
+    "industry": "Shipbuilding & Marine",
+    "numberOfFirms": 9,
+    "standardDeviation": 1744,
+    "region": "REST"
+  },
+  {
+    "industry": "Software (Entertainment)",
+    "numberOfFirms": 35,
+    "standardDeviation": 6914,
+    "region": "REST"
+  },
+  {
+    "industry": "Software (Internet)",
+    "numberOfFirms": 20,
+    "standardDeviation": 7810,
+    "region": "REST"
+  },
+  {
+    "industry": "Software (System & Application)",
+    "numberOfFirms": 205,
+    "standardDeviation": 6735,
+    "region": "REST"
+  },
+  {
+    "industry": "Steel",
+    "numberOfFirms": 53,
+    "standardDeviation": 5276,
+    "region": "REST"
+  },
+  {
+    "industry": "Telecom (Wireless)",
+    "numberOfFirms": 3,
+    "standardDeviation": 2996,
+    "region": "REST"
+  },
+  {
+    "industry": "Telecom. Equipment",
+    "numberOfFirms": 17,
+    "standardDeviation": 5360,
+    "region": "REST"
+  },
+  {
+    "industry": "Telecom. Services",
+    "numberOfFirms": 22,
+    "standardDeviation": 4174,
+    "region": "REST"
+  },
+  {
+    "industry": "Tobacco",
+    "numberOfFirms": 2,
+    "standardDeviation": 7701,
+    "region": "REST"
+  },
+  {
+    "industry": "Transportation",
+    "numberOfFirms": 18,
+    "standardDeviation": 5723,
+    "region": "REST"
+  },
+  {
+    "industry": "Transportation (Railroads)",
+    "numberOfFirms": 3,
+    "standardDeviation": 1548,
+    "region": "REST"
+  },
+  {
+    "industry": "Trucking",
+    "numberOfFirms": 3,
+    "standardDeviation": 2555,
+    "region": "REST"
+  },
+  {
+    "industry": "Utility (General)",
+    "numberOfFirms": 6,
+    "standardDeviation": 1939,
+    "region": "REST"
+  },
+  {
+    "industry": "Utility (Water)",
+    "numberOfFirms": 6,
+    "standardDeviation": 5528,
+    "region": "REST"
+  }
+]

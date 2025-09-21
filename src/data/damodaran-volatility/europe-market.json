@@ -1,0 +1,566 @@
+[
+  {
+    "industry": "Advertising",
+    "numberOfFirms": 88,
+    "standardDeviation": 3758,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Aerospace/Defense",
+    "numberOfFirms": 67,
+    "standardDeviation": 3535,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Air Transport",
+    "numberOfFirms": 33,
+    "standardDeviation": 3254,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Apparel",
+    "numberOfFirms": 107,
+    "standardDeviation": 3718,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Auto & Truck",
+    "numberOfFirms": 32,
+    "standardDeviation": 4841,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Auto Parts",
+    "numberOfFirms": 60,
+    "standardDeviation": 3450,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Bank (Money Center)",
+    "numberOfFirms": 114,
+    "standardDeviation": 2684,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Banks (Regional)",
+    "numberOfFirms": 73,
+    "standardDeviation": 1533,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Beverage (Alcoholic)",
+    "numberOfFirms": 50,
+    "standardDeviation": 2648,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Beverage (Soft)",
+    "numberOfFirms": 15,
+    "standardDeviation": 2620,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Broadcasting",
+    "numberOfFirms": 21,
+    "standardDeviation": 3155,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Brokerage & Investment Banking",
+    "numberOfFirms": 75,
+    "standardDeviation": 3840,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Building Materials",
+    "numberOfFirms": 88,
+    "standardDeviation": 2824,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Business & Consumer Services",
+    "numberOfFirms": 183,
+    "standardDeviation": 3752,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Cable TV",
+    "numberOfFirms": 3,
+    "standardDeviation": 4121,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Chemical (Basic)",
+    "numberOfFirms": 62,
+    "standardDeviation": 3411,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Chemical (Diversified)",
+    "numberOfFirms": 7,
+    "standardDeviation": 2865,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Chemical (Specialty)",
+    "numberOfFirms": 98,
+    "standardDeviation": 3849,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Coal & Related Energy",
+    "numberOfFirms": 14,
+    "standardDeviation": 6037,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Computer Services",
+    "numberOfFirms": 213,
+    "standardDeviation": 3739,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Computers/Peripherals",
+    "numberOfFirms": 42,
+    "standardDeviation": 4711,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Construction Supplies",
+    "numberOfFirms": 118,
+    "standardDeviation": 3279,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Diversified",
+    "numberOfFirms": 72,
+    "standardDeviation": 2493,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Drugs (Biotechnology)",
+    "numberOfFirms": 219,
+    "standardDeviation": 6526,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Drugs (Pharmaceutical)",
+    "numberOfFirms": 123,
+    "standardDeviation": 5205,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Education",
+    "numberOfFirms": 20,
+    "standardDeviation": 4464,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Electrical Equipment",
+    "numberOfFirms": 151,
+    "standardDeviation": 4532,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Electronics (Consumer & Office)",
+    "numberOfFirms": 20,
+    "standardDeviation": 4211,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Electronics (General)",
+    "numberOfFirms": 151,
+    "standardDeviation": 4562,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Engineering/Construction",
+    "numberOfFirms": 158,
+    "standardDeviation": 3345,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Entertainment",
+    "numberOfFirms": 201,
+    "standardDeviation": 4545,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Environmental & Waste Services",
+    "numberOfFirms": 51,
+    "standardDeviation": 4105,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Farming/Agriculture",
+    "numberOfFirms": 48,
+    "standardDeviation": 2957,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Financial Svcs. (Non-bank & Insurance)",
+    "numberOfFirms": 147,
+    "standardDeviation": 3871,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Food Processing",
+    "numberOfFirms": 178,
+    "standardDeviation": 3120,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Food Wholesalers",
+    "numberOfFirms": 12,
+    "standardDeviation": 2631,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Furn/Home Furnishings",
+    "numberOfFirms": 52,
+    "standardDeviation": 3175,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Green & Renewable Energy",
+    "numberOfFirms": 63,
+    "standardDeviation": 3348,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Healthcare Products",
+    "numberOfFirms": 172,
+    "standardDeviation": 4988,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Healthcare Support Services",
+    "numberOfFirms": 43,
+    "standardDeviation": 3116,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Heathcare Information and Technology",
+    "numberOfFirms": 94,
+    "standardDeviation": 4523,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Homebuilding",
+    "numberOfFirms": 38,
+    "standardDeviation": 3099,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Hospitals/Healthcare Facilities",
+    "numberOfFirms": 28,
+    "standardDeviation": 3739,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Hotel/Gaming",
+    "numberOfFirms": 106,
+    "standardDeviation": 3884,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Household Products",
+    "numberOfFirms": 69,
+    "standardDeviation": 3968,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Information Services",
+    "numberOfFirms": 5,
+    "standardDeviation": 4301,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Insurance (General)",
+    "numberOfFirms": 37,
+    "standardDeviation": 1981,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Insurance (Life)",
+    "numberOfFirms": 16,
+    "standardDeviation": 1756,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Insurance (Prop/Cas.)",
+    "numberOfFirms": 19,
+    "standardDeviation": 2227,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Investments & Asset Management",
+    "numberOfFirms": 354,
+    "standardDeviation": 3579,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Machinery",
+    "numberOfFirms": 215,
+    "standardDeviation": 3593,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Metals & Mining",
+    "numberOfFirms": 117,
+    "standardDeviation": 5238,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Office Equipment & Services",
+    "numberOfFirms": 20,
+    "standardDeviation": 2828,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Oil/Gas (Integrated)",
+    "numberOfFirms": 12,
+    "standardDeviation": 2685,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Oil/Gas (Production and Exploration)",
+    "numberOfFirms": 82,
+    "standardDeviation": 5176,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Oil/Gas Distribution",
+    "numberOfFirms": 29,
+    "standardDeviation": 4226,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Oilfield Svcs/Equip.",
+    "numberOfFirms": 60,
+    "standardDeviation": 4028,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Packaging & Container",
+    "numberOfFirms": 44,
+    "standardDeviation": 3345,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Paper/Forest Products",
+    "numberOfFirms": 37,
+    "standardDeviation": 3041,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Power",
+    "numberOfFirms": 71,
+    "standardDeviation": 2799,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Precious Metals",
+    "numberOfFirms": 42,
+    "standardDeviation": 5994,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Publishing & Newspapers",
+    "numberOfFirms": 70,
+    "standardDeviation": 3455,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "R.E.I.T.",
+    "numberOfFirms": 141,
+    "standardDeviation": 2583,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Real Estate (Development)",
+    "numberOfFirms": 60,
+    "standardDeviation": 3680,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Real Estate (General/Diversified)",
+    "numberOfFirms": 42,
+    "standardDeviation": 3508,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Real Estate (Operations & Services)",
+    "numberOfFirms": 227,
+    "standardDeviation": 3009,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Recreation",
+    "numberOfFirms": 57,
+    "standardDeviation": 3087,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Reinsurance",
+    "numberOfFirms": 4,
+    "standardDeviation": 2213,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Restaurant/Dining",
+    "numberOfFirms": 41,
+    "standardDeviation": 3441,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Retail (Automotive)",
+    "numberOfFirms": 26,
+    "standardDeviation": 4036,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Retail (Building Supply)",
+    "numberOfFirms": 28,
+    "standardDeviation": 3213,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Retail (Distributors)",
+    "numberOfFirms": 118,
+    "standardDeviation": 2885,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Retail (General)",
+    "numberOfFirms": 31,
+    "standardDeviation": 3152,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Retail (Grocery and Food)",
+    "numberOfFirms": 33,
+    "standardDeviation": 3922,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Retail (REITs)",
+    "numberOfFirms": 32,
+    "standardDeviation": 2214,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Retail (Special Lines)",
+    "numberOfFirms": 106,
+    "standardDeviation": 4364,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Rubber& Tires",
+    "numberOfFirms": 9,
+    "standardDeviation": 2958,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Semiconductor",
+    "numberOfFirms": 37,
+    "standardDeviation": 4869,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Semiconductor Equip",
+    "numberOfFirms": 22,
+    "standardDeviation": 4401,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Shipbuilding & Marine",
+    "numberOfFirms": 62,
+    "standardDeviation": 4090,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Shoe",
+    "numberOfFirms": 8,
+    "standardDeviation": 3789,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Software (Entertainment)",
+    "numberOfFirms": 58,
+    "standardDeviation": 5097,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Software (Internet)",
+    "numberOfFirms": 24,
+    "standardDeviation": 4476,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Software (System & Application)",
+    "numberOfFirms": 311,
+    "standardDeviation": 4639,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Steel",
+    "numberOfFirms": 59,
+    "standardDeviation": 3498,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Telecom (Wireless)",
+    "numberOfFirms": 11,
+    "standardDeviation": 2352,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Telecom. Equipment",
+    "numberOfFirms": 52,
+    "standardDeviation": 4197,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Telecom. Services",
+    "numberOfFirms": 63,
+    "standardDeviation": 3079,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Tobacco",
+    "numberOfFirms": 6,
+    "standardDeviation": 2691,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Transportation",
+    "numberOfFirms": 55,
+    "standardDeviation": 3029,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Transportation (Railroads)",
+    "numberOfFirms": 8,
+    "standardDeviation": 2515,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Trucking",
+    "numberOfFirms": 7,
+    "standardDeviation": 2853,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Utility (General)",
+    "numberOfFirms": 18,
+    "standardDeviation": 2103,
+    "region": "EUROPE"
+  },
+  {
+    "industry": "Utility (Water)",
+    "numberOfFirms": 11,
+    "standardDeviation": 2999,
+    "region": "EUROPE"
+  }
+]

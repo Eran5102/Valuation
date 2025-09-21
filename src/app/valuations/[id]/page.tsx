@@ -28,7 +28,12 @@ import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/layout/AppLayout'
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils'
 import { LoadingSpinner, LoadingCard } from '@/components/ui/loading-spinner'
-import { BackButton, DownloadButton, DeleteButton, ButtonGroup } from '@/components/ui/action-buttons'
+import {
+  BackButton,
+  DownloadButton,
+  DeleteButton,
+  ButtonGroup,
+} from '@/components/ui/action-buttons'
 
 // Lazy load heavy components to improve initial page load performance
 const ValuationAssumptions = lazy(() => import('@/components/valuation/ValuationAssumptions'))
@@ -185,28 +190,20 @@ export default function ValuationDetail() {
   // Load assumptions data from the database
   const loadAssumptionsData = async (valuationId: string) => {
     try {
-      const response = await fetch(`/api/valuations/${valuationId}`)
+      const response = await fetch(`/api/valuations/${valuationId}/assumptions`)
       if (response.ok) {
-        const valuation = await response.json()
+        const data = await response.json()
+        console.log('Loaded assumptions from API:', data)
 
-        // Check if we have assumptions data (could be array or object)
-        if (valuation.assumptions) {
-          // If it's an array (our new format), use it directly
-          if (Array.isArray(valuation.assumptions) && valuation.assumptions.length > 0) {
-            console.log('Loading saved assumptions data (array):', valuation.assumptions)
-            setAssumptionCategories(valuation.assumptions)
-          }
-          // If it's an object (old format), check if it has keys
-          else if (typeof valuation.assumptions === 'object' && Object.keys(valuation.assumptions).length > 0) {
-            console.log('Loading saved assumptions data (object):', valuation.assumptions)
-            // For backward compatibility, if it's the old flat format, don't use it
-            // as it won't match the expected structure
-          } else {
-            console.log('No valid assumptions data found, using defaults')
-          }
+        // Check if we have assumptions data (should be an array of categories)
+        if (data.assumptions && Array.isArray(data.assumptions) && data.assumptions.length > 0) {
+          console.log('Loading saved assumptions data (array):', data.assumptions)
+          setAssumptionCategories(data.assumptions)
         } else {
           console.log('No saved assumptions data found, using defaults')
         }
+      } else {
+        console.log('Failed to load assumptions, using defaults')
       }
     } catch (error) {
       console.error('Error loading assumptions data:', error)
@@ -222,7 +219,7 @@ export default function ValuationDetail() {
         console.log('Saving assumptions data to database:', categories)
 
         // Store the full categories structure to preserve all data
-        const response = await fetch(`/api/valuations/${id}`, {
+        const response = await fetch(`/api/valuations/${id}/assumptions`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -234,11 +231,9 @@ export default function ValuationDetail() {
           const result = await response.json()
           console.log('Assumptions saved successfully:', result)
           setAssumptionCategories(categories)
-          setProject((prevProject) =>
-            prevProject ? { ...prevProject, assumptions: categories } : prevProject
-          )
         } else {
-          console.error('Failed to save assumptions data')
+          const error = await response.json()
+          console.error('Failed to save assumptions data:', error)
         }
       } catch (error) {
         console.error('Error saving assumptions data:', error)
@@ -450,9 +445,7 @@ export default function ValuationDetail() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <BackButton onClick={() => router.push('/valuations')}>
-              Back to Valuations
-            </BackButton>
+            <BackButton onClick={() => router.push('/valuations')}>Back to Valuations</BackButton>
             <div className="flex items-center space-x-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                 <Calculator className="h-5 w-5 text-primary" />
@@ -478,9 +471,7 @@ export default function ValuationDetail() {
             </div>
           </div>
           <ButtonGroup>
-            <DownloadButton>
-              Export
-            </DownloadButton>
+            <DownloadButton>Export</DownloadButton>
             <DeleteButton onClick={handleDeleteValuation} />
           </ButtonGroup>
         </div>
@@ -596,11 +587,7 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'assumptions' && (
-            <Suspense
-              fallback={
-                <LoadingCard label="Loading valuation assumptions..." />
-              }
-            >
+            <Suspense fallback={<LoadingCard label="Loading valuation assumptions..." />}>
               <ValuationAssumptions
                 valuationId={id!}
                 initialCategories={
@@ -612,11 +599,7 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'captable' && (
-            <Suspense
-              fallback={
-                <LoadingCard label="Loading cap table..." />
-              }
-            >
+            <Suspense fallback={<LoadingCard label="Loading cap table..." />}>
               <ImprovedCapTable valuationId={id!} onSave={handleCapTableSave} />
             </Suspense>
           )}
@@ -650,21 +633,13 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'dlom' && (
-            <Suspense
-              fallback={
-                <LoadingCard label="Loading DLOM models..." />
-              }
-            >
+            <Suspense fallback={<LoadingCard label="Loading DLOM models..." />}>
               <DLOMModels assumptions={(project as any)?.assumptions || assumptionCategories} />
             </Suspense>
           )}
 
           {activeTab === 'breakpoints' && (
-            <Suspense
-              fallback={
-                <LoadingCard label="Loading breakpoints analysis..." />
-              }
-            >
+            <Suspense fallback={<LoadingCard label="Loading breakpoints analysis..." />}>
               <BreakpointsAnalysis
                 valuationId={id!}
                 companyId={project?.companyId}
@@ -702,11 +677,7 @@ export default function ValuationDetail() {
           )}
 
           {activeTab === 'waterfall' && (
-            <Suspense
-              fallback={
-                <LoadingCard label="Loading waterfall analysis..." />
-              }
-            >
+            <Suspense fallback={<LoadingCard label="Loading waterfall analysis..." />}>
               <ComprehensiveWaterfall
                 companyId={parseInt(project?.companyId || '0')}
                 capTableConfig={currentCapTableConfig}

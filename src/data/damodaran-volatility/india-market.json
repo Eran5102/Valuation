@@ -1,0 +1,536 @@
+[
+  {
+    "industry": "Advertising",
+    "numberOfFirms": 26,
+    "standardDeviation": 5677,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Aerospace/Defense",
+    "numberOfFirms": 20,
+    "standardDeviation": 4196,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Air Transport",
+    "numberOfFirms": 4,
+    "standardDeviation": 2913,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Apparel",
+    "numberOfFirms": 366,
+    "standardDeviation": 4435,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Auto & Truck",
+    "numberOfFirms": 14,
+    "standardDeviation": 3066,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Auto Parts",
+    "numberOfFirms": 117,
+    "standardDeviation": 3574,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Bank (Money Center)",
+    "numberOfFirms": 35,
+    "standardDeviation": 2703,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Banks (Regional)",
+    "numberOfFirms": 6,
+    "standardDeviation": 2917,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Beverage (Alcoholic)",
+    "numberOfFirms": 19,
+    "standardDeviation": 3801,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Beverage (Soft)",
+    "numberOfFirms": 5,
+    "standardDeviation": 4973,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Broadcasting",
+    "numberOfFirms": 19,
+    "standardDeviation": 4328,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Brokerage & Investment Banking",
+    "numberOfFirms": 176,
+    "standardDeviation": 4824,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Building Materials",
+    "numberOfFirms": 57,
+    "standardDeviation": 4021,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Business & Consumer Services",
+    "numberOfFirms": 72,
+    "standardDeviation": 4796,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Cable TV",
+    "numberOfFirms": 8,
+    "standardDeviation": 3274,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Chemical (Basic)",
+    "numberOfFirms": 145,
+    "standardDeviation": 4009,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Chemical (Diversified)",
+    "numberOfFirms": 9,
+    "standardDeviation": 2435,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Chemical (Specialty)",
+    "numberOfFirms": 184,
+    "standardDeviation": 3738,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Coal & Related Energy",
+    "numberOfFirms": 5,
+    "standardDeviation": 4305,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Computer Services",
+    "numberOfFirms": 173,
+    "standardDeviation": 4595,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Computers/Peripherals",
+    "numberOfFirms": 9,
+    "standardDeviation": 4787,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Construction Supplies",
+    "numberOfFirms": 102,
+    "standardDeviation": 3694,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Diversified",
+    "numberOfFirms": 15,
+    "standardDeviation": 3691,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Drugs (Biotechnology)",
+    "numberOfFirms": 9,
+    "standardDeviation": 5118,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Drugs (Pharmaceutical)",
+    "numberOfFirms": 176,
+    "standardDeviation": 3818,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Education",
+    "numberOfFirms": 34,
+    "standardDeviation": 5179,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Electrical Equipment",
+    "numberOfFirms": 122,
+    "standardDeviation": 4684,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Electronics (Consumer & Office)",
+    "numberOfFirms": 8,
+    "standardDeviation": 4847,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Electronics (General)",
+    "numberOfFirms": 37,
+    "standardDeviation": 4635,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Engineering/Construction",
+    "numberOfFirms": 189,
+    "standardDeviation": 4880,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Entertainment",
+    "numberOfFirms": 67,
+    "standardDeviation": 4825,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Environmental & Waste Services",
+    "numberOfFirms": 18,
+    "standardDeviation": 5989,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Farming/Agriculture",
+    "numberOfFirms": 66,
+    "standardDeviation": 4283,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Financial Svcs. (Non-bank & Insurance)",
+    "numberOfFirms": 286,
+    "standardDeviation": 4585,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Food Processing",
+    "numberOfFirms": 210,
+    "standardDeviation": 4188,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Food Wholesalers",
+    "numberOfFirms": 40,
+    "standardDeviation": 5676,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Furn/Home Furnishings",
+    "numberOfFirms": 47,
+    "standardDeviation": 3901,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Green & Renewable Energy",
+    "numberOfFirms": 19,
+    "standardDeviation": 4931,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Healthcare Products",
+    "numberOfFirms": 15,
+    "standardDeviation": 4982,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Healthcare Support Services",
+    "numberOfFirms": 41,
+    "standardDeviation": 4543,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Heathcare Information and Technology",
+    "numberOfFirms": 21,
+    "standardDeviation": 4062,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Hospitals/Healthcare Facilities",
+    "numberOfFirms": 36,
+    "standardDeviation": 3534,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Hotel/Gaming",
+    "numberOfFirms": 72,
+    "standardDeviation": 4201,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Household Products",
+    "numberOfFirms": 37,
+    "standardDeviation": 3292,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Information Services",
+    "numberOfFirms": 25,
+    "standardDeviation": 4279,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Insurance (Life)",
+    "numberOfFirms": 8,
+    "standardDeviation": 2080,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Insurance (Prop/Cas.)",
+    "numberOfFirms": 3,
+    "standardDeviation": 3054,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Investments & Asset Management",
+    "numberOfFirms": 111,
+    "standardDeviation": 4585,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Machinery",
+    "numberOfFirms": 178,
+    "standardDeviation": 4318,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Metals & Mining",
+    "numberOfFirms": 46,
+    "standardDeviation": 4633,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Office Equipment & Services",
+    "numberOfFirms": 19,
+    "standardDeviation": 4945,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Oil/Gas (Integrated)",
+    "numberOfFirms": 1,
+    "standardDeviation": 2068,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Oil/Gas (Production and Exploration)",
+    "numberOfFirms": 6,
+    "standardDeviation": 3965,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Oil/Gas Distribution",
+    "numberOfFirms": 10,
+    "standardDeviation": 3961,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Oilfield Svcs/Equip.",
+    "numberOfFirms": 27,
+    "standardDeviation": 4612,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Packaging & Container",
+    "numberOfFirms": 93,
+    "standardDeviation": 4291,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Paper/Forest Products",
+    "numberOfFirms": 53,
+    "standardDeviation": 3788,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Power",
+    "numberOfFirms": 34,
+    "standardDeviation": 3873,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Publishing & Newspapers",
+    "numberOfFirms": 25,
+    "standardDeviation": 4589,
+    "region": "INDIA"
+  },
+  {
+    "industry": "R.E.I.T.",
+    "numberOfFirms": 4,
+    "standardDeviation": 1181,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Real Estate (Development)",
+    "numberOfFirms": 151,
+    "standardDeviation": 4967,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Real Estate (General/Diversified)",
+    "numberOfFirms": 17,
+    "standardDeviation": 4027,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Real Estate (Operations & Services)",
+    "numberOfFirms": 30,
+    "standardDeviation": 4658,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Recreation",
+    "numberOfFirms": 12,
+    "standardDeviation": 4964,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Reinsurance",
+    "numberOfFirms": 1,
+    "standardDeviation": 3253,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Restaurant/Dining",
+    "numberOfFirms": 17,
+    "standardDeviation": 3809,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Retail (Automotive)",
+    "numberOfFirms": 8,
+    "standardDeviation": 3517,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Retail (Building Supply)",
+    "numberOfFirms": 4,
+    "standardDeviation": 7212,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Retail (Distributors)",
+    "numberOfFirms": 252,
+    "standardDeviation": 4891,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Retail (General)",
+    "numberOfFirms": 10,
+    "standardDeviation": 4086,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Retail (Grocery and Food)",
+    "numberOfFirms": 10,
+    "standardDeviation": 3618,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Retail (Special Lines)",
+    "numberOfFirms": 51,
+    "standardDeviation": 4740,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Rubber& Tires",
+    "numberOfFirms": 18,
+    "standardDeviation": 2968,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Semiconductor",
+    "numberOfFirms": 13,
+    "standardDeviation": 5998,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Semiconductor Equip",
+    "numberOfFirms": 1,
+    "standardDeviation": 3605,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Shipbuilding & Marine",
+    "numberOfFirms": 23,
+    "standardDeviation": 4803,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Shoe",
+    "numberOfFirms": 11,
+    "standardDeviation": 2720,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Software (Entertainment)",
+    "numberOfFirms": 4,
+    "standardDeviation": 2940,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Software (Internet)",
+    "numberOfFirms": 7,
+    "standardDeviation": 4022,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Software (System & Application)",
+    "numberOfFirms": 73,
+    "standardDeviation": 4558,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Steel",
+    "numberOfFirms": 173,
+    "standardDeviation": 4501,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Telecom (Wireless)",
+    "numberOfFirms": 4,
+    "standardDeviation": 3747,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Telecom. Equipment",
+    "numberOfFirms": 21,
+    "standardDeviation": 4605,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Telecom. Services",
+    "numberOfFirms": 14,
+    "standardDeviation": 4934,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Tobacco",
+    "numberOfFirms": 7,
+    "standardDeviation": 3425,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Transportation",
+    "numberOfFirms": 55,
+    "standardDeviation": 4602,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Transportation (Railroads)",
+    "numberOfFirms": 2,
+    "standardDeviation": 2443,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Trucking",
+    "numberOfFirms": 16,
+    "standardDeviation": 4699,
+    "region": "INDIA"
+  },
+  {
+    "industry": "Utility (Water)",
+    "numberOfFirms": 1,
+    "standardDeviation": 3530,
+    "region": "INDIA"
+  }
+]

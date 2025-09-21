@@ -17,11 +17,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Valuation not found' }, { status: 404 })
     }
 
-    // Return assumptions if they exist, otherwise return empty object
-    const assumptions = valuation.assumptions || {}
+    // Return assumptions as categories array if they exist
+    // Handle both array format (new) and object format (legacy)
+    let assumptionCategories = []
+
+    if (valuation.assumptions) {
+      if (Array.isArray(valuation.assumptions)) {
+        assumptionCategories = valuation.assumptions
+      } else if (
+        typeof valuation.assumptions === 'object' &&
+        Object.keys(valuation.assumptions).length > 0
+      ) {
+        // Legacy format - could be converted but for now just return empty
+        assumptionCategories = []
+      }
+    }
 
     return NextResponse.json({
-      assumptions,
+      assumptions: assumptionCategories,
       updated_at: valuation.updated_at,
     })
   } catch (error) {
@@ -37,9 +50,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json()
     const { assumptions } = body
 
-    // Validate the assumptions data
-    if (!assumptions || typeof assumptions !== 'object') {
+    // Validate the assumptions data - should be an array of categories
+    if (!assumptions) {
       return NextResponse.json({ error: 'Invalid assumptions data' }, { status: 400 })
+    }
+
+    // Accept both array format (new) and object format (for backward compatibility)
+    let assumptionsToSave = assumptions
+
+    // If it's an object but not an array, we might be getting legacy format
+    if (!Array.isArray(assumptions) && typeof assumptions === 'object') {
+      // For now, we'll still save it but log a warning
+      console.warn('Received assumptions in legacy object format, should be array of categories')
     }
 
     const supabase = await createClient()
@@ -48,7 +70,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { data: valuation, error } = await supabase
       .from('valuations')
       .update({
-        assumptions: assumptions,
+        assumptions: assumptionsToSave,
         updated_at: new Date().toISOString(),
       })
       .eq('id', idParam)
@@ -56,10 +78,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       .single()
 
     if (error || !valuation) {
+      console.error('Error updating assumptions:', error)
       return NextResponse.json({ error: 'Valuation not found or update failed' }, { status: 404 })
     }
 
-    console.log(`Assumptions updated for valuation ${idParam}`)
+    console.log(
+      `Assumptions updated for valuation ${idParam}:`,
+      Array.isArray(assumptionsToSave) ? `${assumptionsToSave.length} categories` : 'legacy format'
+    )
 
     return NextResponse.json({
       success: true,
