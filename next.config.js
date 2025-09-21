@@ -58,6 +58,20 @@ const nextConfig = {
 
   // Webpack optimizations (for production builds)
   webpack: (config, { dev, isServer }) => {
+    // Fix "self is not defined" error during SSR
+    if (isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        self: false,
+      }
+      // Define self for server-side rendering
+      config.plugins.push(
+        new config.webpack.DefinePlugin({
+          self: 'global',
+        })
+      )
+    }
+
     // Only apply webpack optimizations for production builds
     // Turbopack handles development compilation
     if (!dev) {
