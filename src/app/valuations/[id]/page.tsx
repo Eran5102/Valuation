@@ -72,6 +72,7 @@ export default function ValuationDetail() {
   const id = params?.id as string
   const [activeTab, setActiveTab] = useState('overview')
   const [project, setProject] = useState<ValuationProject | null>(null)
+  const [loading, setLoading] = useState(true)
   const [assumptions, setAssumptions] = useState<FinancialAssumption[]>([])
   const [assumptionCategories, setAssumptionCategories] = useState<any[]>([])
   const [capTableData, setCapTableData] = useState<{
@@ -101,6 +102,7 @@ export default function ValuationDetail() {
 
   const fetchValuation = async () => {
     console.log('fetchValuation called with id:', id)
+    setLoading(true)
     try {
       const response = await fetch(`/api/valuations/${id}`)
       console.log('API response status:', response.status)
@@ -205,8 +207,10 @@ export default function ValuationDetail() {
       } else {
         console.log('Failed to load assumptions, using defaults')
       }
+      setLoading(false)
     } catch (error) {
       console.error('Error loading assumptions data:', error)
+      setLoading(false)
     }
   }
 
