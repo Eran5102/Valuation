@@ -145,8 +145,8 @@ export function VolatilityInput({
 
       if (result) {
         setLastFetchResult(result)
-        // Update the assumption value
-        onChange(categoryId, assumption.id, result.value.toString())
+        // Update the assumption value - rounded to 2 decimal places
+        onChange(categoryId, assumption.id, result.value.toFixed(2))
         setError(null)
       }
     } catch (err) {
