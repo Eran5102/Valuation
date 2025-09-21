@@ -286,7 +286,7 @@ const FieldMappingsAdmin = () => {
                         <SelectValue placeholder="Select transformer" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {transformers.map((transformer) => (
                           <SelectItem key={transformer} value={transformer}>
                             {transformer}
