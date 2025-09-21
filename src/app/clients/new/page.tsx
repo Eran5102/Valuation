@@ -72,16 +72,51 @@ export default function NewClientPage() {
         body: JSON.stringify(companyData),
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        // Non-JSON response, likely an error from Next.js or Vercel
+        const text = await response.text()
+        console.error('Non-JSON response:', text)
+        throw new Error(
+          'Server error: Unable to process request. Please ensure Supabase environment variables are configured in Vercel.'
+        )
+      }
+
+      const responseData = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to create client')
+        // Handle different error types
+        if (response.status === 409) {
+          throw new Error('A company with this name already exists')
+        } else if (response.status === 500 && responseData.error === 'Configuration Error') {
+          throw new Error(
+            'Database configuration error. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in Vercel environment variables.'
+          )
+        } else {
+          throw new Error(responseData.message || 'Failed to create client')
+        }
       }
 
       // Redirect back to clients page on success
       router.push('/clients')
     } catch (error) {
       console.error('Error creating client:', error)
-      alert(error instanceof Error ? error.message : 'Failed to create client. Please try again.')
+
+      // Show more informative error messages
+      let errorMessage = 'Failed to create client. Please try again.'
+
+      if (error instanceof Error) {
+        errorMessage = error.message
+
+        // Add helpful context for common issues
+        if (error.message.includes('Failed to execute') || error.message.includes('JSON')) {
+          errorMessage =
+            'Connection error: Unable to reach the server. Please check that Supabase environment variables are properly configured in Vercel.'
+        }
+      }
+
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }
