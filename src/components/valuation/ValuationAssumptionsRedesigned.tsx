@@ -741,6 +741,39 @@ export function ValuationAssumptionsRedesigned({
       setCategories((prevCategories) => {
         const newCategories = prevCategories.map((cat) => {
           if (cat.id === categoryId) {
+            // Handle stage change - auto-populate stage description
+            if (assumptionId === 'stage') {
+              const stageDescriptions: Record<string, string> = {
+                'Stage 1: Ideation':
+                  'Early-stage company in the ideation phase with concept development and business model formulation.',
+                'Stage 2: Product Development':
+                  'Company is developing its initial product or service offering with prototype or MVP in progress.',
+                'Stage 3: Development Progress':
+                  'Significant development milestones achieved, product refinement ongoing, preparing for market entry.',
+                'Stage 4: Early Revenue':
+                  'Initial revenue generation from early customers, proving market demand and product-market fit.',
+                'Stage 5: Revenue Generation':
+                  'Consistent revenue growth with expanding customer base and proven business model.',
+                'Stage 6: Established Operations':
+                  'Mature operations with established market presence, predictable revenues, and scalable business model.',
+              }
+
+              // Update both stage and stage_description
+              return {
+                ...cat,
+                assumptions: cat.assumptions.map((assumption) => {
+                  if (assumption.id === assumptionId) {
+                    return { ...assumption, value }
+                  }
+                  if (assumption.id === 'stage_description' && stageDescriptions[value as string]) {
+                    return { ...assumption, value: stageDescriptions[value as string] }
+                  }
+                  return assumption
+                }),
+              }
+            }
+
+            // Handle normal assumption change
             return {
               ...cat,
               assumptions: cat.assumptions.map((assumption) =>
@@ -922,7 +955,12 @@ export function ValuationAssumptionsRedesigned({
                               </div>
                               {assumption.type === 'textarea' ? (
                                 <Textarea
-                                  value={assumption.value as string}
+                                  value={
+                                    (categories
+                                      .find((c) => c.id === currentCategory.id)
+                                      ?.assumptions.find((a) => a.id === assumption.id)
+                                      ?.value as string) || ''
+                                  }
                                   onChange={(e) =>
                                     handleAssumptionChange(
                                       currentCategory.id,
@@ -987,7 +1025,12 @@ export function ValuationAssumptionsRedesigned({
                       </div>
                       {assumption.type === 'textarea' ? (
                         <Textarea
-                          value={assumption.value as string}
+                          value={
+                            (categories
+                              .find((c) => c.id === currentCategory.id)
+                              ?.assumptions.find((a) => a.id === assumption.id)?.value as string) ||
+                            ''
+                          }
                           onChange={(e) =>
                             handleAssumptionChange(
                               currentCategory.id,
