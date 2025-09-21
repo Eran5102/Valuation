@@ -89,7 +89,7 @@ const sampleTemplates: ReportTemplate[] = [
     metadata: {
       createdAt: '2024-01-15T10:30:00Z',
       updatedAt: '2024-02-20T14:45:00Z',
-      author: 'Value8 AI',
+      author: 'Bridgeland Advisors',
       tags: ['409A', 'valuation', 'compliance', 'standard'],
     },
   },
@@ -105,7 +105,7 @@ const sampleTemplates: ReportTemplate[] = [
     metadata: {
       createdAt: '2024-02-01T09:15:00Z',
       updatedAt: '2024-02-28T16:20:00Z',
-      author: 'Value8 AI',
+      author: 'Bridgeland Advisors',
       tags: ['409A', 'startup', 'early-stage', 'simplified'],
     },
   },
@@ -133,7 +133,9 @@ export function EnhancedReportGenerator({
   valuationId,
 }: EnhancedReportGeneratorProps) {
   const router = useRouter()
-  const [step, setStep] = useState<'selectValuation' | 'selectTemplate' | 'customize' | 'preview'>('selectValuation')
+  const [step, setStep] = useState<'selectValuation' | 'selectTemplate' | 'customize' | 'preview'>(
+    'selectValuation'
+  )
   const [selectedValuation, setSelectedValuation] = useState<Valuation | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null)
   const [customizedTemplate, setCustomizedTemplate] = useState<ReportTemplate | null>(null)
@@ -578,7 +580,7 @@ export function EnhancedReportGenerator({
             }
 
             <div class="footer">
-              <p>This report was generated on ${new Date().toLocaleDateString()} using the Value8 AI platform.</p>
+              <p>This report was generated on ${new Date().toLocaleDateString()} using the Bridgeland Advisors platform.</p>
               <p>Report ID: ${customizedTemplate.id} | Status: ${withWatermark ? 'DRAFT' : 'FINAL'}</p>
             </div>
           </body>

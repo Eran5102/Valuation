@@ -49,7 +49,7 @@ const sampleTemplates: ReportTemplate[] = [
     metadata: {
       createdAt: '2024-01-15T10:30:00Z',
       updatedAt: '2024-02-20T14:45:00Z',
-      author: 'Value8 AI',
+      author: 'Bridgeland Advisors',
       tags: ['409A', 'valuation', 'compliance', 'standard'],
     },
   },
@@ -65,7 +65,7 @@ const sampleTemplates: ReportTemplate[] = [
     metadata: {
       createdAt: '2024-02-01T09:15:00Z',
       updatedAt: '2024-02-28T16:20:00Z',
-      author: 'Value8 AI',
+      author: 'Bridgeland Advisors',
       tags: ['409A', 'startup', 'early-stage', 'simplified'],
     },
   },
@@ -97,7 +97,7 @@ const sampleTemplates: ReportTemplate[] = [
     metadata: {
       createdAt: '2024-01-10T14:20:00Z',
       updatedAt: '2024-03-01T10:15:00Z',
-      author: 'Value8 AI',
+      author: 'Bridgeland Advisors',
       tags: ['cap-table', 'ownership', 'dilution', 'financial'],
     },
   },

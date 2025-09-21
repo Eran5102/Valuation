@@ -124,7 +124,7 @@ export default function ReportPage() {
         type: 'text',
         required: true,
         category: 'Appraiser',
-        defaultValue: 'Value8',
+        defaultValue: 'Bridgeland',
       },
       {
         id: 'appraiser.last_name',

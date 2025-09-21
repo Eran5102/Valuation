@@ -5,24 +5,25 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   TrendingUp,
-  Menu,
-  X,
   Home,
   Users,
   Calculator,
   FileText,
   BarChart3,
   LogOut,
-  Palette,
   ChevronDown,
   ChevronRight,
   Library,
   HelpCircle,
   Settings,
   Database,
-  Calendar,
   Activity,
+  PanelLeft,
+  PanelLeftClose,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -57,7 +58,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Reports'])
   const pathname = usePathname()
 
@@ -68,122 +69,246 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar with white background */}
-      <div
-        className={`${isSidebarOpen ? 'w-64' : 'w-16'} flex flex-col border-r border-sidebar-border bg-sidebar shadow-lg transition-all duration-300`}
-      >
-        {/* Sidebar Header */}
-        <div className="border-b border-sidebar-border p-4">
-          <div className="flex items-center justify-between">
-            {isSidebarOpen && (
-              <div className="flex items-center space-x-3">
+    <TooltipProvider>
+      <div className="flex h-screen bg-background">
+        {/* Sidebar Container */}
+        <div className="relative flex">
+          {/* Main Sidebar */}
+          <div
+            className={cn(
+              'flex flex-col border-r bg-sidebar shadow-sm transition-all duration-300',
+              isSidebarCollapsed ? 'w-20' : 'w-64'
+            )}
+          >
+            {/* Sidebar Header */}
+            <div className="border-b p-4">
+              <div
+                className={cn(
+                  'flex items-center',
+                  isSidebarCollapsed ? 'justify-center' : 'space-x-3'
+                )}
+              >
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                   <TrendingUp className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-sidebar-foreground">Value8</h2>
-                  <p className="text-xs text-muted-foreground">409A Platform</p>
-                </div>
-              </div>
-            )}
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="rounded-md p-1.5 text-sidebar-foreground transition-colors hover:bg-muted"
-            >
-              {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation Items */}
-        <nav className="flex-1 space-y-1 p-4">
-          {navigation.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-            const hasSubmenu = 'submenu' in item && item.submenu
-            const isExpanded = expandedMenus.includes(item.name)
-            const isSubmenuActive =
-              hasSubmenu && item.submenu?.some((subItem) => pathname === subItem.href)
-
-            return (
-              <div key={item.name}>
-                {hasSubmenu ? (
-                  <button
-                    onClick={() => toggleSubmenu(item.name)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                      isActive || isSubmenuActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
-                        : 'text-sidebar-foreground hover:bg-accent/10 hover:text-accent'
-                    } `}
-                  >
-                    <div className="flex items-center">
-                      <Icon className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
-                      {isSidebarOpen && <span>{item.name}</span>}
-                    </div>
-                    {isSidebarOpen &&
-                      (isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      ))}
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={`flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
-                        : 'text-sidebar-foreground hover:bg-accent/10 hover:text-accent'
-                    } `}
-                  >
-                    <Icon className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
-                    {isSidebarOpen && <span>{item.name}</span>}
-                  </Link>
-                )}
-
-                {hasSubmenu && isExpanded && isSidebarOpen && (
-                  <div className="ml-6 mt-1 space-y-1">
-                    {item.submenu?.map((subItem) => {
-                      const SubIcon = subItem.icon
-                      const isSubActive = pathname === subItem.href
-
-                      return (
-                        <Link
-                          key={subItem.name}
-                          href={subItem.href}
-                          className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                            isSubActive
-                              ? 'border-l-2 border-primary bg-primary/20 text-primary'
-                              : 'text-muted-foreground hover:bg-accent/10 hover:text-accent'
-                          } `}
-                        >
-                          <SubIcon className="mr-3 h-4 w-4" />
-                          <span>{subItem.name}</span>
-                        </Link>
-                      )
-                    })}
+                {!isSidebarCollapsed && (
+                  <div>
+                    <h2 className="text-lg font-semibold">Bridgeland Advisors</h2>
+                    <p className="text-xs text-muted-foreground">409A Platform</p>
                   </div>
                 )}
               </div>
-            )
-          })}
-        </nav>
+            </div>
 
-        {/* Sidebar Footer */}
-        <div className="border-t border-sidebar-border p-4">
-          {isSidebarOpen && (
-            <div className="mb-3 text-xs text-muted-foreground">Professional 409A Valuations</div>
-          )}
-          <button className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
-            <LogOut className={`h-5 w-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
-            {isSidebarOpen && <span>Sign Out</span>}
-          </button>
+            {/* Navigation Items */}
+            <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+              {navigation.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                const hasSubmenu = 'submenu' in item && item.submenu
+                const isExpanded = expandedMenus.includes(item.name)
+                const isSubmenuActive =
+                  hasSubmenu && item.submenu?.some((subItem) => pathname === subItem.href)
+
+                if (hasSubmenu) {
+                  // Menu with submenu
+                  const menuButton = (
+                    <button
+                      onClick={() => !isSidebarCollapsed && toggleSubmenu(item.name)}
+                      className={cn(
+                        'group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                        isActive || isSubmenuActive
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'hover:bg-accent hover:text-accent-foreground',
+                        isSidebarCollapsed && 'justify-center px-0 py-3'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                            isActive || isSubmenuActive ? 'bg-primary-foreground/10' : 'bg-muted'
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              'h-5 w-5',
+                              isActive || isSubmenuActive
+                                ? 'text-primary-foreground'
+                                : 'text-muted-foreground'
+                            )}
+                          />
+                        </div>
+                        {!isSidebarCollapsed && <span>{item.name}</span>}
+                      </div>
+                      {!isSidebarCollapsed && (
+                        <ChevronDown
+                          className={cn(
+                            'h-4 w-4 transition-transform duration-200',
+                            !isExpanded && '-rotate-90'
+                          )}
+                        />
+                      )}
+                    </button>
+                  )
+
+                  return (
+                    <div key={item.name}>
+                      {isSidebarCollapsed ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>{menuButton}</TooltipTrigger>
+                          <TooltipContent side="right">
+                            <div>
+                              <div className="font-medium">{item.name}</div>
+                              {item.submenu && (
+                                <div className="mt-1 space-y-1">
+                                  {item.submenu.map((subItem) => (
+                                    <Link
+                                      key={subItem.href}
+                                      href={subItem.href}
+                                      className="block text-xs hover:text-primary"
+                                    >
+                                      {subItem.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        menuButton
+                      )}
+
+                      {hasSubmenu && isExpanded && !isSidebarCollapsed && (
+                        <div className="ml-3 mt-2 space-y-1 border-l-2 border-muted pl-3">
+                          {item.submenu?.map((subItem) => {
+                            const SubIcon = subItem.icon
+                            const isSubActive = pathname === subItem.href
+
+                            return (
+                              <Link
+                                key={subItem.name}
+                                href={subItem.href}
+                                className={cn(
+                                  'flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200',
+                                  isSubActive
+                                    ? 'bg-primary/10 font-medium text-primary'
+                                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                )}
+                              >
+                                <div
+                                  className={cn(
+                                    'flex h-7 w-7 items-center justify-center rounded-md transition-colors',
+                                    isSubActive ? 'bg-primary/20' : 'bg-muted/50'
+                                  )}
+                                >
+                                  <SubIcon
+                                    className={cn(
+                                      'h-3.5 w-3.5',
+                                      isSubActive ? 'text-primary' : 'text-muted-foreground'
+                                    )}
+                                  />
+                                </div>
+                                <span>{subItem.name}</span>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                } else {
+                  // Regular menu item
+                  const menuLink = (
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'hover:bg-accent hover:text-accent-foreground',
+                        isSidebarCollapsed && 'justify-center px-0 py-3'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                          isActive ? 'bg-primary-foreground/10' : 'bg-muted'
+                        )}
+                      >
+                        <Icon
+                          className={cn(
+                            'h-5 w-5',
+                            isActive ? 'text-primary-foreground' : 'text-muted-foreground'
+                          )}
+                        />
+                      </div>
+                      {!isSidebarCollapsed && <span>{item.name}</span>}
+                    </Link>
+                  )
+
+                  if (isSidebarCollapsed) {
+                    return (
+                      <Tooltip key={item.name}>
+                        <TooltipTrigger asChild>{menuLink}</TooltipTrigger>
+                        <TooltipContent side="right">{item.name}</TooltipContent>
+                      </Tooltip>
+                    )
+                  }
+
+                  return <div key={item.name}>{menuLink}</div>
+                }
+              })}
+            </nav>
+
+            {/* Sidebar Footer */}
+            <div className="border-t p-4">
+              {!isSidebarCollapsed && (
+                <div className="mb-3 text-xs text-muted-foreground">
+                  Professional 409A Valuations
+                </div>
+              )}
+              {isSidebarCollapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="flex w-full items-center justify-center rounded-lg p-3 text-sm font-medium transition-colors hover:bg-destructive/10 hover:text-destructive">
+                      <LogOut className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Sign Out</TooltipContent>
+                </Tooltip>
+              ) : (
+                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-destructive/10 hover:text-destructive">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <LogOut className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <span>Sign Out</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Toggle Button - Outside the sidebar */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className={cn(
+              'absolute -right-3 top-9 z-50 h-6 w-6 rounded-md border bg-background shadow-sm transition-all hover:shadow-md'
+            )}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeft className="h-3 w-3" />
+            ) : (
+              <PanelLeftClose className="h-3 w-3" />
+            )}
+          </Button>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-background">{children}</div>
-    </div>
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto bg-background">{children}</div>
+      </div>
+    </TooltipProvider>
   )
 }

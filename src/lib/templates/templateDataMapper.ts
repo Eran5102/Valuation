@@ -345,12 +345,12 @@ export class TemplateDataMapper {
       appraiser_name: {
         sourceModule: 'manual',
         sourcePath: 'appraiser_name',
-        fallback: 'Value8 AI',
+        fallback: 'Bridgeland Advisors',
       },
       appraiser_firm: {
         sourceModule: 'manual',
         sourcePath: 'appraiser_firm',
-        fallback: 'Value8 AI Valuation Services',
+        fallback: 'Bridgeland Advisors',
       },
       appraiser_credentials: {
         sourceModule: 'manual',
