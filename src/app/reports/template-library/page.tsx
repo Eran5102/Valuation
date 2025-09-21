@@ -6,6 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { FormDialog } from '@/components/ui/modal-patterns'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,6 +122,13 @@ export default function TemplateLibraryPage() {
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all')
   const [filteredTemplates, setFilteredTemplates] = useState<ReportTemplate[]>(sampleTemplates)
   const [valuationProject, setValuationProject] = useState<any>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newTemplate, setNewTemplate] = useState({
+    name: '',
+    description: '',
+    category: 'financial' as TemplateCategory,
+    tags: '',
+  })
 
   // Load valuation details when valuationId is present
   useEffect(() => {
@@ -164,7 +181,44 @@ export default function TemplateLibraryPage() {
   }, [templates, searchQuery, selectedCategory])
 
   const handleCreateNew = () => {
-    const params = new URLSearchParams({ templateName: 'New Template' })
+    setShowCreateModal(true)
+  }
+
+  const handleCreateTemplate = () => {
+    const template: ReportTemplate = {
+      id: `template_${Date.now()}`,
+      name: newTemplate.name,
+      description: newTemplate.description,
+      category: newTemplate.category,
+      version: '1.0.0',
+      sections: [],
+      variables: [],
+      metadata: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        author: 'Bridgeland Advisors',
+        tags: newTemplate.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      },
+    }
+
+    // Add to templates
+    setTemplates((prev) => [...prev, template])
+
+    // Reset form
+    setNewTemplate({
+      name: '',
+      description: '',
+      category: 'financial',
+      tags: '',
+    })
+
+    // Close modal and navigate to editor
+    setShowCreateModal(false)
+
+    const params = new URLSearchParams({ templateId: template.id })
     if (valuationId) params.set('valuationId', valuationId)
     router.push(`/reports/template-editor?${params.toString()}`)
   }
@@ -175,10 +229,16 @@ export default function TemplateLibraryPage() {
     router.push(`/reports/template-editor?${params.toString()}`)
   }
 
-  const handleUseTemplate = (templateId: string) => {
-    const params = new URLSearchParams({ templateId })
-    if (valuationId) params.set('valuationId', valuationId)
-    router.push(`/reports/generator?${params.toString()}`)
+  const handleSelectTemplate = (templateId: string) => {
+    // Only navigate to generator if we're in valuation context
+    if (valuationId) {
+      const params = new URLSearchParams({ templateId, valuationId })
+      router.push(`/reports/generator?${params.toString()}`)
+    } else {
+      // In global template library, just go to editor
+      const params = new URLSearchParams({ templateId })
+      router.push(`/reports/template-editor?${params.toString()}`)
+    }
   }
 
   const handleCloneTemplate = (template: ReportTemplate) => {
@@ -446,24 +506,38 @@ export default function TemplateLibraryPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditTemplate(template.id)}
-                    className="flex-1"
-                  >
-                    <Edit2 className="mr-1 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleUseTemplate(template.id)}
-                    className="flex-1"
-                  >
-                    <Eye className="mr-1 h-4 w-4" />
-                    {valuationId ? 'Use for Report' : 'Use Template'}
-                  </Button>
+                  {valuationId ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditTemplate(template.id)}
+                        className="flex-1"
+                      >
+                        <Edit2 className="mr-1 h-4 w-4" />
+                        Customize
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSelectTemplate(template.id)}
+                        className="flex-1"
+                      >
+                        <Eye className="mr-1 h-4 w-4" />
+                        Use for Report
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditTemplate(template.id)}
+                      className="w-full"
+                    >
+                      <Edit2 className="mr-1 h-4 w-4" />
+                      Edit Template
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -488,6 +562,72 @@ export default function TemplateLibraryPage() {
             )}
           </div>
         )}
+
+        {/* Create Template Modal */}
+        <FormDialog
+          open={showCreateModal}
+          onOpenChange={setShowCreateModal}
+          title="Create New Template"
+          description="Create a new report template for your valuations"
+          onSubmit={handleCreateTemplate}
+          submitText="Create Template"
+        >
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="template-name">Template Name *</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g., Standard 409A Report"
+                value={newTemplate.name}
+                onChange={(e) => setNewTemplate((prev) => ({ ...prev, name: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="template-description">Description *</Label>
+              <Textarea
+                id="template-description"
+                placeholder="Brief description of the template's purpose and content"
+                value={newTemplate.description}
+                onChange={(e) =>
+                  setNewTemplate((prev) => ({ ...prev, description: e.target.value }))
+                }
+                rows={3}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="template-category">Category</Label>
+              <Select
+                value={newTemplate.category}
+                onValueChange={(value) =>
+                  setNewTemplate((prev) => ({ ...prev, category: value as TemplateCategory }))
+                }
+              >
+                <SelectTrigger id="template-category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="financial">Financial</SelectItem>
+                  <SelectItem value="legal">Legal</SelectItem>
+                  <SelectItem value="operational">Operational</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="template-tags">Tags</Label>
+              <Input
+                id="template-tags"
+                placeholder="e.g., 409A, startup, compliance (comma-separated)"
+                value={newTemplate.tags}
+                onChange={(e) => setNewTemplate((prev) => ({ ...prev, tags: e.target.value }))}
+              />
+            </div>
+          </div>
+        </FormDialog>
       </div>
     </AppLayout>
   )

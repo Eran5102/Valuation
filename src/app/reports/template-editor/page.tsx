@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { TemplateEditor } from '@/components/templates/TemplateEditor'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, FileText, Calculator, Building2 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import type { ReportTemplate, TemplateVariable } from '@/lib/templates/types'
 import draftService from '@/services/draftService'
@@ -331,6 +331,8 @@ function TemplateEditorContent() {
   const router = useRouter()
   const [template, setTemplate] = useState<ReportTemplate | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [templateInfo, setTemplateInfo] = useState<any>(null)
+  const [valuationInfo, setValuationInfo] = useState<any>(null)
 
   const templateId = searchParams.get('templateId')
   const templateName = searchParams.get('templateName')
@@ -338,12 +340,47 @@ function TemplateEditorContent() {
   const reportName = searchParams.get('reportName')
 
   useEffect(() => {
-    // Simulate loading template data
-    const loadTemplate = async () => {
+    const loadData = async () => {
       setIsLoading(true)
 
-      // In a real implementation, this would fetch from an API
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate loading
+      // Load template info if templateId exists
+      if (templateId) {
+        try {
+          // In real app, fetch from API
+          const templateData = {
+            id: templateId,
+            name: 'Standard 409A Valuation Report',
+            description: 'Comprehensive 409A valuation report template',
+            category: 'financial',
+            author: 'Bridgeland Advisors',
+          }
+          setTemplateInfo(templateData)
+        } catch (error) {
+          console.error('Error loading template info:', error)
+        }
+      }
+
+      // Load valuation info if valuationId exists
+      if (valuationId) {
+        try {
+          const response = await fetch(`/api/valuations/${valuationId}`)
+          if (response.ok) {
+            const valuation = await response.json()
+            // Get client name
+            const clientResponse = await fetch(`/api/companies/${valuation.companyId}`)
+            const client = clientResponse.ok ? await clientResponse.json() : null
+            setValuationInfo({
+              ...valuation,
+              clientName: client?.name || 'Unknown Client',
+            })
+          }
+        } catch (error) {
+          console.error('Error loading valuation info:', error)
+        }
+      }
+
+      // Simulate loading template data
+      await new Promise((resolve) => setTimeout(resolve, 500))
 
       const loadedTemplate = createSampleTemplate(
         templateId || undefined,
@@ -353,8 +390,8 @@ function TemplateEditorContent() {
       setIsLoading(false)
     }
 
-    loadTemplate()
-  }, [templateId, templateName])
+    loadData()
+  }, [templateId, templateName, valuationId])
 
   const handleSave = async (updatedTemplate: ReportTemplate) => {
     try {
@@ -373,11 +410,14 @@ function TemplateEditorContent() {
   }
 
   const handleCancel = () => {
-    // Navigate back to the report generator
-    const returnUrl = valuationId
-      ? `/reports/generator?selectedValuation=${valuationId}`
-      : '/reports/generator'
-    router.push(returnUrl)
+    // Navigate back to appropriate page
+    if (valuationId) {
+      router.push(`/valuations/${valuationId}`)
+    } else if (templateId) {
+      router.push('/reports/template-library')
+    } else {
+      router.push('/reports')
+    }
   }
 
   const handlePreview = (previewTemplate: ReportTemplate) => {
@@ -402,9 +442,9 @@ function TemplateEditorContent() {
   return (
     <AppLayout>
       <div className="h-full bg-background">
-        {/* Compact Header */}
+        {/* Enhanced Header with Context */}
         <div className="border-b border-border bg-card/50">
-          <div className="px-6 py-3">
+          <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Button
@@ -414,15 +454,62 @@ function TemplateEditorContent() {
                   className="flex items-center space-x-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  <span>Back to Generator</span>
+                  <span>
+                    {valuationId ? 'Back to Valuation' : templateId ? 'Back to Library' : 'Back'}
+                  </span>
                 </Button>
-                <div>
-                  <h1 className="text-xl font-bold">Template Editor</h1>
-                  <p className="text-xs text-muted-foreground">
-                    {valuationId
-                      ? `Customizing template for valuation ${valuationId}`
-                      : 'Creating custom template'}
-                  </p>
+
+                {/* Context Information */}
+                <div className="flex items-center space-x-4">
+                  {/* Template Info */}
+                  {(templateInfo || templateId) && (
+                    <div className="flex items-center space-x-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold">
+                          {templateInfo?.name || template?.name || 'Template Editor'}
+                        </h2>
+                        {templateInfo?.description && (
+                          <p className="text-xs text-muted-foreground">
+                            {templateInfo.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Separator */}
+                  {templateInfo && valuationInfo && <div className="h-8 w-px bg-border" />}
+
+                  {/* Valuation Context */}
+                  {valuationInfo && (
+                    <div className="flex items-center space-x-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                        <Calculator className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{valuationInfo.title}</p>
+                        <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                          <Building2 className="h-3 w-3" />
+                          <span>{valuationInfo.clientName}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Default header if no context */}
+                  {!templateInfo && !valuationInfo && (
+                    <div>
+                      <h1 className="text-xl font-bold">Template Editor</h1>
+                      <p className="text-xs text-muted-foreground">
+                        {reportName
+                          ? `Creating ${reportName}`
+                          : 'Create and customize report templates'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
