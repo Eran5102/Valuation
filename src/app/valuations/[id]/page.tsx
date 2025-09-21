@@ -588,13 +588,19 @@ export default function ValuationDetail() {
 
           {activeTab === 'assumptions' && (
             <Suspense fallback={<LoadingCard label="Loading valuation assumptions..." />}>
-              <ValuationAssumptions
-                valuationId={id!}
-                initialCategories={
-                  assumptionCategories.length > 0 ? assumptionCategories : undefined
-                }
-                onSave={handleAssumptionsSave}
-              />
+              {/* Only render ValuationAssumptions after data is loaded or confirmed empty */}
+              {(assumptionCategories.length > 0 || !loading) && (
+                <ValuationAssumptions
+                  valuationId={id!}
+                  initialCategories={
+                    assumptionCategories.length > 0 ? assumptionCategories : undefined
+                  }
+                  onSave={handleAssumptionsSave}
+                />
+              )}
+              {loading && assumptionCategories.length === 0 && (
+                <LoadingCard label="Loading valuation assumptions..." />
+              )}
             </Suspense>
           )}
 

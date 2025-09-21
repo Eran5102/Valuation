@@ -119,20 +119,28 @@ export function VolatilityInput({
           throw new Error('Please enter comparable company tickers')
         }
 
-        // Use the singleton service instance which has API key from env
-        const service = getVolatilityService()
-
         const tickers = comparableTickers
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean)
 
-        result = await service.getVolatility({
-          source: 'alpha_vantage',
-          tickers,
-          timePeriodYears: measurementPeriod,
-          frequency: dataFrequency,
+        // Use API route for Alpha Vantage to handle server-side
+        const response = await fetch('/api/volatility/alpha-vantage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tickers,
+            timePeriodYears: measurementPeriod,
+            frequency: dataFrequency,
+          }),
         })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to fetch volatility')
+        }
+
+        result = await response.json()
       }
 
       if (result) {
