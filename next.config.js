@@ -65,8 +65,9 @@ const nextConfig = {
         self: false,
       }
       // Define self for server-side rendering
+      const webpack = require('webpack')
       config.plugins.push(
-        new config.webpack.DefinePlugin({
+        new webpack.DefinePlugin({
           self: 'global',
         })
       )
