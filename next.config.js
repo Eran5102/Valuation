@@ -23,8 +23,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Enable experimental features for better performance
+  // Enable instrumentation for polyfills and other experimental features
   experimental: {
+    instrumentationHook: true,
     // Optimize package imports
     optimizePackageImports: [
       'lucide-react',
@@ -58,21 +59,6 @@ const nextConfig = {
 
   // Webpack optimizations (for production builds)
   webpack: (config, { dev, isServer }) => {
-    // Fix "self is not defined" error during SSR
-    if (isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        self: false,
-      }
-      // Define self for server-side rendering
-      const webpack = require('webpack')
-      config.plugins.push(
-        new webpack.DefinePlugin({
-          self: 'global',
-        })
-      )
-    }
-
     // Only apply webpack optimizations for production builds
     // Turbopack handles development compilation
     if (!dev) {
