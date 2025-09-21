@@ -58,13 +58,14 @@ const nextConfig = {
 
   // Webpack configuration
   webpack: (config, { isServer }) => {
-    // Fix for browser globals in server environment
+    // Prevent browser-only libraries from being bundled on server
     if (isServer) {
-      // Use ignore-loader for browser-only libraries
-      config.module.rules.push({
-        test: /node_modules\/(xlsx|jspdf|html2canvas)/,
-        use: 'ignore-loader',
-      })
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        xlsx: false,
+        jspdf: false,
+        html2canvas: false,
+      }
     }
 
     return config
