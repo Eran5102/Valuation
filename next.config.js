@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true'
-});
+
+// Only load bundle analyzer if it's available (dev environment)
+let withBundleAnalyzer = (config) => config
+try {
+  withBundleAnalyzer = require('@next/bundle-analyzer')({
+    enabled: process.env.ANALYZE === 'true',
+  })
+} catch (e) {
+  // Bundle analyzer not available in production, that's fine
+}
 
 const nextConfig = {
   // SWC minification is now enabled by default in Next.js 15
@@ -21,7 +28,7 @@ const nextConfig = {
       '@radix-ui/react-select',
       '@radix-ui/react-tabs',
       '@radix-ui/react-tooltip',
-      '@tanstack/react-table'
+      '@tanstack/react-table',
     ],
 
     // Enable partial pre-rendering for faster navigation
@@ -29,7 +36,6 @@ const nextConfig = {
 
     // Optimize CSS
     optimizeCss: true,
-
   },
 
   // Output file tracing to silence warnings
@@ -40,9 +46,9 @@ const nextConfig = {
     rules: {
       '*.svg': {
         loaders: ['@svgr/webpack'],
-        as: '*.js'
-      }
-    }
+        as: '*.js',
+      },
+    },
   },
 
   // Webpack optimizations (for production builds)
@@ -58,32 +64,32 @@ const nextConfig = {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             chunks: 'all',
-            priority: 10
+            priority: 10,
           },
           common: {
             name: 'common',
             minChunks: 2,
             chunks: 'all',
             priority: 5,
-            reuseExistingChunk: true
+            reuseExistingChunk: true,
           },
           radix: {
             test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
             name: 'radix',
             chunks: 'all',
-            priority: 15
+            priority: 15,
           },
           lucide: {
             test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
             name: 'lucide',
             chunks: 'all',
-            priority: 15
-          }
-        }
-      };
+            priority: 15,
+          },
+        },
+      }
     }
 
-    return config;
+    return config
   },
 
   // Enable compression
@@ -93,7 +99,7 @@ const nextConfig = {
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384]
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
   // Headers for better caching
@@ -104,20 +110,20 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          }
-        ]
-      }
-    ];
-  }
-};
+            value: '1; mode=block',
+          },
+        ],
+      },
+    ]
+  },
+}
 
-module.exports = withBundleAnalyzer(nextConfig);
+module.exports = withBundleAnalyzer(nextConfig)
