@@ -13,6 +13,7 @@ import {
   ColumnFiltersState,
   SortingState,
   VisibilityState,
+  RowSelectionState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -453,7 +454,7 @@ export function OptimizedDataTable<TData, TValue>({
     data,
     columns: orderedColumns,
     onSortingChange: useCallback(
-      (sorting) =>
+      (sorting: SortingState | ((old: SortingState) => SortingState)) =>
         dispatch({
           type: 'SET_SORTING',
           payload: typeof sorting === 'function' ? sorting(state.sorting) : sorting,
@@ -461,7 +462,7 @@ export function OptimizedDataTable<TData, TValue>({
       [state.sorting]
     ),
     onColumnFiltersChange: useCallback(
-      (filters) =>
+      (filters: ColumnFiltersState | ((old: ColumnFiltersState) => ColumnFiltersState)) =>
         dispatch({
           type: 'SET_COLUMN_FILTERS',
           payload: typeof filters === 'function' ? filters(state.columnFilters) : filters,
@@ -473,7 +474,7 @@ export function OptimizedDataTable<TData, TValue>({
     getSortedRowModel: state.localEnableSorting ? getSortedRowModel() : undefined,
     getFilteredRowModel: state.localEnableFilters ? getFilteredRowModel() : undefined,
     onColumnVisibilityChange: useCallback(
-      (visibility) =>
+      (visibility: VisibilityState | ((old: VisibilityState) => VisibilityState)) =>
         dispatch({
           type: 'SET_COLUMN_VISIBILITY',
           payload:
@@ -482,7 +483,7 @@ export function OptimizedDataTable<TData, TValue>({
       [state.columnVisibility]
     ),
     onRowSelectionChange: useCallback(
-      (selection) =>
+      (selection: RowSelectionState | ((old: RowSelectionState) => RowSelectionState)) =>
         dispatch({
           type: 'SET_ROW_SELECTION',
           payload: typeof selection === 'function' ? selection(state.rowSelection) : selection,
@@ -490,7 +491,7 @@ export function OptimizedDataTable<TData, TValue>({
       [state.rowSelection]
     ),
     onGlobalFilterChange: useCallback(
-      (filter) =>
+      (filter: string | ((old: string) => string)) =>
         dispatch({
           type: 'SET_GLOBAL_FILTER',
           payload: typeof filter === 'function' ? filter(state.globalFilter) : filter,

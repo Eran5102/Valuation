@@ -18,7 +18,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // Temporarily disable TypeScript checking during build for deployment
+  // Temporarily disable TypeScript checking during build
   typescript: {
     ignoreBuildErrors: true,
   },
