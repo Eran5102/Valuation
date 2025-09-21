@@ -1,6 +1,8 @@
-import * as XLSX from 'xlsx'
-
+// Dynamic import to prevent SSR issues with xlsx library
 export async function exportTableToExcel(table: any, tableId: string) {
+  // Dynamically import XLSX to prevent SSR issues
+  const XLSX = await import('xlsx')
+
   const visibleColumns = table.getVisibleLeafColumns()
   const rows = table.getRowModel().rows
 

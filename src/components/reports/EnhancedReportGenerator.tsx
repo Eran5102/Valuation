@@ -50,7 +50,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import type { ReportTemplate } from '@/lib/templates/types'
 import { getStatusColor, formatDate } from '@/lib/utils'
 import { TemplatePreview } from '@/components/templates/TemplatePreview'
-import PDFGenerator from '@/lib/services/pdfGenerator'
+// PDFGenerator will be dynamically imported to prevent SSR issues
 
 interface Valuation {
   id: number
@@ -586,6 +586,9 @@ export function EnhancedReportGenerator({
           </body>
         </html>
       `
+
+      // Dynamically import PDFGenerator to prevent SSR issues
+      const { default: PDFGenerator } = await import('@/lib/services/pdfGenerator')
 
       // Generate filename
       const filename = PDFGenerator.generateFilename(

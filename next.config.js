@@ -23,9 +23,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Enable instrumentation for polyfills and other experimental features
+  // Experimental features for performance optimization
   experimental: {
-    instrumentationHook: true,
     // Optimize package imports
     optimizePackageImports: [
       'lucide-react',
@@ -57,42 +56,15 @@ const nextConfig = {
     },
   },
 
-  // Webpack optimizations (for production builds)
-  webpack: (config, { dev, isServer }) => {
-    // Only apply webpack optimizations for production builds
-    // Turbopack handles development compilation
-    if (!dev) {
-      // Production optimizations - Split chunks for better caching
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-            priority: 10,
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            priority: 5,
-            reuseExistingChunk: true,
-          },
-          radix: {
-            test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
-            name: 'radix',
-            chunks: 'all',
-            priority: 15,
-          },
-          lucide: {
-            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
-            name: 'lucide',
-            chunks: 'all',
-            priority: 15,
-          },
-        },
-      }
+  // Webpack configuration
+  webpack: (config, { isServer }) => {
+    // Fix for browser globals in server environment
+    if (isServer) {
+      // Use ignore-loader for browser-only libraries
+      config.module.rules.push({
+        test: /node_modules\/(xlsx|jspdf|html2canvas)/,
+        use: 'ignore-loader',
+      })
     }
 
     return config
