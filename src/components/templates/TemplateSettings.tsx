@@ -62,6 +62,9 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
       settings: {
         ...template.settings,
         watermark: {
+          enabled: template.settings?.watermark?.enabled ?? false,
+          text: template.settings?.watermark?.text ?? 'DRAFT',
+          opacity: template.settings?.watermark?.opacity ?? 0.1,
           ...template.settings?.watermark,
           [field]: value,
         },

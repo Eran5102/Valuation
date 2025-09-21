@@ -227,10 +227,10 @@ export function TemplateThemeManager({ template, onChange }: TemplateThemeManage
 
   const createCustomTheme = useCallback(() => {
     const newTheme: TemplateTheme = {
+      ...defaultThemes[0], // Start with professional theme as base
       id: `custom_${Date.now()}`,
       name: 'Custom Theme',
       description: 'Customized theme based on your preferences',
-      ...defaultThemes[0], // Start with professional theme as base
     }
 
     setCustomTheme(newTheme)

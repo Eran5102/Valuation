@@ -78,8 +78,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from './badge'
 import { cn } from '@/lib/utils'
 
-// Lazy load Excel export functionality
-const ExcelExporter = lazy(() => import('./excel-exporter'))
+// Excel export functionality will be dynamically imported when needed
 
 // Debounce utility
 function useDebounce<T>(value: T, delay: number): T {
