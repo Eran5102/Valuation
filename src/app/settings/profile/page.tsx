@@ -47,10 +47,27 @@ export default function ProfileSettingsPage() {
         setCurrentData(data)
 
         // Set form data from current user metadata
+        // Handle both individual fields and full_name
+        let firstName = data.user_metadata?.first_name || ''
+        let lastName = data.user_metadata?.last_name || ''
+
+        // If no individual fields but have full_name, split it
+        if (!firstName && data.user_metadata?.full_name) {
+          const nameParts = data.user_metadata.full_name.split(' ')
+          firstName = nameParts[0] || ''
+          lastName = nameParts.slice(1).join(' ') || ''
+        }
+
+        // Try to infer organization from email domain if not set
+        let orgName = data.user_metadata?.organization_name || ''
+        if (!orgName && data.email && data.email.includes('@bridgeland-advisors.com')) {
+          orgName = 'Bridgeland Advisors'
+        }
+
         setFormData({
-          first_name: data.user_metadata?.first_name || '',
-          last_name: data.user_metadata?.last_name || '',
-          organization_name: data.user_metadata?.organization_name || '',
+          first_name: firstName,
+          last_name: lastName,
+          organization_name: orgName,
           organization_type: data.user_metadata?.organization_type || 'appraisal_firm',
           email: data.email || '',
         })

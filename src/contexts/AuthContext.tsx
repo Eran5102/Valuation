@@ -79,11 +79,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await supabase.auth.getUser()
       const userMetadata = userData.data.user?.user_metadata
 
-      if (userMetadata?.organization_name) {
+      // Extract name parts from full_name if individual fields don't exist
+      if (userMetadata && !userMetadata.first_name && userMetadata.full_name) {
+        const nameParts = userMetadata.full_name.split(' ')
+        userMetadata.first_name = nameParts[0]
+        userMetadata.last_name = nameParts.slice(1).join(' ')
+      }
+
+      // Try to extract organization from email domain if not set
+      let organizationName = userMetadata?.organization_name
+      if (!organizationName && userMetadata?.email) {
+        const domain = userMetadata.email.split('@')[1]
+        if (
+          domain &&
+          domain !== 'gmail.com' &&
+          domain !== 'outlook.com' &&
+          domain !== 'yahoo.com'
+        ) {
+          // Use domain as org name (e.g., bridgeland-advisors.com -> Bridgeland Advisors)
+          organizationName = domain
+            .replace('.com', '')
+            .replace('.org', '')
+            .replace('.net', '')
+            .split('-')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+        }
+      }
+
+      if (organizationName) {
         const mockOrg: Organization = {
-          id: userId, // Using user ID as org ID for now
-          name: userMetadata.organization_name || 'My Organization',
-          slug: userMetadata.organization_name?.toLowerCase().replace(/\s+/g, '-'),
+          id: userId,
+          name: organizationName,
+          slug: organizationName.toLowerCase().replace(/\s+/g, '-'),
           role: 'owner',
           subscription_plan: 'starter',
         }

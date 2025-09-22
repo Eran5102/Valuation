@@ -316,8 +316,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       </div>
                       <div className="flex-1 text-left">
                         <div className="truncate font-medium">
-                          {user.user_metadata?.first_name || 'User'}{' '}
-                          {user.user_metadata?.last_name || ''}
+                          {(() => {
+                            const metadata = user.user_metadata
+                            if (metadata?.first_name) {
+                              return `${metadata.first_name} ${metadata.last_name || ''}`.trim()
+                            }
+                            if (metadata?.full_name) {
+                              return metadata.full_name
+                            }
+                            return 'User'
+                          })()}
                         </div>
                         <div className="truncate text-xs text-muted-foreground">{user.email}</div>
                       </div>
@@ -328,7 +336,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     <DropdownMenuLabel>
                       <div>
                         <p className="font-medium">
-                          {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+                          {(() => {
+                            const metadata = user.user_metadata
+                            if (metadata?.first_name) {
+                              return `${metadata.first_name} ${metadata.last_name || ''}`.trim()
+                            }
+                            if (metadata?.full_name) {
+                              return metadata.full_name
+                            }
+                            return 'User'
+                          })()}
                         </p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
