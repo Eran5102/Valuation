@@ -93,11 +93,12 @@ export default function SignUpPage() {
       const supabase = createClient()
 
       // Sign up the user
+      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${redirectUrl}/auth/callback`,
           data: {
             first_name: formData.firstName,
             last_name: formData.lastName,
