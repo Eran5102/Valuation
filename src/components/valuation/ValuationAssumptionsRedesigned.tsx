@@ -977,9 +977,14 @@ export function ValuationAssumptionsRedesigned({
                                   categoryId={currentCategory.id}
                                   onChange={handleAssumptionChange}
                                   onGetAssumptionValue={(id) => {
-                                    const cat = categories.find((c) => c.id === currentCategory.id)
-                                    const assumption = cat?.assumptions.find((a) => a.id === id)
-                                    return assumption?.value || ''
+                                    // Search across all categories, not just the current one
+                                    for (const cat of categories) {
+                                      const assumption = cat.assumptions.find((a) => a.id === id)
+                                      if (assumption && assumption.value !== undefined) {
+                                        return assumption.value
+                                      }
+                                    }
+                                    return ''
                                   }}
                                 />
                               )}
@@ -1047,9 +1052,14 @@ export function ValuationAssumptionsRedesigned({
                           categoryId={currentCategory.id}
                           onChange={handleAssumptionChange}
                           onGetAssumptionValue={(id) => {
-                            const cat = categories.find((c) => c.id === currentCategory.id)
-                            const assumption = cat?.assumptions.find((a) => a.id === id)
-                            return assumption?.value || ''
+                            // Search across all categories, not just the current one
+                            for (const cat of categories) {
+                              const assumption = cat.assumptions.find((a) => a.id === id)
+                              if (assumption && assumption.value !== undefined) {
+                                return assumption.value
+                              }
+                            }
+                            return ''
                           }}
                         />
                       )}

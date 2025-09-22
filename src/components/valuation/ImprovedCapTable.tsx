@@ -46,10 +46,15 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
   const [options, setOptions] = useState<OptionsWarrants[]>([])
   const [editingRows, setEditingRows] = useState<Set<string>>(new Set())
   const [hasChanges, setHasChanges] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load cap table data
   useEffect(() => {
     const loadCapTableData = async () => {
+      setIsLoading(true)
       try {
         const response = await fetch(`/api/valuations/${valuationId}/cap-table`)
         if (response.ok) {
@@ -60,6 +65,9 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
         }
       } catch (error) {
         console.error('Error loading cap table data:', error)
+        setSaveError('Failed to load cap table data')
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -68,7 +76,10 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
   // Save cap table data
   const saveCapTable = useCallback(async () => {
-    if (!hasChanges) return
+    if (!hasChanges || isSaving) return
+
+    setIsSaving(true)
+    setSaveError(null)
 
     try {
       const response = await fetch(`/api/valuations/${valuationId}/cap-table`, {
@@ -80,11 +91,39 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       if (response.ok) {
         setHasChanges(false)
         onSave?.({ shareClasses, options })
+      } else {
+        const error = await response.json()
+        setSaveError(error.message || 'Failed to save cap table')
       }
     } catch (error) {
       console.error('Error saving cap table:', error)
+      setSaveError('Network error: Failed to save cap table')
+    } finally {
+      setIsSaving(false)
     }
-  }, [valuationId, shareClasses, options, hasChanges, onSave])
+  }, [valuationId, shareClasses, options, hasChanges, onSave, isSaving])
+
+  // Auto-save with debouncing
+  useEffect(() => {
+    if (!hasChanges) return
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Set new timeout for auto-save (2 seconds)
+    saveTimeoutRef.current = setTimeout(() => {
+      saveCapTable()
+    }, 2000)
+
+    // Cleanup
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [hasChanges, saveCapTable])
 
   // Update share class on blur (when user leaves the field)
   const updateShareClass = useCallback(
@@ -96,6 +135,28 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
           alert('Only one common share class is allowed')
           return
         }
+      }
+
+      // Additional validation for numeric fields
+      if (field === 'sharesOutstanding' && value < 0) {
+        alert('Shares outstanding cannot be negative')
+        return
+      }
+      if (field === 'pricePerShare' && value < 0) {
+        alert('Price per share cannot be negative')
+        return
+      }
+      if (field === 'lpMultiple' && value <= 0) {
+        alert('Liquidation preference multiple must be greater than 0')
+        return
+      }
+      if (field === 'conversionRatio' && value <= 0) {
+        alert('Conversion ratio must be greater than 0')
+        return
+      }
+      if (field === 'dividendsRate' && (value < 0 || value > 100)) {
+        alert('Dividend rate must be between 0 and 100')
+        return
       }
 
       setHasChanges(true)
@@ -140,24 +201,29 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
   }
 
   // Add new share class
-  const addShareClass = () => {
+  const addShareClass = useCallback(() => {
+    // Prevent adding while loading
+    if (isLoading) return
+
     const commonClassExists = shareClasses.some((sc) => sc.shareType === 'common')
-    const isFirstClass = shareClasses.length === 0
+    const preferredCount = shareClasses.filter((sc) => sc.shareType === 'preferred').length
+
+    // Generate unique ID with timestamp and random component to prevent collisions
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     const newShareClass: ShareClass = {
-      id: Date.now().toString(),
+      id: uniqueId,
       companyId: 1,
-      shareType: isFirstClass || !commonClassExists ? 'common' : 'preferred',
-      name:
-        isFirstClass || !commonClassExists
-          ? 'Common Stock'
-          : `Preferred Series ${String.fromCharCode(65 + shareClasses.filter((sc) => sc.shareType === 'preferred').length)}`,
+      shareType: !commonClassExists ? 'common' : 'preferred',
+      name: !commonClassExists
+        ? 'Common Stock'
+        : `Preferred Series ${String.fromCharCode(65 + preferredCount)}`,
       roundDate: new Date().toISOString().split('T')[0],
       sharesOutstanding: 0,
       pricePerShare: 0,
       preferenceType: 'non-participating',
       lpMultiple: 1.0,
-      seniority: shareClasses.filter((sc) => sc.shareType === 'preferred').length + 1,
+      seniority: preferredCount + 1,
       participationCap: null,
       conversionRatio: 1.0,
       dividendsDeclared: false,
@@ -166,52 +232,71 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       pik: false,
     }
 
-    setHasChanges(true)
     const enhancedShareClasses = enhanceShareClassesWithCalculations([
       ...shareClasses,
       newShareClass,
     ])
     setShareClasses(enhancedShareClasses)
-  }
+    setHasChanges(true)
+  }, [shareClasses, isLoading])
 
   // Delete share class
-  const deleteShareClass = (id: string) => {
-    setHasChanges(true)
-    setShareClasses((prev) => prev.filter((sc) => sc.id !== id))
+  const deleteShareClass = useCallback((id: string) => {
+    setShareClasses((prev) => {
+      const filtered = prev.filter((sc) => sc.id !== id)
+      return enhanceShareClassesWithCalculations(filtered)
+    })
     setEditingRows((prev) => {
       const newSet = new Set(prev)
       newSet.delete(id)
       return newSet
     })
-  }
+    setHasChanges(true)
+  }, [])
 
   // Options/Warrants Management Functions
-  const addOption = () => {
+  const addOption = useCallback(() => {
+    // Prevent adding while loading
+    if (isLoading) return
+
+    // Generate unique ID with timestamp and random component
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
     const newOption: OptionsWarrants = {
-      id: Date.now().toString(),
+      id: uniqueId,
       numOptions: 0,
       exercisePrice: 0,
       type: 'Options',
     }
 
+    setOptions((prev) => [...prev, newOption])
     setHasChanges(true)
-    setOptions([...options, newOption])
-  }
+  }, [isLoading])
 
   const updateOption = useCallback((id: string, field: keyof OptionsWarrants, value: any) => {
+    // Validation for numeric fields
+    if (field === 'numOptions' && value < 0) {
+      alert('Number of options cannot be negative')
+      return
+    }
+    if (field === 'exercisePrice' && value < 0) {
+      alert('Exercise price cannot be negative')
+      return
+    }
+
     setHasChanges(true)
     setOptions((prev) => prev.map((opt) => (opt.id === id ? { ...opt, [field]: value } : opt)))
   }, [])
 
-  const deleteOption = (id: string) => {
-    setHasChanges(true)
+  const deleteOption = useCallback((id: string) => {
     setOptions((prev) => prev.filter((opt) => opt.id !== id))
     setEditingRows((prev) => {
       const newSet = new Set(prev)
       newSet.delete(id)
       return newSet
     })
-  }
+    setHasChanges(true)
+  }, [])
 
   // Options/Warrants Table Columns
   const optionsColumns: ColumnDef<OptionsWarrants>[] = [

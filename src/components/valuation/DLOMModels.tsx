@@ -33,24 +33,26 @@ interface ModelData {
 }
 
 const DLOMModels: React.FC<DLOMModelsProps> = ({ assumptions }) => {
-  // Pull values from assumptions if available - handles both array and flat object formats
+  // Pull values from assumptions if available - handles array format (current structure)
   const getAssumptionValue = (categoryId: string, assumptionId: string, defaultValue: number) => {
     if (!assumptions) return defaultValue
 
-    // Handle flat object format (expected)
-    if (assumptions[categoryId] && assumptions[categoryId][assumptionId] !== undefined) {
-      return parseFloat(assumptions[categoryId][assumptionId]) || defaultValue
-    }
-
-    // Handle array format (fallback for current data)
+    // Handle array format (current data structure)
     if (Array.isArray(assumptions)) {
-      const category = assumptions.find((cat: any) => cat.id === categoryId)
-      if (category && category.assumptions) {
-        const assumption = category.assumptions.find((ass: any) => ass.id === assumptionId)
-        if (assumption && assumption.value) {
-          return parseFloat(assumption.value) || defaultValue
+      // Search through all categories for the assumption
+      for (const category of assumptions) {
+        if (category.assumptions && Array.isArray(category.assumptions)) {
+          const assumption = category.assumptions.find((ass: any) => ass.id === assumptionId)
+          if (assumption && assumption.value !== undefined && assumption.value !== '') {
+            return parseFloat(assumption.value) || defaultValue
+          }
         }
       }
+    }
+
+    // Handle flat object format (legacy)
+    if (assumptions[categoryId] && assumptions[categoryId][assumptionId] !== undefined) {
+      return parseFloat(assumptions[categoryId][assumptionId]) || defaultValue
     }
 
     return defaultValue
@@ -59,19 +61,23 @@ const DLOMModels: React.FC<DLOMModelsProps> = ({ assumptions }) => {
   const [inputs, setInputs] = useState<DLOMInputs>({
     stockPrice: 100,
     strikePrice: 100,
-    volatility: getAssumptionValue('volatility_assumptions', 'equity_volatility', 30), // Already in percentage
-    riskFreeRate: getAssumptionValue('discount_rates', 'risk_free_rate', 4.5), // Already in percentage
-    timeToExpiration: getAssumptionValue('volatility_assumptions', 'time_to_liquidity', 2.0),
+    volatility: getAssumptionValue('volatility_assumptions', 'equity_volatility', 60), // Already in percentage, default 60%
+    riskFreeRate: getAssumptionValue('discount_rates', 'risk_free_rate', 4.5), // Already in percentage, default 4.5%
+    timeToExpiration: getAssumptionValue('volatility_assumptions', 'time_to_liquidity', 3.0), // Default 3 years
     dividendYield: 0, // Now stored as percentage
   })
 
   // Update inputs when assumptions change
   useEffect(() => {
+    const volatility = getAssumptionValue('volatility_assumptions', 'equity_volatility', 60)
+    const riskFreeRate = getAssumptionValue('discount_rates', 'risk_free_rate', 4.5)
+    const timeToExpiration = getAssumptionValue('volatility_assumptions', 'time_to_liquidity', 3.0)
+
     setInputs((prev) => ({
       ...prev,
-      volatility: getAssumptionValue('volatility_assumptions', 'equity_volatility', 30), // Already in percentage
-      riskFreeRate: getAssumptionValue('discount_rates', 'risk_free_rate', 4.5), // Already in percentage
-      timeToExpiration: getAssumptionValue('volatility_assumptions', 'time_to_liquidity', 2.0),
+      volatility: volatility,
+      riskFreeRate: riskFreeRate,
+      timeToExpiration: timeToExpiration,
     }))
   }, [assumptions])
 

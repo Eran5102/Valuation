@@ -42,6 +42,7 @@ const ValuationAssumptions = lazy(() =>
   }))
 )
 const ImprovedCapTable = lazy(() => import('@/components/valuation/ImprovedCapTable'))
+const OPMBacksolve = lazy(() => import('@/components/valuation/OPMBacksolve'))
 const DLOMModels = lazy(() => import('@/components/valuation/DLOMModels'))
 const BreakpointsAnalysis = lazy(() => import('@/components/valuation/BreakpointsAnalysis'))
 const ComprehensiveWaterfall = lazy(() => import('@/components/valuation/ComprehensiveWaterfall'))
@@ -508,6 +509,13 @@ export default function ValuationDetail() {
             Cap Table
           </TabButton>
           <TabButton
+            active={activeTab === 'opm'}
+            onClick={() => setActiveTab('opm')}
+            icon={Calculator}
+          >
+            OPM Backsolve
+          </TabButton>
+          <TabButton
             active={activeTab === 'financial'}
             onClick={() => setActiveTab('financial')}
             icon={DollarSign}
@@ -615,6 +623,15 @@ export default function ValuationDetail() {
           {activeTab === 'captable' && (
             <Suspense fallback={<LoadingCard label="Loading cap table..." />}>
               <ImprovedCapTable valuationId={id!} onSave={handleCapTableSave} />
+            </Suspense>
+          )}
+
+          {activeTab === 'opm' && (
+            <Suspense fallback={<LoadingCard label="Loading OPM Backsolve..." />}>
+              <OPMBacksolve
+                valuationId={id!}
+                assumptions={(project as any)?.assumptions || assumptionCategories}
+              />
             </Suspense>
           )}
 
