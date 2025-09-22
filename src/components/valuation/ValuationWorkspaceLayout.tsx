@@ -205,7 +205,8 @@ export default function ValuationWorkspaceLayout({
   const pathname = usePathname()
   const router = useRouter()
 
-  const navigation = valuationNavigation[valuationData.type] || valuationNavigation['409a']
+  const navigation =
+    valuationNavigation[valuationData.type || '409a'] || valuationNavigation['409a']
   const currentSection = pathname.split(`/valuations/${valuationId}/`)[1] || 'overview'
 
   const toggleSubmenu = (itemName: string) => {
@@ -261,7 +262,7 @@ export default function ValuationWorkspaceLayout({
               <div>
                 <h2 className="text-lg font-semibold">{valuationData.company_name}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {valuationData.type.replace('_', ' ').toUpperCase()} Valuation
+                  {(valuationData.type || '409a').replace('_', ' ').toUpperCase()} Valuation
                 </p>
               </div>
 

@@ -29,12 +29,13 @@ export default function ValuationLayout({ children }: { children: React.ReactNod
             }
           }
 
-          // Normalize data structure
+          // Normalize data structure - ensure type is always set
+          const normalizedType = data.valuation_type || data.type || '409a'
           setValuationData({
             id: valuationId,
             company_name: data.company_name || data.client_name || 'Unknown Company',
             valuation_date: data.valuation_date || data.valuationDate || new Date().toISOString(),
-            type: data.valuation_type || data.type || '409a',
+            type: normalizedType,
             status: data.status || 'draft',
             fair_market_value: data.fair_market_value,
             selected_methodologies: data.selected_methodologies || {},
@@ -42,6 +43,16 @@ export default function ValuationLayout({ children }: { children: React.ReactNod
         }
       } catch (error) {
         console.error('Error fetching valuation:', error)
+        // Set default data if fetch fails
+        setValuationData({
+          id: valuationId,
+          company_name: 'Loading...',
+          valuation_date: new Date().toISOString(),
+          type: '409a',
+          status: 'draft',
+          fair_market_value: undefined,
+          selected_methodologies: {},
+        })
       } finally {
         setLoading(false)
       }
