@@ -20,10 +20,23 @@ import {
   Activity,
   PanelLeft,
   PanelLeftClose,
+  User,
+  Building2,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/contexts/AuthContext'
+import { Badge } from '@/components/ui/badge'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -61,6 +74,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Reports'])
   const pathname = usePathname()
+  const { user, organization, organizations, signOut, switchOrganization } = useAuth()
 
   const toggleSubmenu = (itemName: string) => {
     setExpandedMenus((prev) =>
@@ -92,9 +106,38 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   <TrendingUp className="h-6 w-6 text-primary-foreground" />
                 </div>
                 {!isSidebarCollapsed && (
-                  <div>
-                    <h2 className="text-lg font-semibold">Bridgeland Advisors</h2>
-                    <p className="text-xs text-muted-foreground">409A Platform</p>
+                  <div className="flex-1">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="w-full rounded-md px-1 py-1 text-left transition-colors hover:bg-accent">
+                          <h2 className="truncate text-sm font-semibold">
+                            {organization?.name || 'My Organization'}
+                          </h2>
+                          <p className="text-xs text-muted-foreground">409A Platform</p>
+                        </button>
+                      </DropdownMenuTrigger>
+                      {organizations.length > 1 && (
+                        <DropdownMenuContent align="start" className="w-56">
+                          <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          {organizations.map((org) => (
+                            <DropdownMenuItem
+                              key={org.id}
+                              onClick={() => switchOrganization(org.id)}
+                              className="cursor-pointer"
+                            >
+                              <Building2 className="mr-2 h-4 w-4" />
+                              <span className="flex-1">{org.name}</span>
+                              {org.id === organization?.id && (
+                                <Badge variant="secondary" className="ml-2">
+                                  Current
+                                </Badge>
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      )}
+                    </DropdownMenu>
                   </div>
                 )}
               </div>
@@ -262,29 +305,76 @@ export default function AppLayout({ children }: AppLayoutProps) {
               })}
             </nav>
 
-            {/* Sidebar Footer */}
+            {/* Sidebar Footer - User Menu */}
             <div className="border-t p-4">
-              {!isSidebarCollapsed && (
-                <div className="mb-3 text-xs text-muted-foreground">
-                  Professional 409A Valuations
-                </div>
+              {!isSidebarCollapsed && user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="truncate font-medium">
+                          {user.user_metadata?.first_name || 'User'}{' '}
+                          {user.user_metadata?.last_name || ''}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div>
+                        <p className="font-medium">
+                          {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/profile" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        Profile Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/organization" className="cursor-pointer">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        Organization Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/billing" className="cursor-pointer">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Billing & Plan
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={signOut}
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
-              {isSidebarCollapsed ? (
+              {isSidebarCollapsed && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button className="flex w-full items-center justify-center rounded-lg p-3 text-sm font-medium transition-colors hover:bg-destructive/10 hover:text-destructive">
+                    <button
+                      onClick={signOut}
+                      className="flex w-full items-center justify-center rounded-lg p-3 text-sm font-medium transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
                       <LogOut className="h-5 w-5" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="right">Sign Out</TooltipContent>
                 </Tooltip>
-              ) : (
-                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-destructive/10 hover:text-destructive">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                    <LogOut className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <span>Sign Out</span>
-                </button>
               )}
             </div>
           </div>

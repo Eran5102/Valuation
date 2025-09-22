@@ -9,6 +9,7 @@ import {
   MapPin,
   Mail,
   TrendingUp,
+  User,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -28,6 +29,9 @@ import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-gri
 import { PageHeader } from '@/components/ui/page-header'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
 import { StatusSelector } from '@/components/ui/status-selector'
+import { AssignmentSelector } from '@/components/assignment/AssignmentSelector'
+import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Client {
   id: number
@@ -42,13 +46,17 @@ interface Client {
   lastActivity?: string
   status: 'active' | 'inactive' | 'prospect'
   createdAt: string
+  assignedTo?: string | null
+  teamMembers?: string[]
 }
 
 export default function ClientsPage() {
+  const { user } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery] = useState('')
   const [statusFilter] = useState<'all' | 'active' | 'inactive' | 'prospect'>('all')
+  const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('my')
 
   useEffect(() => {
     fetchClients()
@@ -77,6 +85,8 @@ export default function ClientsPage() {
           lastActivity: company.updated_at || company.created_at,
           status: company.status || 'active',
           createdAt: company.created_at || new Date().toISOString(),
+          assignedTo: company.assigned_to || null,
+          teamMembers: company.team_members || [],
         }))
 
         setClients(transformedClients)
@@ -159,7 +169,16 @@ export default function ClientsPage() {
       client.industry?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.contactPerson?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || client.status === statusFilter
-    return matchesSearch && matchesStatus
+
+    // Filter by assignment
+    let matchesAssignment = true
+    if (viewMode === 'my') {
+      matchesAssignment = client.assignedTo === user?.id
+    } else if (viewMode === 'team') {
+      matchesAssignment = client.teamMembers?.includes(user?.id || '') || false
+    }
+
+    return matchesSearch && matchesStatus && matchesAssignment
   })
 
   const deleteClient = useCallback(
@@ -327,6 +346,39 @@ export default function ClientsPage() {
         },
       },
       {
+        id: 'assignment',
+        header: 'Assignment',
+        accessorKey: 'assignedTo',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const client = row.original
+          return (
+            <AssignmentSelector
+              assignedTo={client.assignedTo}
+              teamMembers={client.teamMembers || []}
+              onAssignmentChange={async (assignedTo, teamMembers) => {
+                // Update client assignment
+                try {
+                  const response = await fetch(`/api/companies/${client.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assigned_to: assignedTo, team_members: teamMembers }),
+                  })
+                  if (response.ok) {
+                    setClients((prev) =>
+                      prev.map((c) => (c.id === client.id ? { ...c, assignedTo, teamMembers } : c))
+                    )
+                  }
+                } catch (error) {
+                  console.error('Failed to update assignment:', error)
+                }
+              }}
+              entityType="client"
+            />
+          )
+        },
+      },
+      {
         id: 'projects',
         header: 'Projects',
         accessorKey: 'valuationCount',
@@ -401,7 +453,33 @@ export default function ClientsPage() {
             icon: Plus,
             text: 'Add Client',
           }}
-        />
+        >
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={viewMode === 'all' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setViewMode('all')}
+            >
+              All Clients
+            </Badge>
+            <Badge
+              variant={viewMode === 'my' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setViewMode('my')}
+            >
+              <User className="mr-1 h-3 w-3" />
+              My Clients
+            </Badge>
+            <Badge
+              variant={viewMode === 'team' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setViewMode('team')}
+            >
+              <UsersIcon className="mr-1 h-3 w-3" />
+              Team Clients
+            </Badge>
+          </div>
+        </PageHeader>
 
         {/* Summary Cards */}
         <SummaryCardsGrid cards={summaryCards} />

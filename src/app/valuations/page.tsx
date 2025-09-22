@@ -12,6 +12,8 @@ import {
   Eye,
   Edit,
   Trash2,
+  User,
+  Users as UsersIcon,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -32,6 +34,8 @@ import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'
 import { PageHeader } from '@/components/ui/page-header'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
+import { AssignmentSelector } from '@/components/assignment/AssignmentSelector'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Valuation {
   id: string | number
@@ -45,13 +49,17 @@ interface Valuation {
   title?: string
   purpose?: string
   methodology?: string
+  assignedAppraiser?: string | null
+  teamMembers?: string[]
 }
 
 export default function ValuationsPage() {
+  const { user } = useAuth()
   const [valuations, setValuations] = useState<Valuation[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm] = useState('')
   const [statusFilter] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('my')
 
   useEffect(() => {
     fetchValuations()
@@ -78,12 +86,22 @@ export default function ValuationsPage() {
           valuationType: val.valuation_type || val.project_type || '409A',
           status: val.status || 'draft',
           value: val.value || val.equity_value || val.enterprise_value || 0,
-          createdDate: val.valuation_date ? new Date(val.valuation_date).toISOString().split('T')[0] : val.created_at ? new Date(val.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          completedDate: val.completed_at ? new Date(val.completed_at).toISOString().split('T')[0] : undefined,
-          nextReview: val.next_review ? new Date(val.next_review).toISOString().split('T')[0] : undefined,
+          createdDate: val.valuation_date
+            ? new Date(val.valuation_date).toISOString().split('T')[0]
+            : val.created_at
+              ? new Date(val.created_at).toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0],
+          completedDate: val.completed_at
+            ? new Date(val.completed_at).toISOString().split('T')[0]
+            : undefined,
+          nextReview: val.next_review
+            ? new Date(val.next_review).toISOString().split('T')[0]
+            : undefined,
           title: val.title,
           purpose: val.purpose,
           methodology: val.methodology,
+          assignedAppraiser: val.assigned_appraiser || null,
+          teamMembers: val.team_members || [],
         }))
 
         setValuations(transformedValuations)
@@ -105,7 +123,16 @@ export default function ValuationsPage() {
       valuation.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       valuation.valuationType.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || valuation.status === statusFilter
-    return matchesSearch && matchesStatus
+
+    // Filter by assignment
+    let matchesAssignment = true
+    if (viewMode === 'my') {
+      matchesAssignment = valuation.assignedAppraiser === user?.id
+    } else if (viewMode === 'team') {
+      matchesAssignment = valuation.teamMembers?.includes(user?.id || '') || false
+    }
+
+    return matchesSearch && matchesStatus && matchesAssignment
   })
 
   const getStatusIcon = (status: string) => {
@@ -234,6 +261,46 @@ export default function ValuationsPage() {
         },
       },
       {
+        id: 'assignment',
+        header: 'Assigned To',
+        accessorKey: 'assignedAppraiser',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const valuation = row.original
+          return (
+            <AssignmentSelector
+              assignedTo={valuation.assignedAppraiser}
+              teamMembers={valuation.teamMembers || []}
+              onAssignmentChange={async (assignedTo, teamMembers) => {
+                // Update valuation assignment
+                try {
+                  const response = await fetch(`/api/valuations/${valuation.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      assigned_appraiser: assignedTo,
+                      team_members: teamMembers,
+                    }),
+                  })
+                  if (response.ok) {
+                    setValuations((prev) =>
+                      prev.map((v) =>
+                        v.id === valuation.id
+                          ? { ...v, assignedAppraiser: assignedTo, teamMembers }
+                          : v
+                      )
+                    )
+                  }
+                } catch (error) {
+                  console.error('Failed to update assignment:', error)
+                }
+              }}
+              entityType="valuation"
+            />
+          )
+        },
+      },
+      {
         id: 'nextReview',
         header: 'Next Review',
         accessorKey: 'nextReview',
@@ -291,7 +358,33 @@ export default function ValuationsPage() {
             icon: Plus,
             text: 'New Valuation',
           }}
-        />
+        >
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={viewMode === 'all' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setViewMode('all')}
+            >
+              All Valuations
+            </Badge>
+            <Badge
+              variant={viewMode === 'my' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setViewMode('my')}
+            >
+              <User className="mr-1 h-3 w-3" />
+              My Valuations
+            </Badge>
+            <Badge
+              variant={viewMode === 'team' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setViewMode('team')}
+            >
+              <UsersIcon className="mr-1 h-3 w-3" />
+              Team Valuations
+            </Badge>
+          </div>
+        </PageHeader>
 
         {/* Summary Cards */}
         <SummaryCardsGrid cards={summaryCards} />
