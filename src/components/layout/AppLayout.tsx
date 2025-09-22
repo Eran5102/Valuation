@@ -72,7 +72,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['Reports'])
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const pathname = usePathname()
   const { user, organization, organizations, signOut, switchOrganization } = useAuth()
 
