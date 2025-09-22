@@ -72,7 +72,11 @@ export function ValuationWorkspaceProvider({ children }: { children: React.React
         throw new Error('Failed to fetch valuation')
       }
       const data = await response.json()
-      setValuation(data)
+      // Ensure type field is set, default to '409a'
+      setValuation({
+        ...data,
+        type: data.type || data.valuation_type || '409a',
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {

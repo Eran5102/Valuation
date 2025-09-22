@@ -75,7 +75,8 @@ export default function ValuationOverviewPage() {
       <div>
         <h1 className="text-2xl font-bold">Valuation Overview</h1>
         <p className="mt-1 text-muted-foreground">
-          Track progress and manage your {valuation.type.replace('_', ' ').toUpperCase()} valuation
+          Track progress and manage your{' '}
+          {(valuation.type || '409a').replace('_', ' ').toUpperCase()} valuation
         </p>
       </div>
 
@@ -161,11 +162,11 @@ export default function ValuationOverviewPage() {
             <div className="flex items-baseline gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <span className="text-2xl font-bold">
-                {valuation.type.replace('_', ' ').toUpperCase()}
+                {(valuation.type || '409a').replace('_', ' ').toUpperCase()}
               </span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {valuation.type === '409a' ? 'IRC 409A Compliance' : 'Special Purpose'}
+              {(valuation.type || '409a') === '409a' ? 'IRC 409A Compliance' : 'Special Purpose'}
             </p>
           </CardContent>
         </Card>
