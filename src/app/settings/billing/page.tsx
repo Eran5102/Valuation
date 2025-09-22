@@ -1,4 +1,5 @@
 'use client'
+// Billing and subscription management page
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
