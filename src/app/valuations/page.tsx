@@ -118,6 +118,19 @@ export default function ValuationsPage() {
     }
   }
 
+  const deleteValuation = async (valuationId: string | number) => {
+    if (confirm('Are you sure you want to delete this valuation?')) {
+      try {
+        await fetch(`/api/valuations/${valuationId}`, {
+          method: 'DELETE',
+        })
+        fetchValuations() // Refresh the list
+      } catch (error) {
+        console.error('Failed to delete valuation:', error)
+      }
+    }
+  }
+
   const filteredValuations = valuations.filter((valuation) => {
     const matchesSearch =
       valuation.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -325,9 +338,7 @@ export default function ValuationsPage() {
               itemId={valuation.id}
               viewHref={`/valuations/${valuation.id}`}
               showEdit={false}
-              onDelete={() => {
-                /* TODO: Implement delete functionality */
-              }}
+              onDelete={() => deleteValuation(valuation.id)}
             />
           )
         },

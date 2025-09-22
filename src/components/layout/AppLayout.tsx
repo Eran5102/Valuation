@@ -23,6 +23,7 @@ import {
   User,
   Building2,
   CreditCard,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePermissions } from '@/contexts/PermissionsContext'
 import { Badge } from '@/components/ui/badge'
 
 const navigation = [
@@ -75,6 +77,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const pathname = usePathname()
   const { user, organization, organizations, signOut, switchOrganization } = useAuth()
+  const { isSuperAdmin, role } = usePermissions()
 
   const toggleSubmenu = (itemName: string) => {
     setExpandedMenus((prev) =>
@@ -145,6 +148,42 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
             {/* Navigation Items */}
             <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+              {/* Admin Link for Super Admins */}
+              {isSuperAdmin && (
+                <Link
+                  href="/admin"
+                  className={cn(
+                    'mb-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    pathname === '/admin'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'hover:bg-accent hover:text-accent-foreground',
+                    isSidebarCollapsed && 'justify-center px-0 py-3'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                      pathname === '/admin' ? 'bg-white/10' : 'bg-purple-100'
+                    )}
+                  >
+                    <Shield
+                      className={cn(
+                        'h-5 w-5',
+                        pathname === '/admin' ? 'text-white' : 'text-purple-600'
+                      )}
+                    />
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <div className="flex items-center gap-2">
+                      <span>Admin Panel</span>
+                      <Badge variant="secondary" className="px-1.5 py-0 text-xs">
+                        Super
+                      </Badge>
+                    </div>
+                  )}
+                </Link>
+              )}
+
               {navigation.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
@@ -357,6 +396,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
                         Profile Settings
                       </Link>
                     </DropdownMenuItem>
+                    {(role === 'org_owner' || role === 'org_admin') && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/settings/team" className="cursor-pointer">
+                          <Users className="mr-2 h-4 w-4" />
+                          Team Management
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link href="/settings/organization" className="cursor-pointer">
                         <Building2 className="mr-2 h-4 w-4" />

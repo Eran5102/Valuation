@@ -74,104 +74,166 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // In a real app, this would fetch user-specific data from Supabase
-      // Debug: Log what we're getting
-      console.log('User metadata:', user?.user_metadata)
-
       // Handle both first_name and full_name formats
       let extractedFirstName = user?.user_metadata?.first_name
       if (!extractedFirstName && user?.user_metadata?.full_name) {
         extractedFirstName = user.user_metadata.full_name.split(' ')[0]
       }
       extractedFirstName = extractedFirstName || 'there'
-
-      console.log('Extracted first name:', extractedFirstName)
       setFirstName(extractedFirstName)
 
-      const orgName = organization?.name || 'Organization'
+      // Fetch real data from APIs
+      const [valuationsRes, companiesRes, reportsRes] = await Promise.all([
+        fetch('/api/valuations').catch(() => ({ ok: false })),
+        fetch('/api/companies').catch(() => ({ ok: false })),
+        fetch('/api/reports').catch(() => ({ ok: false })),
+      ])
 
-      const mockStats: DashboardStats = {
-        myActiveValuations: 8,
-        myClients: 12,
-        myPendingReports: 5,
-        teamValuations: 24,
-        totalClients: 36,
-        completedThisMonth: 7,
-        recentActivity: [
-          {
-            id: 1,
-            type: 'valuation',
-            title: 'Series A 409A Valuation',
-            client: 'TechStart Inc.',
-            timestamp: '2 hours ago',
-            status: 'completed',
-            user: extractedFirstName,
-          },
-          {
-            id: 2,
-            type: 'assignment',
-            title: 'New Valuation Assigned',
-            client: 'InnovateCorp',
-            timestamp: '4 hours ago',
-            status: 'in_progress',
-            user: 'System',
-          },
-          {
-            id: 3,
-            type: 'report',
-            title: 'Quarterly Report Generated',
-            client: 'StartupXYZ',
-            timestamp: '1 day ago',
-            status: 'completed',
-            user: extractedFirstName,
-          },
-          {
-            id: 4,
-            type: 'client',
-            title: 'Client Information Updated',
-            client: 'TechStart Inc.',
-            timestamp: '2 days ago',
-            status: 'completed',
-            user: extractedFirstName,
-          },
-        ],
-        upcomingDeadlines: [
-          {
-            id: 1,
-            title: 'Quarterly 409A Update',
-            client: 'TechStart Inc.',
-            dueDate: '2024-01-15',
-            priority: 'high',
-            type: 'valuation',
-            assignedTo: firstName,
-          },
-          {
-            id: 2,
-            title: 'Board Report Submission',
-            client: 'InnovateCorp',
-            dueDate: '2024-01-20',
-            priority: 'medium',
-            type: 'report',
-            assignedTo: firstName,
-          },
-          {
-            id: 3,
-            title: 'Annual Compliance Report',
-            client: 'StartupXYZ',
-            dueDate: '2024-01-25',
-            priority: 'low',
-            type: 'report',
-            assignedTo: 'Team',
-          },
-        ],
-      }
+      const valuations = valuationsRes.ok ? (await valuationsRes.json()).data || [] : []
+      const companies = companiesRes.ok ? (await companiesRes.json()).data || [] : []
+      const reports = reportsRes.ok ? (await reportsRes.json()).data || [] : []
 
-      setStats(mockStats)
+      // Calculate real stats based on actual data
+      const myActiveValuations = valuations.filter(
+        (v: any) => v.assigned_appraiser === user?.id && v.status === 'in_progress'
+      ).length
+
+      const myClients = companies.filter((c: any) => c.assigned_to === user?.id).length
+
+      const myPendingReports = reports.filter(
+        (r: any) => r.assigned_to === user?.id && r.status === 'pending'
+      ).length
+
+      const teamValuations = valuations.filter((v: any) =>
+        v.team_members?.includes(user?.id)
+      ).length
+
+      const totalClients = companies.length
+
+      // Count valuations completed this month
+      const now = new Date()
+      const completedThisMonth = valuations.filter((v: any) => {
+        if (v.status !== 'completed' || !v.completed_at) return false
+        const completedDate = new Date(v.completed_at)
+        return (
+          completedDate.getMonth() === now.getMonth() &&
+          completedDate.getFullYear() === now.getFullYear()
+        )
+      }).length
+
+      // Create recent activity from real data
+      const recentActivity: ActivityItem[] = []
+
+      // Add recent valuations
+      valuations
+        .sort(
+          (a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        )
+        .slice(0, 2)
+        .forEach((v: any, index: number) => {
+          const company = companies.find((c: any) => c.id === v.company_id)
+          recentActivity.push({
+            id: index + 1,
+            type: 'valuation',
+            title: v.title || `${v.valuation_type || '409A'} Valuation`,
+            client: company?.name || 'Unknown Client',
+            timestamp: getRelativeTime(v.updated_at),
+            status: v.status || 'draft',
+            user: v.assigned_appraiser === user?.id ? extractedFirstName : 'Team',
+          })
+        })
+
+      // Add recent reports if any
+      reports
+        .sort(
+          (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        .slice(0, 2)
+        .forEach((r: any, index: number) => {
+          recentActivity.push({
+            id: recentActivity.length + index + 1,
+            type: 'report',
+            title: r.title || 'Report',
+            client: r.client_name || 'Unknown Client',
+            timestamp: getRelativeTime(r.created_at),
+            status: r.status || 'draft',
+            user: r.assigned_to === user?.id ? extractedFirstName : 'Team',
+          })
+        })
+
+      // Create upcoming deadlines from valuations with next_review dates
+      const upcomingDeadlines: DeadlineItem[] = valuations
+        .filter((v: any) => v.next_review)
+        .map((v: any, index: number) => {
+          const company = companies.find((c: any) => c.id === v.company_id)
+          return {
+            id: index + 1,
+            title: v.title || 'Valuation Review',
+            client: company?.name || 'Unknown Client',
+            dueDate: new Date(v.next_review).toISOString().split('T')[0],
+            priority: getDuePriority(v.next_review),
+            type: 'valuation' as const,
+            assignedTo: v.assigned_appraiser === user?.id ? extractedFirstName : 'Team',
+          }
+        })
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+        .slice(0, 3)
+
+      setStats({
+        myActiveValuations,
+        myClients,
+        myPendingReports,
+        teamValuations,
+        totalClients,
+        completedThisMonth,
+        recentActivity,
+        upcomingDeadlines,
+      })
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
+      // Set empty stats on error
+      setStats({
+        myActiveValuations: 0,
+        myClients: 0,
+        myPendingReports: 0,
+        teamValuations: 0,
+        totalClients: 0,
+        completedThisMonth: 0,
+        recentActivity: [],
+        upcomingDeadlines: [],
+      })
     } finally {
       setLoading(false)
     }
+  }
+
+  // Helper function to get relative time
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (hours < 1) return 'Just now'
+    if (hours === 1) return '1 hour ago'
+    if (hours < 24) return `${hours} hours ago`
+    if (days === 1) return '1 day ago'
+    if (days < 7) return `${days} days ago`
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`
+    return date.toLocaleDateString()
+  }
+
+  // Helper function to determine priority based on due date
+  const getDuePriority = (dueDate: string): 'high' | 'medium' | 'low' => {
+    const date = new Date(dueDate)
+    const now = new Date()
+    const diff = date.getTime() - now.getTime()
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (days < 7) return 'high'
+    if (days < 30) return 'medium'
+    return 'low'
   }
 
   const getActivityIcon = (type: string) => {
@@ -225,8 +287,6 @@ export default function Dashboard() {
     )
   }
 
-  const firstName = user?.user_metadata?.first_name || 'there'
-
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
@@ -237,11 +297,6 @@ export default function Dashboard() {
             <p className="mt-1 text-muted-foreground">
               {organization?.name} • Here's your valuation activity overview
             </p>
-            {/* Debug info - shows what metadata we have */}
-            <div className="mt-2 rounded bg-muted/50 p-2 text-xs">
-              <p>Debug - User metadata:</p>
-              <pre>{JSON.stringify(user?.user_metadata, null, 2)}</pre>
-            </div>
           </div>
           <div className="flex space-x-2">
             <Link

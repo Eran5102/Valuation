@@ -70,63 +70,6 @@ export default function ClientsPage() {
         // The API returns { data: [], pagination: {} }, so we need to access result.data
         const companies = result.data || []
 
-        // If no companies from database, use mock data to demonstrate features
-        if (companies.length === 0) {
-          console.log('No companies from API, using mock data')
-          const mockClients: Client[] = [
-            {
-              id: 1,
-              name: 'TechStart Inc.',
-              industry: 'Technology',
-              location: 'San Francisco, CA',
-              email: 'contact@techstart.com',
-              phone: '+1 (555) 123-4567',
-              contactPerson: 'John Smith',
-              valuationCount: 3,
-              reportCount: 2,
-              lastActivity: '2024-01-15',
-              status: 'active',
-              createdAt: '2024-01-01T00:00:00.000Z',
-              assignedTo: null,
-              teamMembers: [],
-            },
-            {
-              id: 2,
-              name: 'InnovateCorp',
-              industry: 'Healthcare',
-              location: 'Boston, MA',
-              email: 'info@innovatecorp.com',
-              phone: '+1 (555) 987-6543',
-              contactPerson: 'Sarah Johnson',
-              valuationCount: 2,
-              reportCount: 1,
-              lastActivity: '2024-01-12',
-              status: 'active',
-              createdAt: '2024-01-01T00:00:00.000Z',
-              assignedTo: null,
-              teamMembers: [],
-            },
-            {
-              id: 3,
-              name: 'StartupXYZ',
-              industry: 'FinTech',
-              location: 'New York, NY',
-              email: 'hello@startupxyz.com',
-              phone: '+1 (555) 456-7890',
-              contactPerson: 'Mike Wilson',
-              valuationCount: 1,
-              reportCount: 1,
-              lastActivity: '2024-01-10',
-              status: 'prospect',
-              createdAt: '2024-01-01T00:00:00.000Z',
-              assignedTo: null,
-              teamMembers: [],
-            },
-          ]
-          setClients(mockClients)
-          return
-        }
-
         // Transform the data to use actual database values
         const transformedClients: Client[] = companies.map((company: any) => ({
           id: company.id,
@@ -148,73 +91,13 @@ export default function ClientsPage() {
 
         setClients(transformedClients)
       } else {
-        // Fallback to mock data if API is not available
-        const mockClients: Client[] = [
-          {
-            id: 1,
-            name: 'TechStart Inc.',
-            industry: 'Technology',
-            location: 'San Francisco, CA',
-            email: 'contact@techstart.com',
-            phone: '+1 (555) 123-4567',
-            contactPerson: 'John Smith',
-            valuationCount: 3,
-            reportCount: 2,
-            lastActivity: '2024-01-15',
-            status: 'active',
-            createdAt: '2024-01-01T00:00:00.000Z',
-          },
-          {
-            id: 2,
-            name: 'InnovateCorp',
-            industry: 'Healthcare',
-            location: 'Boston, MA',
-            email: 'info@innovatecorp.com',
-            phone: '+1 (555) 987-6543',
-            contactPerson: 'Sarah Johnson',
-            valuationCount: 2,
-            reportCount: 1,
-            lastActivity: '2024-01-12',
-            status: 'active',
-            createdAt: '2024-01-01T00:00:00.000Z',
-          },
-          {
-            id: 3,
-            name: 'StartupXYZ',
-            industry: 'FinTech',
-            location: 'New York, NY',
-            email: 'hello@startupxyz.com',
-            phone: '+1 (555) 456-7890',
-            contactPerson: 'Mike Wilson',
-            valuationCount: 1,
-            reportCount: 1,
-            lastActivity: '2024-01-10',
-            status: 'prospect',
-            createdAt: '2024-01-01T00:00:00.000Z',
-          },
-        ]
-        setClients(mockClients)
+        // API not available - set empty array
+        setClients([])
       }
     } catch (error) {
-      // Error handled by displaying mock data
-      // Set mock data on error
-      const mockClients: Client[] = [
-        {
-          id: 1,
-          name: 'TechStart Inc.',
-          industry: 'Technology',
-          location: 'San Francisco, CA',
-          email: 'contact@techstart.com',
-          phone: '+1 (555) 123-4567',
-          contactPerson: 'John Smith',
-          valuationCount: 3,
-          reportCount: 2,
-          lastActivity: '2024-01-15',
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00.000Z',
-        },
-      ]
-      setClients(mockClients)
+      console.error('Error fetching clients:', error)
+      // Set empty array on error
+      setClients([])
     } finally {
       setLoading(false)
     }
