@@ -53,6 +53,7 @@ interface DeadlineItem {
 
 export default function Dashboard() {
   const { user, organization, loading: authLoading } = useAuth()
+  const [firstName, setFirstName] = useState<string>('there')
   const [stats, setStats] = useState<DashboardStats>({
     myActiveValuations: 0,
     myClients: 0,
@@ -74,7 +75,14 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       // In a real app, this would fetch user-specific data from Supabase
-      const firstName = user?.user_metadata?.first_name || 'User'
+      // Handle both first_name and full_name formats
+      let extractedFirstName = user?.user_metadata?.first_name
+      if (!extractedFirstName && user?.user_metadata?.full_name) {
+        extractedFirstName = user.user_metadata.full_name.split(' ')[0]
+      }
+      extractedFirstName = extractedFirstName || 'there'
+      setFirstName(extractedFirstName)
+
       const orgName = organization?.name || 'Organization'
 
       const mockStats: DashboardStats = {
@@ -92,7 +100,7 @@ export default function Dashboard() {
             client: 'TechStart Inc.',
             timestamp: '2 hours ago',
             status: 'completed',
-            user: firstName,
+            user: extractedFirstName,
           },
           {
             id: 2,
@@ -110,7 +118,7 @@ export default function Dashboard() {
             client: 'StartupXYZ',
             timestamp: '1 day ago',
             status: 'completed',
-            user: firstName,
+            user: extractedFirstName,
           },
           {
             id: 4,
@@ -119,7 +127,7 @@ export default function Dashboard() {
             client: 'TechStart Inc.',
             timestamp: '2 days ago',
             status: 'completed',
-            user: firstName,
+            user: extractedFirstName,
           },
         ],
         upcomingDeadlines: [
