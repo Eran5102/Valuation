@@ -59,7 +59,7 @@ export default function ValuationsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm] = useState('')
   const [statusFilter] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('my')
+  const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('all')
 
   useEffect(() => {
     fetchValuations()

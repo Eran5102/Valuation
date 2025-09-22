@@ -56,7 +56,7 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery] = useState('')
   const [statusFilter] = useState<'all' | 'active' | 'inactive' | 'prospect'>('all')
-  const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('my')
+  const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('all')
 
   useEffect(() => {
     fetchClients()
