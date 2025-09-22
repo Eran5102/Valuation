@@ -20,8 +20,30 @@ export const GET = async (request: NextRequest) => {
 
   const supabase = await createClient()
 
-  // Build query
+  // Get current user and their organization
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let organizationId = null
+  if (user) {
+    const { data: membership } = await supabase
+      .from('organization_members')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .single()
+
+    organizationId = membership?.organization_id
+  }
+
+  // Build query - filter by organization if user has one
   let query = supabase.from('companies').select('*', { count: 'exact' })
+
+  // Only show companies from user's organization
+  if (organizationId) {
+    query = query.eq('organization_id', organizationId)
+  }
 
   // Apply filters
   if (companyId) {
@@ -138,11 +160,30 @@ export const POST = async (request: NextRequest) => {
       )
     }
 
-    // Create the company with all available fields
+    // Get current user and organization
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // Get user's organization
+    let organizationId = null
+    if (user) {
+      const { data: membership } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single()
+
+      organizationId = membership?.organization_id
+    }
+
+    // Create the company with all available fields and organization
     const { data: company, error: createError } = await supabase
       .from('companies')
       .insert({
         ...companyData,
+        organization_id: organizationId,
         created_at: new Date().toISOString(),
       })
       .select()
