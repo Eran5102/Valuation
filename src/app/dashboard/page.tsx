@@ -75,12 +75,17 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       // In a real app, this would fetch user-specific data from Supabase
+      // Debug: Log what we're getting
+      console.log('User metadata:', user?.user_metadata)
+
       // Handle both first_name and full_name formats
       let extractedFirstName = user?.user_metadata?.first_name
       if (!extractedFirstName && user?.user_metadata?.full_name) {
         extractedFirstName = user.user_metadata.full_name.split(' ')[0]
       }
       extractedFirstName = extractedFirstName || 'there'
+
+      console.log('Extracted first name:', extractedFirstName)
       setFirstName(extractedFirstName)
 
       const orgName = organization?.name || 'Organization'
@@ -232,6 +237,11 @@ export default function Dashboard() {
             <p className="mt-1 text-muted-foreground">
               {organization?.name} • Here's your valuation activity overview
             </p>
+            {/* Debug info - shows what metadata we have */}
+            <div className="mt-2 rounded bg-muted/50 p-2 text-xs">
+              <p>Debug - User metadata:</p>
+              <pre>{JSON.stringify(user?.user_metadata, null, 2)}</pre>
+            </div>
           </div>
           <div className="flex space-x-2">
             <Link
