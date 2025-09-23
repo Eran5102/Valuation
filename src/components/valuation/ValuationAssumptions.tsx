@@ -14,6 +14,8 @@ import {
   Share2,
   CreditCard,
   Briefcase,
+  Menu,
+  X,
 } from 'lucide-react'
 import { FinancialAssumption } from '@/types'
 import { AssumptionCategory as AssumptionCategoryComponent } from './AssumptionCategory'
@@ -508,6 +510,7 @@ export default function ValuationAssumptions({
   ])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMethodologies, setSelectedMethodologies] = useState<ValuationMethodology[]>([])
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const { updateMethodologies } = useValuationWorkspace()
 
   // Update categories when initialCategories change
@@ -648,92 +651,205 @@ export default function ValuationAssumptions({
 
   const stats = getCompletionStats()
 
+  // Scroll to category
+  const scrollToCategory = (categoryId: string) => {
+    const element = document.getElementById(`category-${categoryId}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      // Also expand the category
+      if (!expandedCategories.includes(categoryId)) {
+        setExpandedCategories((prev) => [...prev, categoryId])
+      }
+    }
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header with Statistics */}
-      <div className="rounded-lg border border-border bg-card p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">Valuation Assumptions</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Configure all assumptions and inputs for your 409A valuation
-            </p>
-          </div>
-          <button
-            onClick={toggleAllCategories}
-            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            {expandedCategories.length === categories.length ? 'Collapse All' : 'Expand All'}
-          </button>
-        </div>
+    <div className="relative flex gap-6">
+      {/* Mobile Sidebar Toggle */}
+      <button
+        onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        className="fixed bottom-4 right-4 z-50 rounded-full bg-primary p-3 text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 lg:hidden"
+      >
+        {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
 
-        {/* Progress Bar */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Overall Progress</span>
-            <span className="font-medium">
-              {stats.completed} / {stats.total} fields completed
-            </span>
-          </div>
-          <div className="h-2 w-full rounded-full bg-gray-200">
-            <div
-              className="h-2 rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${(stats.completed / stats.total) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mt-4">
-          <input
-            type="text"
-            placeholder="Search assumptions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-md border border-border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-      </div>
-
-      {/* Summary Section */}
-      <AssumptionsSummary categories={categories} />
-
-      {/* Methodology Selector - Replaces the old weighting section */}
-      <ValuationMethodologySelector
-        selectedMethodologies={selectedMethodologies}
-        onMethodologiesChange={(methodologies) => {
-          setSelectedMethodologies(methodologies)
-          updateMethodologies(methodologies)
-        }}
-        onUpdateSidebar={() => {
-          // This will trigger sidebar update via context
-          updateMethodologies(selectedMethodologies)
-        }}
-      />
-
-      {/* Categories */}
-      <div className="space-y-4">
-        {filteredCategories
-          .filter((cat) => cat.id !== 'valuation_methodology')
-          .map((category) => (
-            <AssumptionCategoryComponent
-              key={category.id}
-              category={category}
-              isExpanded={expandedCategories.includes(category.id)}
-              onToggle={() => toggleCategory(category.id)}
-              onAssumptionChange={handleAssumptionChange}
-              onAssumptionBlur={handleAssumptionBlur}
-              onGetAssumptionValue={getAssumptionValue}
-              searchQuery={searchQuery}
-            />
-          ))}
-      </div>
-
-      {filteredCategories.length === 0 && searchQuery && (
-        <div className="py-8 text-center text-muted-foreground">
-          No assumptions found matching "{searchQuery}"
-        </div>
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
       )}
+
+      {/* Left Sidebar Navigation */}
+      <div
+        className={`${isMobileSidebarOpen ? 'fixed left-0 top-0 z-50 h-full overflow-y-auto border-r bg-background' : 'hidden'} w-64 shrink-0 lg:block`}
+      >
+        <div className="sticky top-4 max-h-screen space-y-4 overflow-y-auto p-4 lg:p-0">
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h3 className="mb-3 font-semibold">Quick Navigation</h3>
+            <nav className="space-y-1">
+              {categories
+                .filter((cat) => cat.id !== 'valuation_methodology')
+                .map((category) => {
+                  const categoryStats = category.assumptions.reduce(
+                    (acc, assumption) => ({
+                      total: acc.total + 1,
+                      completed: acc.completed + (assumption.value ? 1 : 0),
+                    }),
+                    { total: 0, completed: 0 }
+                  )
+                  const Icon = category.icon
+
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        scrollToCategory(category.id)
+                        setIsMobileSidebarOpen(false)
+                      }}
+                      className="group w-full rounded-md px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
+                        <span className="text-sm font-medium">{category.name}</span>
+                      </div>
+                      <div className="ml-6 mt-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full bg-primary transition-all duration-300"
+                              style={{
+                                width: `${
+                                  categoryStats.total > 0
+                                    ? (categoryStats.completed / categoryStats.total) * 100
+                                    : 0
+                                }%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {categoryStats.completed}/{categoryStats.total}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+            </nav>
+          </div>
+
+          {/* Overall Progress Card */}
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h4 className="mb-2 font-semibold">Overall Progress</h4>
+            <div className="space-y-3">
+              <div>
+                <div className="mb-1 flex justify-between text-sm">
+                  <span className="text-muted-foreground">Completed</span>
+                  <span className="font-medium">
+                    {Math.round((stats.completed / stats.total) * 100)}%
+                  </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-muted">
+                  <div
+                    className="h-2 rounded-full bg-primary transition-all duration-300"
+                    style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total Fields:</span>
+                  <span className="font-medium">{stats.total}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Completed:</span>
+                  <span className="font-medium text-green-600">{stats.completed}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Remaining:</span>
+                  <span className="font-medium text-orange-600">
+                    {stats.total - stats.completed}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 space-y-6">
+        {/* Header with Statistics */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Valuation Assumptions</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Configure all assumptions and inputs for your 409A valuation
+              </p>
+            </div>
+            <button
+              onClick={toggleAllCategories}
+              className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {expandedCategories.length === categories.length ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="mt-4">
+            <input
+              type="text"
+              placeholder="Search assumptions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-md border border-border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
+
+        {/* Summary Section */}
+        <AssumptionsSummary categories={categories} />
+
+        {/* Methodology Selector - Replaces the old weighting section */}
+        <ValuationMethodologySelector
+          selectedMethodologies={selectedMethodologies}
+          onMethodologiesChange={(methodologies) => {
+            setSelectedMethodologies(methodologies)
+            updateMethodologies(methodologies)
+          }}
+          onUpdateSidebar={() => {
+            // This will trigger sidebar update via context
+            updateMethodologies(selectedMethodologies)
+          }}
+        />
+
+        {/* Categories */}
+        <div className="space-y-4">
+          {filteredCategories
+            .filter((cat) => cat.id !== 'valuation_methodology')
+            .map((category) => (
+              <div key={category.id} id={`category-${category.id}`} className="scroll-mt-6">
+                <AssumptionCategoryComponent
+                  category={category}
+                  isExpanded={expandedCategories.includes(category.id)}
+                  onToggle={() => toggleCategory(category.id)}
+                  onAssumptionChange={handleAssumptionChange}
+                  onAssumptionBlur={handleAssumptionBlur}
+                  onGetAssumptionValue={getAssumptionValue}
+                  searchQuery={searchQuery}
+                />
+              </div>
+            ))}
+        </div>
+
+        {filteredCategories.length === 0 && searchQuery && (
+          <div className="py-8 text-center text-muted-foreground">
+            No assumptions found matching "{searchQuery}"
+          </div>
+        )}
+      </div>
     </div>
   )
 }
