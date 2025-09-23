@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
 
 interface ValuationWorkspaceLayoutProps {
   children: React.ReactNode
@@ -231,9 +232,125 @@ export default function ValuationWorkspaceLayout({
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const { valuation } = useValuationWorkspace()
 
-  const navigation =
-    valuationNavigation[valuationData.type || '409a'] || valuationNavigation['409a']
+  // Build dynamic navigation based on selected methodologies
+  const navigation = useMemo(() => {
+    const baseNav = valuationNavigation[valuationData.type || '409a'] || valuationNavigation['409a']
+
+    // If it's not a 409a valuation, return the base navigation
+    if (valuationData.type !== '409a' && valuationData.type) {
+      return baseNav
+    }
+
+    // Get selected methodologies from context
+    const selectedMethodologies = valuation?.methodologies?.selectedMethodologies || []
+
+    // If no methodologies are selected yet, show all base navigation
+    if (!selectedMethodologies.length) {
+      return baseNav
+    }
+
+    // Build dynamic navigation
+    const dynamicNav = []
+
+    // Always include these core items
+    dynamicNav.push(
+      baseNav.find((item) => item.name === 'Overview'),
+      baseNav.find((item) => item.name === 'Assumptions'),
+      baseNav.find((item) => item.name === 'Cap Table'),
+      baseNav.find((item) => item.name === 'Company Information')
+    )
+
+    // Add enabled methodologies
+    const enabledMethodologies = selectedMethodologies.filter((m) => m.enabled)
+
+    // Group methodologies by category
+    const hasIncome = enabledMethodologies.some((m) => m.category === 'income')
+    const hasMarket = enabledMethodologies.some((m) => m.category === 'market')
+    const hasAsset = enabledMethodologies.some((m) => m.category === 'asset')
+
+    // Add Enterprise Valuation with dynamic submenu
+    if (hasIncome || hasMarket || hasAsset) {
+      const enterpriseSubmenu = []
+
+      // Add methodology-specific pages
+      enabledMethodologies.forEach((method) => {
+        if (method.category === 'income' && method.route) {
+          enterpriseSubmenu.push({
+            name: method.name,
+            href: `enterprise/${method.route}`,
+            icon: TrendingUp,
+          })
+        } else if (method.category === 'market' && method.route) {
+          enterpriseSubmenu.push({
+            name: method.name,
+            href: `enterprise/${method.route}`,
+            icon: BarChart3,
+          })
+        } else if (method.category === 'asset' && method.route) {
+          enterpriseSubmenu.push({
+            name: method.name,
+            href: `enterprise/${method.route}`,
+            icon: FileSpreadsheet,
+          })
+        }
+      })
+
+      // Add category summaries if there are multiple methods in a category
+      if (hasMarket && enabledMethodologies.filter((m) => m.category === 'market').length > 1) {
+        enterpriseSubmenu.unshift({
+          name: 'Market Approach Summary',
+          href: 'enterprise/market',
+          icon: BarChart3,
+        })
+      }
+      if (hasIncome && enabledMethodologies.filter((m) => m.category === 'income').length > 1) {
+        enterpriseSubmenu.unshift({
+          name: 'Income Approach Summary',
+          href: 'enterprise/income',
+          icon: DollarSign,
+        })
+      }
+      if (hasAsset && enabledMethodologies.filter((m) => m.category === 'asset').length > 1) {
+        enterpriseSubmenu.unshift({
+          name: 'Asset Approach Summary',
+          href: 'enterprise/asset',
+          icon: FileSpreadsheet,
+        })
+      }
+
+      dynamicNav.push({
+        name: 'Enterprise Valuation',
+        href: 'enterprise',
+        icon: TrendingUp,
+        description: 'Selected valuation methodologies',
+        submenu: enterpriseSubmenu,
+      })
+    }
+
+    // Add allocation methods (always show for 409a)
+    dynamicNav.push(
+      baseNav.find((item) => item.name === 'OPM Backsolve'),
+      baseNav.find((item) => item.name === 'Breakpoints (PWERM)')
+    )
+
+    // Add Equity Allocation section
+    dynamicNav.push(baseNav.find((item) => item.name === 'Equity Allocation'))
+
+    // Add Discounts section
+    dynamicNav.push(baseNav.find((item) => item.name === 'Discounts'))
+
+    // Always include Report and Settings
+    dynamicNav.push(
+      baseNav.find((item) => item.name === 'Report'),
+      baseNav.find((item) => item.name === 'Settings')
+    )
+
+    // Filter out any undefined items
+    return dynamicNav.filter(Boolean)
+  }, [valuationData.type, valuation?.methodologies?.selectedMethodologies])
+
   const currentSection = pathname.split(`/valuations/${valuationId}/`)[1] || 'overview'
 
   const toggleSubmenu = (itemName: string) => {

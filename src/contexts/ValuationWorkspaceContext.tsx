@@ -3,6 +3,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 
+export interface ValuationMethodology {
+  id: string
+  name: string
+  category: 'income' | 'market' | 'asset' | 'allocation'
+  enabled: boolean
+  weight: number
+  implemented: boolean
+  route?: string
+  description: string
+}
+
 export interface ValuationMethodologies {
   enterprise: {
     market: boolean
@@ -17,6 +28,8 @@ export interface ValuationMethodologies {
     dlom: boolean
     minority: boolean
   }
+  // New: Selected methodologies with weights
+  selectedMethodologies?: ValuationMethodology[]
 }
 
 export interface ValuationData {
@@ -40,7 +53,9 @@ interface ValuationWorkspaceContextType {
   loading: boolean
   error: string | null
   refreshValuation: () => Promise<void>
-  updateMethodologies: (methodologies: Partial<ValuationMethodologies>) => Promise<void>
+  updateMethodologies: (
+    methodologies: ValuationMethodology[] | Partial<ValuationMethodologies>
+  ) => Promise<void>
   updateAssumptions: (assumptions: Record<string, any>) => Promise<void>
   updateStatus: (status: ValuationData['status']) => Promise<void>
   calculateFairMarketValue: () => Promise<void>
@@ -84,13 +99,27 @@ export function ValuationWorkspaceProvider({ children }: { children: React.React
     }
   }
 
-  const updateMethodologies = async (methodologies: Partial<ValuationMethodologies>) => {
+  const updateMethodologies = async (
+    methodologies: ValuationMethodology[] | Partial<ValuationMethodologies>
+  ) => {
     if (!valuation) return
 
     try {
-      const updatedMethodologies = {
-        ...valuation.methodologies,
-        ...methodologies,
+      let updatedMethodologies: ValuationMethodologies
+
+      // Check if it's an array of methodologies or partial object
+      if (Array.isArray(methodologies)) {
+        // It's the new methodology selector format
+        updatedMethodologies = {
+          ...valuation.methodologies,
+          selectedMethodologies: methodologies,
+        }
+      } else {
+        // It's the old partial update format
+        updatedMethodologies = {
+          ...valuation.methodologies,
+          ...methodologies,
+        }
       }
 
       const response = await fetch(`/api/valuations/${valuationId}`, {

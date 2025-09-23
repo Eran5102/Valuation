@@ -18,6 +18,8 @@ import {
 import { FinancialAssumption } from '@/types'
 import { AssumptionCategory as AssumptionCategoryComponent } from './AssumptionCategory'
 import { AssumptionsSummary } from './AssumptionsSummary'
+import { ValuationMethodologySelector, ValuationMethodology } from './ValuationMethodologySelector'
+import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
 
 export interface AssumptionCategory {
   id: string
@@ -92,7 +94,7 @@ const defaultAssumptionCategories: AssumptionCategory[] = [
         name: 'Stage Description',
         value: '',
         type: 'textarea',
-        description: 'Describe the company\'s current position within the selected stage',
+        description: "Describe the company's current position within the selected stage",
       },
       { id: 'company_employees', name: 'Number of Employees', value: '', type: 'number' },
       { id: 'years_in_operation', name: 'Years in Operation', value: '', type: 'number' },
@@ -505,6 +507,8 @@ export default function ValuationAssumptions({
     'financial_metrics',
   ])
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedMethodologies, setSelectedMethodologies] = useState<ValuationMethodology[]>([])
+  const { updateMethodologies } = useValuationWorkspace()
 
   // Update categories when initialCategories change
   useEffect(() => {
@@ -515,45 +519,52 @@ export default function ValuationAssumptions({
     }
   }, [initialCategories])
 
-  const handleAssumptionChange = useCallback((
-    categoryId: string,
-    assumptionId: string,
-    value: string | number
-  ) => {
-    const updatedCategories = categories.map((cat) => {
-      if (cat.id === categoryId) {
-        let updatedAssumptions = cat.assumptions.map((assumption) =>
-          assumption.id === assumptionId ? { ...assumption, value } : assumption
-        )
+  const handleAssumptionChange = useCallback(
+    (categoryId: string, assumptionId: string, value: string | number) => {
+      const updatedCategories = categories.map((cat) => {
+        if (cat.id === categoryId) {
+          let updatedAssumptions = cat.assumptions.map((assumption) =>
+            assumption.id === assumptionId ? { ...assumption, value } : assumption
+          )
 
-        // Auto-populate stage description when stage is selected
-        if (assumptionId === 'stage' && value) {
-          const stageDescriptions: Record<string, string> = {
-            'Stage 1: Ideation': 'The Idea - Ideation and Initial Concept: No tangible product exists. Management team typically incomplete. Initial funding from founders, friends, and family. No product revenue and limited expense history. Valuation highly subjective; Backsolve Method most reliable if recent transaction occurred.',
-            'Stage 2: Product Development': 'The Plan - Formalization and Early Development: Product development actively underway, business challenges better understood. Management team being assembled. First or second round of financing (preferred stock) to fund development. No product revenue but substantive expense history. Backsolve Method remains primary valuation tool.',
-            'Stage 3: Development Progress': 'The Product - Nearing Completion: Key development milestones met, product nearing completion with alpha/beta testing. More complete management team in place. Continued financing through preferred stock. Generally no product revenue yet. Valuation approaches expanded to include DCF and market comparables.',
-            'Stage 4: Early Revenue': 'The Market - Initial Commercialization: Key milestones achieved (first customer orders/initial revenue). Management team largely in place, focused on commercialization. Mezzanine financing rounds for market expansion. Some product revenue but operating at a loss. More reliable financial forecasts enable lower DCF discount rates.',
-            'Stage 5: Revenue Generation': 'The Breakthrough - Achieving Financial Viability: Product established in market, focus on scaling and penetration. Management fully operational and growth-focused. Potential liquidity event (IPO or sale). Achieved operating profitability, break-even, or positive cash flows. Lower discount rate for DCF due to increased forecast reliability.',
-            'Stage 6: Established Operations': 'The Maturity - Established and Profitable: Well-established product/service in market. Stable, experienced management team. May remain private or pursue IPO. Established history of profitable operations and positive cash flows. Most reliable forecasts result in lowest discount rates for DCF analysis.',
+          // Auto-populate stage description when stage is selected
+          if (assumptionId === 'stage' && value) {
+            const stageDescriptions: Record<string, string> = {
+              'Stage 1: Ideation':
+                'The Idea - Ideation and Initial Concept: No tangible product exists. Management team typically incomplete. Initial funding from founders, friends, and family. No product revenue and limited expense history. Valuation highly subjective; Backsolve Method most reliable if recent transaction occurred.',
+              'Stage 2: Product Development':
+                'The Plan - Formalization and Early Development: Product development actively underway, business challenges better understood. Management team being assembled. First or second round of financing (preferred stock) to fund development. No product revenue but substantive expense history. Backsolve Method remains primary valuation tool.',
+              'Stage 3: Development Progress':
+                'The Product - Nearing Completion: Key development milestones met, product nearing completion with alpha/beta testing. More complete management team in place. Continued financing through preferred stock. Generally no product revenue yet. Valuation approaches expanded to include DCF and market comparables.',
+              'Stage 4: Early Revenue':
+                'The Market - Initial Commercialization: Key milestones achieved (first customer orders/initial revenue). Management team largely in place, focused on commercialization. Mezzanine financing rounds for market expansion. Some product revenue but operating at a loss. More reliable financial forecasts enable lower DCF discount rates.',
+              'Stage 5: Revenue Generation':
+                'The Breakthrough - Achieving Financial Viability: Product established in market, focus on scaling and penetration. Management fully operational and growth-focused. Potential liquidity event (IPO or sale). Achieved operating profitability, break-even, or positive cash flows. Lower discount rate for DCF due to increased forecast reliability.',
+              'Stage 6: Established Operations':
+                'The Maturity - Established and Profitable: Well-established product/service in market. Stable, experienced management team. May remain private or pursue IPO. Established history of profitable operations and positive cash flows. Most reliable forecasts result in lowest discount rates for DCF analysis.',
+            }
+
+            const description = stageDescriptions[value as string] || ''
+            updatedAssumptions = updatedAssumptions.map((assumption) =>
+              assumption.id === 'stage_description'
+                ? { ...assumption, value: description }
+                : assumption
+            )
           }
 
-          const description = stageDescriptions[value as string] || ''
-          updatedAssumptions = updatedAssumptions.map((assumption) =>
-            assumption.id === 'stage_description' ? { ...assumption, value: description } : assumption
-          )
+          return {
+            ...cat,
+            assumptions: updatedAssumptions,
+          }
         }
+        return cat
+      })
 
-        return {
-          ...cat,
-          assumptions: updatedAssumptions,
-        }
-      }
-      return cat
-    })
-
-    setCategories(updatedCategories)
-    // Don't save immediately - wait for blur event
-  }, [categories])
+      setCategories(updatedCategories)
+      // Don't save immediately - wait for blur event
+    },
+    [categories]
+  )
 
   const handleAssumptionBlur = useCallback(() => {
     // Save when user exits a field
@@ -575,7 +586,6 @@ export default function ValuationAssumptions({
     },
     [categories]
   )
-
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) =>
@@ -688,20 +698,35 @@ export default function ValuationAssumptions({
       {/* Summary Section */}
       <AssumptionsSummary categories={categories} />
 
+      {/* Methodology Selector - Replaces the old weighting section */}
+      <ValuationMethodologySelector
+        selectedMethodologies={selectedMethodologies}
+        onMethodologiesChange={(methodologies) => {
+          setSelectedMethodologies(methodologies)
+          updateMethodologies(methodologies)
+        }}
+        onUpdateSidebar={() => {
+          // This will trigger sidebar update via context
+          updateMethodologies(selectedMethodologies)
+        }}
+      />
+
       {/* Categories */}
       <div className="space-y-4">
-        {filteredCategories.map((category) => (
-          <AssumptionCategoryComponent
-            key={category.id}
-            category={category}
-            isExpanded={expandedCategories.includes(category.id)}
-            onToggle={() => toggleCategory(category.id)}
-            onAssumptionChange={handleAssumptionChange}
-            onAssumptionBlur={handleAssumptionBlur}
-            onGetAssumptionValue={getAssumptionValue}
-            searchQuery={searchQuery}
-          />
-        ))}
+        {filteredCategories
+          .filter((cat) => cat.id !== 'valuation_methodology')
+          .map((category) => (
+            <AssumptionCategoryComponent
+              key={category.id}
+              category={category}
+              isExpanded={expandedCategories.includes(category.id)}
+              onToggle={() => toggleCategory(category.id)}
+              onAssumptionChange={handleAssumptionChange}
+              onAssumptionBlur={handleAssumptionBlur}
+              onGetAssumptionValue={getAssumptionValue}
+              searchQuery={searchQuery}
+            />
+          ))}
       </div>
 
       {filteredCategories.length === 0 && searchQuery && (
