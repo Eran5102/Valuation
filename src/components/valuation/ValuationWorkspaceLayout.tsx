@@ -69,6 +69,24 @@ const valuationNavigation = {
       description: 'Manage share classes and options',
     },
     {
+      name: 'OPM Backsolve',
+      href: 'allocation/opm',
+      icon: Calculator,
+      description: 'Option Pricing Model allocation',
+    },
+    {
+      name: 'Breakpoints (PWERM)',
+      href: 'allocation/pwerm',
+      icon: GitBranch,
+      description: 'Probability-weighted scenarios',
+    },
+    {
+      name: 'DLOM Analysis',
+      href: 'discounts/dlom',
+      icon: Shield,
+      description: 'Discount for Lack of Marketability',
+    },
+    {
       name: 'Company Information',
       href: 'company',
       icon: Building2,
