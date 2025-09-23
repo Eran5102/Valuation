@@ -244,3 +244,5 @@ For issues, questions, or suggestions:
 ---
 
 Built with ❤️ for financial professionals
+
+# Force rebuild
