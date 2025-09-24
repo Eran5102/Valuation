@@ -15,9 +15,14 @@ import {
   Plus,
   User,
   Briefcase,
+  ArrowRight,
+  Sparkles,
+  FileSpreadsheet,
+  PlusCircle,
 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface DashboardStats {
@@ -52,7 +57,8 @@ interface DeadlineItem {
 }
 
 export default function Dashboard() {
-  const { user, organization, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { currentOrganization, loading: orgLoading } = useOrganization()
   console.log('Dashboard render - authLoading:', authLoading, 'user:', !!user)
   const [firstName, setFirstName] = useState<string>('there')
   const [stats, setStats] = useState<DashboardStats>({
@@ -68,7 +74,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && !orgLoading) {
       if (user) {
         fetchDashboardData()
       } else {
@@ -76,7 +82,7 @@ export default function Dashboard() {
         setLoading(false)
       }
     }
-  }, [user, organization, authLoading])
+  }, [user, currentOrganization, authLoading, orgLoading])
 
   const fetchDashboardData = async () => {
     console.log('Fetching dashboard data...')
@@ -326,24 +332,132 @@ export default function Dashboard() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Welcome back, {firstName}!</h1>
             <p className="mt-1 text-muted-foreground">
-              {organization?.name} • Here's your valuation activity overview
+              {currentOrganization?.name} • Here's what you can do today
             </p>
           </div>
-          <div className="flex space-x-2">
-            <Link
-              href="/clients/new"
-              className="inline-flex items-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Client
-            </Link>
-            <Link
-              href="/valuations/new"
-              className="inline-flex items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Calculator className="mr-2 h-4 w-4" />
-              New Valuation
-            </Link>
+          <div className="text-sm text-muted-foreground">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </div>
+        </div>
+
+        {/* PROMINENT Quick Actions - Moved to top */}
+        <div className="rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 shadow-lg">
+          <div className="border-b border-primary/20 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">Get Started</h3>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Choose an action below to begin your work
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {/* Add New Client */}
+              <Link
+                href="/clients/new"
+                className="group relative overflow-hidden rounded-lg border-2 border-transparent bg-card p-6 shadow-md transition-all hover:border-primary/30 hover:shadow-xl"
+              >
+                <div className="absolute right-2 top-2">
+                  <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="rounded-lg bg-primary/10 p-3 transition-colors group-hover:bg-primary/20">
+                    <PlusCircle className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-semibold text-foreground">Add New Client</h4>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Onboard a company for valuation services
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-primary">
+                      <span className="font-medium">Quick setup</span>
+                      <span className="text-muted-foreground">• 2 min</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Create Valuation */}
+              <Link
+                href="/valuations/new"
+                className="group relative overflow-hidden rounded-lg border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-xl"
+              >
+                <div className="absolute right-2 top-2">
+                  <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
+                </div>
+                <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10" />
+                <div className="relative flex items-start gap-4">
+                  <div className="rounded-lg bg-primary p-3 text-primary-foreground shadow-lg">
+                    <Calculator className="h-8 w-8" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-semibold text-foreground">Start Valuation</h4>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      409A, M&A, or LBO valuation models
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs">
+                      <span className="font-medium text-primary">Most used</span>
+                      <span className="text-muted-foreground">• Full workflow</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Generate Report */}
+              <Link
+                href="/reports/new"
+                className="group relative overflow-hidden rounded-lg border-2 border-transparent bg-card p-6 shadow-md transition-all hover:border-accent/30 hover:shadow-xl"
+              >
+                <div className="absolute right-2 top-2">
+                  <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="rounded-lg bg-accent/10 p-3 transition-colors group-hover:bg-accent/20">
+                    <FileSpreadsheet className="h-8 w-8 text-accent" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-semibold text-foreground">Generate Report</h4>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Export professional PDF reports
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-accent">
+                      <span className="font-medium">Automated</span>
+                      <span className="text-muted-foreground">• Ready to share</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            {/* Secondary actions */}
+            <div className="mt-4 flex items-center justify-center gap-4 border-t border-border pt-4">
+              <Link
+                href="/valuations"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Browse existing valuations →
+              </Link>
+              <span className="text-muted-foreground">|</span>
+              <Link
+                href="/clients"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                View all clients →
+              </Link>
+              <span className="text-muted-foreground">|</span>
+              <Link
+                href="/templates"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Use templates →
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -613,69 +727,6 @@ export default function Dashboard() {
                     )
                   })}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions - Personalized */}
-        <div className="rounded-lg border border-border bg-card shadow">
-          <div className="border-b border-border px-4 py-5 sm:px-6">
-            <h3 className="text-lg font-medium leading-6 text-card-foreground">Quick Actions</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Common tasks for your workflow</p>
-          </div>
-          <div className="px-4 py-5 sm:p-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Link
-                href="/clients/new"
-                className="relative flex items-center space-x-3 rounded-lg border border-border bg-card px-6 py-5 shadow-sm transition-all hover:border-accent/50 hover:shadow-md"
-              >
-                <div className="flex-shrink-0">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <Building2 className="h-6 w-6 text-primary" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-card-foreground">Add New Client</p>
-                  <p className="truncate text-sm text-muted-foreground">Onboard a new client</p>
-                </div>
-              </Link>
-
-              <Link
-                href="/valuations/new"
-                className="relative flex items-center space-x-3 rounded-lg border border-border bg-card px-6 py-5 shadow-sm transition-all hover:border-accent/50 hover:shadow-md"
-              >
-                <div className="flex-shrink-0">
-                  <div className="rounded-lg bg-accent/10 p-3">
-                    <Calculator className="h-6 w-6 text-accent" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-card-foreground">Create Valuation</p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    Start a new 409A valuation
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                href="/reports/new"
-                className="relative flex items-center space-x-3 rounded-lg border border-border bg-card px-6 py-5 shadow-sm transition-all hover:border-accent/50 hover:shadow-md"
-              >
-                <div className="flex-shrink-0">
-                  <div className="rounded-lg bg-chart-2/10 p-3">
-                    <FileText className="h-6 w-6 text-chart-2" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-card-foreground">Generate Report</p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    Create professional report
-                  </p>
-                </div>
-              </Link>
             </div>
           </div>
         </div>

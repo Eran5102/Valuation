@@ -96,7 +96,7 @@ export function SharedSidebar({
             fontSize,
             isActive || isSubmenuActive
               ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'hover:bg-accent hover:text-accent-foreground',
+              : 'text-gray-200 hover:bg-gray-700 hover:text-white',
             item.disabled && 'cursor-not-allowed opacity-50',
             isCollapsed && 'justify-center px-0 py-3',
             depth > 0 && 'ml-3'
@@ -108,15 +108,13 @@ export function SharedSidebar({
                 className={cn(
                   'flex items-center justify-center rounded-lg transition-colors',
                   iconContainerSize,
-                  isActive || isSubmenuActive ? 'bg-primary-foreground/10' : 'bg-muted'
+                  isActive || isSubmenuActive ? 'bg-primary-foreground/10' : 'bg-gray-700'
                 )}
               >
                 <Icon
                   className={cn(
                     iconSize,
-                    isActive || isSubmenuActive
-                      ? 'text-primary-foreground'
-                      : 'text-muted-foreground'
+                    isActive || isSubmenuActive ? 'text-primary-foreground' : 'text-gray-300'
                   )}
                 />
               </div>
@@ -159,7 +157,7 @@ export function SharedSidebar({
           )}
 
           {hasSubmenu && isExpanded && !isCollapsed && (
-            <div className="ml-3 mt-2 space-y-1 border-l-2 border-muted pl-3">
+            <div className="ml-3 mt-2 space-y-1 border-l-2 border-gray-600 pl-3">
               {item.submenu?.map((subItem) => renderNavItem(subItem, depth + 1))}
             </div>
           )}
@@ -174,14 +172,11 @@ export function SharedSidebar({
               className={cn(
                 'flex items-center justify-center rounded-lg transition-colors',
                 iconContainerSize,
-                isActive ? 'bg-primary-foreground/10' : 'bg-muted'
+                isActive ? 'bg-primary-foreground/10' : 'bg-gray-700'
               )}
             >
               <Icon
-                className={cn(
-                  iconSize,
-                  isActive ? 'text-primary-foreground' : 'text-muted-foreground'
-                )}
+                className={cn(iconSize, isActive ? 'text-primary-foreground' : 'text-gray-300')}
               />
             </div>
           )}
@@ -207,7 +202,7 @@ export function SharedSidebar({
         fontSize,
         isActive
           ? 'bg-primary text-primary-foreground shadow-sm'
-          : 'hover:bg-accent hover:text-accent-foreground',
+          : 'text-gray-200 hover:bg-gray-700 hover:text-white',
         item.disabled && 'cursor-not-allowed opacity-50',
         isCollapsed && 'justify-center px-0 py-3',
         depth > 0 &&
@@ -215,7 +210,7 @@ export function SharedSidebar({
             'ml-2',
             isActive
               ? 'bg-primary/10 font-medium text-primary'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              : 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
           )
       )
 
@@ -261,14 +256,15 @@ export function SharedSidebar({
         {/* Sidebar Container */}
         <div
           className={cn(
-            'flex flex-col border-r bg-sidebar shadow-sm transition-all duration-300',
+            'flex flex-col border-r shadow-sm transition-all duration-300',
             isCollapsed ? collapsedWidth : width,
             position === 'right' && 'border-l border-r-0',
             className
           )}
+          style={{ backgroundColor: '#2E3944' }}
         >
           {/* Header */}
-          {header && <div className="border-b p-4">{header}</div>}
+          {header && <div className="border-b border-gray-600 p-4 text-gray-100">{header}</div>}
 
           {/* Navigation Items */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-3">
@@ -276,7 +272,7 @@ export function SharedSidebar({
           </nav>
 
           {/* Footer */}
-          {footer && <div className="border-t p-4">{footer}</div>}
+          {footer && <div className="border-t border-gray-600 p-4 text-gray-100">{footer}</div>}
         </div>
 
         {/* Toggle Button - Outside the sidebar */}

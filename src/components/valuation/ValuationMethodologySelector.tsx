@@ -179,17 +179,52 @@ export function ValuationMethodologySelector({
           )}
 
           {/* Methodology Groups */}
-          <div className="space-y-4">
-            {methodologyGroups.map((group) => {
+          <div className="space-y-6">
+            {methodologyGroups.map((group, index) => {
               const GroupIcon = group.icon
               const groupMethodologies = methodologies.filter((m) => m.category === group.category)
 
+              // Skip allocation methods from visual separation
+              const showSeparation = group.category !== 'allocation'
+
               return (
-                <div key={group.category} className="space-y-3">
+                <div
+                  key={group.category}
+                  className={cn(
+                    'space-y-3',
+                    showSeparation && 'rounded-lg border p-4',
+                    group.category === 'asset' &&
+                      'border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20',
+                    group.category === 'market' &&
+                      'border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20',
+                    group.category === 'income' &&
+                      'border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20'
+                  )}
+                >
                   <div className="flex items-center gap-2">
-                    <GroupIcon className="h-4 w-4 text-muted-foreground" />
-                    <h4 className="text-sm font-medium">{group.name}</h4>
-                    <span className="text-xs text-muted-foreground">({group.description})</span>
+                    <div
+                      className={cn(
+                        'flex items-center justify-center rounded-lg p-2',
+                        group.category === 'asset' && 'bg-blue-100 dark:bg-blue-900/30',
+                        group.category === 'market' && 'bg-green-100 dark:bg-green-900/30',
+                        group.category === 'income' && 'bg-purple-100 dark:bg-purple-900/30',
+                        group.category === 'allocation' && 'bg-gray-100 dark:bg-gray-900/30'
+                      )}
+                    >
+                      <GroupIcon
+                        className={cn(
+                          'h-4 w-4',
+                          group.category === 'asset' && 'text-blue-600 dark:text-blue-400',
+                          group.category === 'market' && 'text-green-600 dark:text-green-400',
+                          group.category === 'income' && 'text-purple-600 dark:text-purple-400',
+                          group.category === 'allocation' && 'text-gray-600 dark:text-gray-400'
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold">{group.name}</h4>
+                      <span className="text-xs text-muted-foreground">{group.description}</span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">

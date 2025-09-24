@@ -4,6 +4,9 @@ import './globals.css'
 import QueryProvider from '@/providers/QueryProvider'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { PermissionsProvider } from '@/contexts/PermissionsContext'
+import { OrganizationProvider } from '@/contexts/OrganizationContext'
+import { ThemeProvider } from '@/providers/ThemeProvider'
+import { AppHeader } from '@/components/layout/AppHeader'
 import { Toaster } from 'sonner'
 
 const geistSans = Geist({
@@ -17,8 +20,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: '409A Valuation Platform',
-  description: 'Professional 409A valuation management for appraisers',
+  title: 'Value8 - Valuation Platform',
+  description: 'Complete platform for M&A, LBO, and company valuations with real-time market data',
 }
 
 export default function RootLayout({
@@ -27,14 +30,26 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <PermissionsProvider>
-            <QueryProvider>{children}</QueryProvider>
-          </PermissionsProvider>
-        </AuthProvider>
-        <Toaster position="top-right" richColors />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <PermissionsProvider>
+              <OrganizationProvider>
+                <QueryProvider>
+                  <AppHeader />
+                  {children}
+                </QueryProvider>
+              </OrganizationProvider>
+            </PermissionsProvider>
+          </AuthProvider>
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -21,7 +21,6 @@ import {
   PanelLeft,
   PanelLeftClose,
   User,
-  Building2,
   CreditCard,
   Shield,
 } from 'lucide-react'
@@ -32,8 +31,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/contexts/AuthContext'
@@ -77,7 +74,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const pathname = usePathname()
-  const { user, organization, organizations, signOut, switchOrganization } = useAuth()
+  const { user, signOut } = useAuth()
   const { isSuperAdmin, role } = usePermissions()
 
   const toggleSubmenu = (itemName: string) => {
@@ -137,37 +134,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </div>
         {!isSidebarCollapsed && (
           <div className="flex-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="w-full rounded-md px-1 py-1 text-left transition-colors hover:bg-accent">
-                  <h2 className="truncate text-sm font-semibold">
-                    {organization?.name || 'My Organization'}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">409A Platform</p>
-                </button>
-              </DropdownMenuTrigger>
-              {organizations.length > 1 && (
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {organizations.map((org) => (
-                    <DropdownMenuItem
-                      key={org.id}
-                      onClick={() => switchOrganization(org.id)}
-                      className="cursor-pointer"
-                    >
-                      <Building2 className="mr-2 h-4 w-4" />
-                      <span className="flex-1">{org.name}</span>
-                      {org.id === organization?.id && (
-                        <Badge variant="secondary" className="ml-2">
-                          Current
-                        </Badge>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              )}
-            </DropdownMenu>
+            <h2 className="text-sm font-bold">Value8</h2>
+            <p className="text-xs text-muted-foreground">Valuation Platform</p>
           </div>
         )}
       </div>

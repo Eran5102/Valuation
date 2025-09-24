@@ -218,12 +218,6 @@ export default function ValuationWorkspaceLayout({
     dynamicNav.push(
       baseNav.find((item) => item.name === 'Overview'),
       baseNav.find((item) => item.name === 'Assumptions'),
-      {
-        name: 'Core Assumptions',
-        href: 'assumptions/core',
-        icon: Settings,
-        description: 'Fundamental project settings and methodology selection',
-      },
       baseNav.find((item) => item.name === 'Cap Table')
     )
 
