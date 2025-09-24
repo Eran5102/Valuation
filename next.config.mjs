@@ -136,8 +136,7 @@ const nextConfig = {
     } : false,
   },
 
-  // Output configuration
-  output: 'standalone',
+  // Output configuration - removed standalone for Vercel deployment
 
   // Page extensions
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
