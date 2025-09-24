@@ -6,7 +6,8 @@
     "env": {
       "NEXT_TELEMETRY_DISABLED": "1",
       "NODE_ENV": "production",
-      "SKIP_ENV_VALIDATION": "true"
+      "SKIP_ENV_VALIDATION": "true",
+      "NEXT_EXPERIMENTAL_OPTIMIZE_CSS": "false"
     }
   },
   "functions": {
