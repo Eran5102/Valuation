@@ -1,6 +1,10 @@
 import { getDCFData } from './actions'
 import { DCFAnalysisClient } from './client'
 
+// Force dynamic rendering on Vercel
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface PageProps {
   params: Promise<{
     id: string

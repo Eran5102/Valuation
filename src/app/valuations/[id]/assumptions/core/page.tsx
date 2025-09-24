@@ -4,6 +4,10 @@ import { getCoreAssumptions, getValuationById } from './actions'
 import CoreAssumptionsClient from './client'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
+// Force dynamic rendering on Vercel
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface PageProps {
   params: Promise<{
     id: string
