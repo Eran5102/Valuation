@@ -20,8 +20,9 @@ import {
 import { FinancialAssumption } from '@/types'
 import { AssumptionCategory as AssumptionCategoryComponent } from './AssumptionCategory'
 import { AssumptionsSummary } from './AssumptionsSummary'
-import { ValuationMethodologySelector, ValuationMethodology } from './ValuationMethodologySelector'
-import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
+import { ValuationMethodologySelector } from './ValuationMethodologySelector'
+import { SharedSidebar, SidebarNavItem } from '@/components/ui/shared-sidebar'
+import { Badge } from '@/components/ui/badge'
 
 export interface AssumptionCategory {
   id: string
@@ -507,11 +508,10 @@ export default function ValuationAssumptions({
     'company',
     'valuation_details',
     'financial_metrics',
+    'methodology_selector',
   ])
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedMethodologies, setSelectedMethodologies] = useState<ValuationMethodology[]>([])
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const { updateMethodologies } = useValuationWorkspace()
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   // Update categories when initialCategories change
   useEffect(() => {
@@ -663,121 +663,37 @@ export default function ValuationAssumptions({
     }
   }
 
+  // Build sidebar navigation items
+  const sidebarItems: SidebarNavItem[] = categories
+    .filter((cat) => cat.id !== 'valuation_methodology')
+    .map((category) => {
+      const categoryStats = category.assumptions.reduce(
+        (acc, assumption) => ({
+          total: acc.total + 1,
+          completed: acc.completed + (assumption.value ? 1 : 0),
+        }),
+        { total: 0, completed: 0 }
+      )
+
+      const Icon = category.icon
+      return {
+        id: category.id,
+        name: category.name,
+        icon: Icon,
+        onClick: () => scrollToCategory(category.id),
+        badge: (
+          <Badge
+            variant={categoryStats.completed === categoryStats.total ? 'default' : 'secondary'}
+          >
+            {categoryStats.completed}/{categoryStats.total}
+          </Badge>
+        ),
+        tooltip: `${category.name} (${categoryStats.completed}/${categoryStats.total} completed)`,
+      }
+    })
+
   return (
     <div className="relative flex gap-6">
-      {/* Mobile Sidebar Toggle */}
-      <button
-        onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        className="fixed bottom-4 right-4 z-50 rounded-full bg-primary p-3 text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 lg:hidden"
-      >
-        {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
-
-      {/* Mobile Sidebar Overlay */}
-      {isMobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* Left Sidebar Navigation */}
-      <div
-        className={`${isMobileSidebarOpen ? 'fixed left-0 top-0 z-50 h-full overflow-y-auto border-r bg-background' : 'hidden'} w-64 shrink-0 lg:block`}
-      >
-        <div className="sticky top-4 max-h-screen space-y-4 overflow-y-auto p-4 lg:p-0">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="mb-3 font-semibold">Quick Navigation</h3>
-            <nav className="space-y-1">
-              {categories
-                .filter((cat) => cat.id !== 'valuation_methodology')
-                .map((category) => {
-                  const categoryStats = category.assumptions.reduce(
-                    (acc, assumption) => ({
-                      total: acc.total + 1,
-                      completed: acc.completed + (assumption.value ? 1 : 0),
-                    }),
-                    { total: 0, completed: 0 }
-                  )
-                  const Icon = category.icon
-
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => {
-                        scrollToCategory(category.id)
-                        setIsMobileSidebarOpen(false)
-                      }}
-                      className="group w-full rounded-md px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
-                        <span className="text-sm font-medium">{category.name}</span>
-                      </div>
-                      <div className="ml-6 mt-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-primary transition-all duration-300"
-                              style={{
-                                width: `${
-                                  categoryStats.total > 0
-                                    ? (categoryStats.completed / categoryStats.total) * 100
-                                    : 0
-                                }%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {categoryStats.completed}/{categoryStats.total}
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
-            </nav>
-          </div>
-
-          {/* Overall Progress Card */}
-          <div className="rounded-lg border border-border bg-card p-4">
-            <h4 className="mb-2 font-semibold">Overall Progress</h4>
-            <div className="space-y-3">
-              <div>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="text-muted-foreground">Completed</span>
-                  <span className="font-medium">
-                    {Math.round((stats.completed / stats.total) * 100)}%
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-muted">
-                  <div
-                    className="h-2 rounded-full bg-primary transition-all duration-300"
-                    style={{ width: `${(stats.completed / stats.total) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Fields:</span>
-                  <span className="font-medium">{stats.total}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Completed:</span>
-                  <span className="font-medium text-green-600">{stats.completed}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Remaining:</span>
-                  <span className="font-medium text-orange-600">
-                    {stats.total - stats.completed}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="flex-1 space-y-6">
         {/* Header with Statistics */}
@@ -812,17 +728,10 @@ export default function ValuationAssumptions({
         {/* Summary Section */}
         <AssumptionsSummary categories={categories} />
 
-        {/* Methodology Selector - Replaces the old weighting section */}
+        {/* Methodology Selector - As a collapsible card like other categories */}
         <ValuationMethodologySelector
-          selectedMethodologies={selectedMethodologies}
-          onMethodologiesChange={(methodologies) => {
-            setSelectedMethodologies(methodologies)
-            updateMethodologies(methodologies)
-          }}
-          onUpdateSidebar={() => {
-            // This will trigger sidebar update via context
-            updateMethodologies(selectedMethodologies)
-          }}
+          isExpanded={expandedCategories.includes('methodology_selector')}
+          onToggle={() => toggleCategory('methodology_selector')}
         />
 
         {/* Categories */}
@@ -850,6 +759,71 @@ export default function ValuationAssumptions({
           </div>
         )}
       </div>
+
+      {/* Right Sidebar Navigation */}
+      <SharedSidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        position="right"
+        items={sidebarItems}
+        showToggleButton={true}
+        variant="compact"
+        width="w-80"
+        collapsedWidth="w-16"
+        header={
+          !isSidebarCollapsed && (
+            <div>
+              <h3 className="mb-3 font-semibold">Quick Navigation</h3>
+            </div>
+          )
+        }
+        footer={
+          !isSidebarCollapsed && (
+            <div className="space-y-4">
+              {/* Completion Summary */}
+              <div className="rounded-lg border border-border bg-card p-4">
+                <h3 className="mb-3 font-semibold">Completion Status</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Fields</span>
+                    <span className="font-medium">{stats.total}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Completed</span>
+                    <span className="font-medium text-green-600">{stats.completed}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Required Fields</span>
+                    <span className="font-medium">{stats.required}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Required Complete</span>
+                    <span
+                      className={`font-medium ${stats.requiredCompleted === stats.required ? 'text-green-600' : 'text-orange-600'}`}
+                    >
+                      {stats.requiredCompleted}
+                    </span>
+                  </div>
+                  <div className="mt-2 border-t pt-2">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Completion</span>
+                      <span className="font-medium">
+                        {Math.round((stats.completed / stats.total) * 100)}%
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+      />
     </div>
   )
 }

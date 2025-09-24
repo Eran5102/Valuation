@@ -30,7 +30,8 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
+import { SharedSidebar, SidebarNavItem } from '@/components/ui/shared-sidebar'
+import { useMethodologyStore } from '@/hooks/useMethodologyStore'
 
 interface ValuationWorkspaceLayoutProps {
   children: React.ReactNode
@@ -69,47 +70,7 @@ const valuationNavigation = {
       icon: Table,
       description: 'Manage share classes and options',
     },
-    {
-      name: 'OPM Backsolve',
-      href: 'allocation/opm',
-      icon: Calculator,
-      description: 'Option Pricing Model allocation',
-    },
-    {
-      name: 'Breakpoints (PWERM)',
-      href: 'allocation/pwerm',
-      icon: GitBranch,
-      description: 'Probability-weighted scenarios',
-    },
-    {
-      name: 'Company Information',
-      href: 'company',
-      icon: Building2,
-      description: 'Company details and financials',
-    },
-    {
-      name: 'Enterprise Valuation',
-      href: 'enterprise',
-      icon: TrendingUp,
-      description: 'Market, Income, and Asset approaches',
-      submenu: [
-        { name: 'Market Approach', href: 'enterprise/market', icon: BarChart3 },
-        { name: 'Income Approach', href: 'enterprise/income', icon: DollarSign },
-        { name: 'Asset Approach', href: 'enterprise/asset', icon: FileSpreadsheet },
-      ],
-    },
-    {
-      name: 'Equity Allocation',
-      href: 'allocation',
-      icon: Layers,
-      description: 'Allocate value across share classes',
-      submenu: [
-        { name: 'Option Pricing Model', href: 'allocation/opm', icon: Calculator },
-        { name: 'PWERM', href: 'allocation/pwerm', icon: GitBranch },
-        { name: 'Current Value Method', href: 'allocation/cvm', icon: DollarSign },
-        { name: 'Hybrid Method', href: 'allocation/hybrid', icon: Layers },
-      ],
-    },
+    // Enterprise Valuation and Equity Allocation are dynamically added based on selected methodologies
     {
       name: 'Discounts',
       href: 'discounts',
@@ -232,24 +193,23 @@ export default function ValuationWorkspaceLayout({
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { valuation } = useValuationWorkspace()
+  const { methodologies } = useMethodologyStore()
 
   // Build dynamic navigation based on selected methodologies
   const navigation = useMemo(() => {
-    const baseNav = valuationNavigation[valuationData.type || '409a'] || valuationNavigation['409a']
+    const baseNav =
+      valuationNavigation[valuationData.type?.toLowerCase() || '409a'] ||
+      valuationNavigation['409a']
 
-    // If it's not a 409a valuation, return the base navigation
-    if (valuationData.type !== '409a' && valuationData.type) {
+    // For non-409a valuations, return the base navigation
+    // For 409a valuations (or when type is not set), build dynamic nav
+    const normalizedType = valuationData.type?.toLowerCase()
+    if (normalizedType && normalizedType !== '409a') {
       return baseNav
     }
 
-    // Get selected methodologies from context
-    const selectedMethodologies = valuation?.methodologies?.selectedMethodologies || []
-
-    // If no methodologies are selected yet, show all base navigation
-    if (!selectedMethodologies.length) {
-      return baseNav
-    }
+    // Get enabled methodologies from store
+    const enabledMethodologies = methodologies.filter((m) => m.enabled)
 
     // Build dynamic navigation
     const dynamicNav = []
@@ -258,12 +218,8 @@ export default function ValuationWorkspaceLayout({
     dynamicNav.push(
       baseNav.find((item) => item.name === 'Overview'),
       baseNav.find((item) => item.name === 'Assumptions'),
-      baseNav.find((item) => item.name === 'Cap Table'),
-      baseNav.find((item) => item.name === 'Company Information')
+      baseNav.find((item) => item.name === 'Cap Table')
     )
-
-    // Add enabled methodologies
-    const enabledMethodologies = selectedMethodologies.filter((m) => m.enabled)
 
     // Group methodologies by category
     const hasIncome = enabledMethodologies.some((m) => m.category === 'income')
@@ -283,11 +239,16 @@ export default function ValuationWorkspaceLayout({
             icon: TrendingUp,
           })
         } else if (method.category === 'market' && method.route) {
-          enterpriseSubmenu.push({
-            name: method.name,
-            href: `enterprise/${method.route}`,
-            icon: BarChart3,
-          })
+          // Special handling for OPM Backsolve - put it at the root level
+          if (method.id === 'opm_backsolve') {
+            // This will be added directly to dynamicNav later
+          } else {
+            enterpriseSubmenu.push({
+              name: method.name,
+              href: `enterprise/${method.route}`,
+              icon: BarChart3,
+            })
+          }
         } else if (method.category === 'asset' && method.route) {
           enterpriseSubmenu.push({
             name: method.name,
@@ -329,14 +290,66 @@ export default function ValuationWorkspaceLayout({
       })
     }
 
-    // Add allocation methods (always show for 409a)
-    dynamicNav.push(
-      baseNav.find((item) => item.name === 'OPM Backsolve'),
-      baseNav.find((item) => item.name === 'Breakpoints (PWERM)')
-    )
+    // Add OPM Backsolve to main nav if selected (it's now under Market Approach)
+    const opmBacksolve = enabledMethodologies.find((m) => m.id === 'opm_backsolve')
+    if (opmBacksolve && opmBacksolve.enabled) {
+      dynamicNav.push({
+        name: 'OPM Backsolve',
+        href: 'allocation/opm',
+        icon: Calculator,
+        description: 'Option Pricing Model backsolve from recent transaction',
+      })
+    }
 
-    // Add Equity Allocation section
-    dynamicNav.push(baseNav.find((item) => item.name === 'Equity Allocation'))
+    // Add allocation methods dynamically based on selection
+    const allocationMethodologies = enabledMethodologies.filter((m) => m.category === 'allocation')
+
+    if (allocationMethodologies.length > 0) {
+      const allocationSubmenu = []
+
+      // Add each selected allocation methodology
+      allocationMethodologies.forEach((method) => {
+        if (method.id === 'opm') {
+          // Add OPM to submenu (not PWERM, which goes to main nav)
+          allocationSubmenu.push({
+            name: 'Option Pricing Model',
+            href: 'allocation/opm',
+            icon: Calculator,
+          })
+        } else if (method.id === 'pwerm') {
+          // Add PWERM/Breakpoints directly to main nav (not in submenu)
+          dynamicNav.push({
+            name: 'Breakpoints (PWERM)',
+            href: 'allocation/pwerm',
+            icon: GitBranch,
+            description: 'Probability-weighted scenarios',
+          })
+        } else if (method.id === 'cvm') {
+          allocationSubmenu.push({
+            name: 'Current Value Method',
+            href: 'allocation/cvm',
+            icon: DollarSign,
+          })
+        } else if (method.id === 'hybrid') {
+          allocationSubmenu.push({
+            name: 'Hybrid Method',
+            href: 'allocation/hybrid',
+            icon: Layers,
+          })
+        }
+      })
+
+      // Only add Equity Allocation submenu if there are non-PWERM methods
+      if (allocationSubmenu.length > 0) {
+        dynamicNav.push({
+          name: 'Equity Allocation',
+          href: 'allocation',
+          icon: Layers,
+          description: 'Allocate value across share classes',
+          submenu: allocationSubmenu,
+        })
+      }
+    }
 
     // Add Discounts section
     dynamicNav.push(baseNav.find((item) => item.name === 'Discounts'))
@@ -349,7 +362,7 @@ export default function ValuationWorkspaceLayout({
 
     // Filter out any undefined items
     return dynamicNav.filter(Boolean)
-  }, [valuationData.type, valuation?.methodologies?.selectedMethodologies])
+  }, [valuationData.type, methodologies])
 
   const currentSection = pathname.split(`/valuations/${valuationId}/`)[1] || 'overview'
 
@@ -387,109 +400,41 @@ export default function ValuationWorkspaceLayout({
     }
   }
 
-  const NavigationItem = ({ item }: { item: any }) => {
-    const Icon = item.icon
-    const isActive = currentSection === item.href || currentSection.startsWith(`${item.href}/`)
-    const hasSubmenu = 'submenu' in item && item.submenu
-    const isExpanded = expandedMenus.includes(item.name)
-
-    const ItemContent = () => (
-      <>
-        <Icon className="h-4 w-4 flex-shrink-0" />
-        {!isCollapsed && <span>{item.name}</span>}
-      </>
-    )
-
-    if (hasSubmenu) {
-      return (
-        <>
-          <button
-            onClick={() => toggleSubmenu(item.name)}
-            className={cn(
-              'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
-              isActive
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-accent hover:text-accent-foreground'
-            )}
-          >
-            <ItemContent />
-            {!isCollapsed && (
-              <ChevronDown
-                className={cn('ml-auto h-4 w-4 transition-transform', !isExpanded && '-rotate-90')}
-              />
-            )}
-          </button>
-          {hasSubmenu && isExpanded && !isCollapsed && (
-            <div className="ml-4 mt-1 space-y-1 border-l-2 border-muted pl-3">
-              {item.submenu?.map((subItem: any) => {
-                const SubIcon = subItem.icon
-                const isSubActive = currentSection === subItem.href
-
-                return (
-                  <Link
-                    key={subItem.name}
-                    href={`/valuations/${valuationId}/${subItem.href}`}
-                    className={cn(
-                      'flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all',
-                      isSubActive
-                        ? 'bg-primary/10 font-medium text-primary'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )}
-                  >
-                    <SubIcon className="h-3.5 w-3.5" />
-                    <span>{subItem.name}</span>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </>
-      )
-    }
-
-    const linkContent = (
-      <Link
-        href={`/valuations/${valuationId}/${item.href}`}
-        className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
-          isActive
-            ? 'bg-primary text-primary-foreground'
-            : 'hover:bg-accent hover:text-accent-foreground'
-        )}
-      >
-        <ItemContent />
-      </Link>
-    )
-
-    if (isCollapsed) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-          <TooltipContent side="right" className="flex items-center gap-4">
-            {item.name}
-            {item.description && (
-              <span className="text-muted-foreground">- {item.description}</span>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      )
-    }
-
-    return linkContent
-  }
+  // Convert navigation to SidebarNavItem format
+  const sidebarItems: SidebarNavItem[] = useMemo(() => {
+    const items = navigation.map((item) => ({
+      id: item.name,
+      name: item.name,
+      href: `/valuations/${valuationId}/${item.href}`,
+      icon: item.icon,
+      isActive: currentSection === item.href || currentSection.startsWith(`${item.href}/`),
+      tooltip: item.description,
+      submenu: item.submenu?.map((subItem: any) => ({
+        id: subItem.name,
+        name: subItem.name,
+        href: `/valuations/${valuationId}/${subItem.href}`,
+        icon: subItem.icon,
+        isActive: currentSection === subItem.href,
+      })),
+    }))
+    return items
+  }, [navigation, valuationId, currentSection])
 
   return (
-    <TooltipProvider>
-      <div className="flex h-screen bg-background">
-        {/* Valuation Sidebar */}
-        <div
-          className={cn(
-            'flex flex-col border-r bg-sidebar transition-all duration-300',
-            isCollapsed ? 'w-16' : 'w-80'
-          )}
-        >
-          {/* Sidebar Header */}
-          <div className="border-b p-4">
+    <div className="flex h-screen bg-background">
+      {/* Valuation Sidebar using SharedSidebar */}
+      <SharedSidebar
+        isCollapsed={isCollapsed}
+        onToggle={() => setIsCollapsed(!isCollapsed)}
+        position="left"
+        items={sidebarItems}
+        expandedMenus={expandedMenus}
+        onExpandMenu={toggleSubmenu}
+        showToggleButton={true}
+        width="w-80"
+        collapsedWidth="w-20"
+        header={
+          <div>
             <div className="flex items-center justify-between">
               {!isCollapsed && (
                 <Button
@@ -502,18 +447,6 @@ export default function ValuationWorkspaceLayout({
                   Back
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className={cn(isCollapsed && 'w-full')}
-              >
-                {isCollapsed ? (
-                  <PanelLeft className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </Button>
             </div>
 
             {!isCollapsed && (
@@ -546,38 +479,27 @@ export default function ValuationWorkspaceLayout({
               </div>
             )}
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-3">
-            <div className="space-y-1">
-              {navigation.map((item) => (
-                <NavigationItem key={item.name} item={item} />
-              ))}
-            </div>
-          </nav>
-
-          {/* Sidebar Footer - Progress Indicator */}
-          {!isCollapsed && (
-            <div className="border-t p-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Completion</span>
-                  <span className="font-medium">65%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-[65%] bg-primary transition-all" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Complete enterprise valuation to continue
-                </p>
+        }
+        footer={
+          !isCollapsed && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Completion</span>
+                <span className="font-medium">65%</span>
               </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full w-[65%] bg-primary transition-all" />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Complete enterprise valuation to continue
+              </p>
             </div>
-          )}
-        </div>
+          )
+        }
+      />
 
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-auto">{children}</div>
-      </div>
-    </TooltipProvider>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-auto">{children}</div>
+    </div>
   )
 }
