@@ -53,6 +53,7 @@ interface DeadlineItem {
 
 export default function Dashboard() {
   const { user, organization, loading: authLoading } = useAuth()
+  console.log('Dashboard render - authLoading:', authLoading, 'user:', !!user)
   const [firstName, setFirstName] = useState<string>('there')
   const [stats, setStats] = useState<DashboardStats>({
     myActiveValuations: 0,
@@ -67,12 +68,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!authLoading && user) {
-      fetchDashboardData()
+    if (!authLoading) {
+      if (user) {
+        fetchDashboardData()
+      } else {
+        // If no user, still set loading to false
+        setLoading(false)
+      }
     }
   }, [user, organization, authLoading])
 
   const fetchDashboardData = async () => {
+    console.log('Fetching dashboard data...')
     try {
       // Handle both first_name and full_name formats
       let extractedFirstName = user?.user_metadata?.first_name
@@ -82,16 +89,40 @@ export default function Dashboard() {
       extractedFirstName = extractedFirstName || 'there'
       setFirstName(extractedFirstName)
 
-      // Fetch real data from APIs
-      const [valuationsRes, companiesRes, reportsRes] = await Promise.all([
-        fetch('/api/valuations').catch(() => ({ ok: false })),
-        fetch('/api/companies').catch(() => ({ ok: false })),
-        fetch('/api/reports').catch(() => ({ ok: false })),
-      ])
+      // Fetch real data from APIs with better error handling
+      let valuations = []
+      let companies = []
+      let reports = []
 
-      const valuations = valuationsRes.ok ? (await valuationsRes.json()).data || [] : []
-      const companies = companiesRes.ok ? (await companiesRes.json()).data || [] : []
-      const reports = reportsRes.ok ? (await reportsRes.json()).data || [] : []
+      try {
+        const valuationsRes = await fetch('/api/valuations')
+        if (valuationsRes.ok) {
+          const data = await valuationsRes.json()
+          valuations = data.data || []
+        }
+      } catch (err) {
+        console.log('Failed to fetch valuations:', err)
+      }
+
+      try {
+        const companiesRes = await fetch('/api/companies')
+        if (companiesRes.ok) {
+          const data = await companiesRes.json()
+          companies = data.data || []
+        }
+      } catch (err) {
+        console.log('Failed to fetch companies:', err)
+      }
+
+      try {
+        const reportsRes = await fetch('/api/reports')
+        if (reportsRes.ok) {
+          const data = await reportsRes.json()
+          reports = data.data || []
+        }
+      } catch (err) {
+        console.log('Failed to fetch reports:', err)
+      }
 
       // Calculate real stats based on actual data
       const myActiveValuations = valuations.filter(

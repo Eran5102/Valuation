@@ -5,7 +5,7 @@ import {
   LRUCache,
   createLazyLoader,
   calculateVirtualItems,
-  batchUpdates
+  batchUpdates,
 } from '../performance-utils'
 
 describe('performance-utils', () => {
@@ -41,9 +41,9 @@ describe('performance-utils', () => {
     it('should preserve context', () => {
       const obj = {
         value: 'test',
-        method: jest.fn(function(this: any) {
+        method: jest.fn(function (this: any) {
           return this.value
-        })
+        }),
       }
 
       obj.method = throttle(obj.method, 100)
@@ -239,7 +239,7 @@ describe('performance-utils', () => {
         root: null,
         rootMargin: '',
         thresholds: [],
-        takeRecords: () => []
+        takeRecords: () => [],
       }))
     })
 
@@ -276,7 +276,7 @@ describe('performance-utils', () => {
         containerHeight: 200,
         buffer: 1,
         getScrollTop: () => 100,
-        setScrollHeight: jest.fn()
+        setScrollHeight: jest.fn(),
       })
 
       // At scroll position 100 with item height 50:
@@ -296,7 +296,7 @@ describe('performance-utils', () => {
         containerHeight: 200,
         buffer: 1,
         getScrollTop: () => 0,
-        setScrollHeight: jest.fn()
+        setScrollHeight: jest.fn(),
       })
 
       expect(result.startIndex).toBe(0)
@@ -310,7 +310,7 @@ describe('performance-utils', () => {
         containerHeight: 200,
         buffer: 1,
         getScrollTop: () => 400, // Near bottom
-        setScrollHeight: jest.fn()
+        setScrollHeight: jest.fn(),
       })
 
       expect(result.endIndex).toBe(9) // Last item
@@ -322,7 +322,7 @@ describe('performance-utils', () => {
         containerHeight: 200,
         buffer: 1,
         getScrollTop: () => 0,
-        setScrollHeight: jest.fn()
+        setScrollHeight: jest.fn(),
       })
 
       expect(result.visibleItems).toHaveLength(0)
@@ -361,5 +361,5 @@ describe('performance-utils', () => {
       expect(update2).toHaveBeenCalled()
       expect(update3).not.toHaveBeenCalled()
     })
-  }
+  })
 })

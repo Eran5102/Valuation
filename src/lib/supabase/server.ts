@@ -34,3 +34,6 @@ export async function createClient() {
     }
   )
 }
+
+// Alias for backward compatibility with existing imports
+export { createClient as createServerClient }

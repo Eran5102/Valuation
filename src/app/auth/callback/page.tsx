@@ -4,14 +4,15 @@ import { NextResponse } from 'next/server'
 export default async function AuthCallback({
   searchParams,
 }: {
-  searchParams: { code?: string; error?: string }
+  searchParams: Promise<{ code?: string; error?: string }>
 }) {
-  if (searchParams.error) {
+  const params = await searchParams
+  if (params.error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive">Authentication Error</h1>
-          <p className="mt-2 text-muted-foreground">{searchParams.error}</p>
+          <p className="mt-2 text-muted-foreground">{params.error}</p>
           <a href="/auth/login" className="mt-4 inline-block text-primary hover:underline">
             Return to login
           </a>
@@ -20,9 +21,9 @@ export default async function AuthCallback({
     )
   }
 
-  if (searchParams.code) {
+  if (params.code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(searchParams.code)
+    const { error } = await supabase.auth.exchangeCodeForSession(params.code)
 
     if (!error) {
       return NextResponse.redirect(

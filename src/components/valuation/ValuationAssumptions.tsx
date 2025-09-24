@@ -23,6 +23,8 @@ import { AssumptionsSummary } from './AssumptionsSummary'
 import { ValuationMethodologySelector } from './ValuationMethodologySelector'
 import { SharedSidebar, SidebarNavItem } from '@/components/ui/shared-sidebar'
 import { Badge } from '@/components/ui/badge'
+import { RiskFreeRateInput } from './RiskFreeRateInput'
+import { VolatilityInput } from './VolatilityInput'
 
 export interface AssumptionCategory {
   id: string

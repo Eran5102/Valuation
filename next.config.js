@@ -11,7 +11,7 @@ try {
 }
 
 const nextConfig = {
-  // SWC minification is now enabled by default in Next.js 15
+  // SWC minifier is enabled by default in Next.js 15
 
   // Disable eslint during build for bundle analysis
   eslint: {
@@ -25,15 +25,26 @@ const nextConfig = {
 
   // Experimental features for performance optimization
   experimental: {
-    // Optimize package imports
+    // Optimize package imports - add heavy libraries
     optimizePackageImports: [
       'lucide-react',
+      'recharts',
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-dialog',
       '@radix-ui/react-select',
       '@radix-ui/react-tabs',
       '@radix-ui/react-tooltip',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-label',
+      '@radix-ui/react-radio-group',
+      '@radix-ui/react-slider',
+      '@radix-ui/react-switch',
       '@tanstack/react-table',
+      '@tanstack/react-query',
+      '@supabase/supabase-js',
+      '@supabase/ssr',
+      'sonner',
+      'zod',
     ],
 
     // Enable partial pre-rendering for faster navigation
@@ -41,6 +52,11 @@ const nextConfig = {
 
     // Optimize CSS
     optimizeCss: true,
+  },
+
+  // Compiler optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
   },
 
   // Output file tracing to silence warnings

@@ -218,6 +218,12 @@ export default function ValuationWorkspaceLayout({
     dynamicNav.push(
       baseNav.find((item) => item.name === 'Overview'),
       baseNav.find((item) => item.name === 'Assumptions'),
+      {
+        name: 'Core Assumptions',
+        href: 'assumptions/core',
+        icon: Settings,
+        description: 'Fundamental project settings and methodology selection',
+      },
       baseNav.find((item) => item.name === 'Cap Table')
     )
 
@@ -233,11 +239,22 @@ export default function ValuationWorkspaceLayout({
       // Add methodology-specific pages
       enabledMethodologies.forEach((method) => {
         if (method.category === 'income' && method.route) {
-          enterpriseSubmenu.push({
-            name: method.name,
-            href: `enterprise/${method.route}`,
-            icon: TrendingUp,
-          })
+          // DCF gets special treatment with additional schedules
+          if (method.id === 'dcf') {
+            enterpriseSubmenu.push({
+              name: 'DCF Analysis',
+              href: `enterprise/${method.route}`,
+              icon: Calculator,
+            })
+            // DCF supporting schedules are now accessible via tabs within the DCF Analysis page
+            // No need to add them separately to the sidebar
+          } else {
+            enterpriseSubmenu.push({
+              name: method.name,
+              href: `enterprise/${method.route}`,
+              icon: TrendingUp,
+            })
+          }
         } else if (method.category === 'market' && method.route) {
           // Special handling for OPM Backsolve - put it at the root level
           if (method.id === 'opm_backsolve') {
