@@ -62,9 +62,6 @@ const nextConfig = {
   // Output file tracing to silence warnings
   outputFileTracingRoot: __dirname,
 
-  // Disable output file tracing to speed up builds
-  output: 'standalone',
-
   // Turbopack configuration for development
   turbopack: {
     rules: {
