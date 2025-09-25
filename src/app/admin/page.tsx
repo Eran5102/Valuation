@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       case 'warning':
         return <AlertCircle className="h-4 w-4 text-yellow-600" />
       case 'info':
-        return <Clock className="h-4 w-4 text-blue-600" />
+        return <Clock className="h-4 w-4 text-primary" />
       default:
         return <Activity className="h-4 w-4 text-gray-600" />
     }

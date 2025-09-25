@@ -129,7 +129,7 @@ export function AppHeader() {
     <>
       <header
         className="sticky top-0 z-50 w-full border-b border-gray-600"
-        style={{ backgroundColor: '#2E3944' }}
+        style={{ backgroundColor: 'hsl(var(--primary))' }}
       >
         <div className="flex h-14 items-center">
           {/* Left side - Logo and Brand (inside sidebar width) */}
@@ -326,7 +326,7 @@ export function AppHeader() {
                             notification.type === 'success' && 'bg-green-500',
                             notification.type === 'error' && 'bg-red-500',
                             notification.type === 'warning' && 'bg-yellow-500',
-                            notification.type === 'info' && 'bg-blue-500'
+                            notification.type === 'info' && 'bg-primary'
                           )}
                         />
                         <span className="text-sm font-medium">{notification.title}</span>

@@ -119,7 +119,7 @@ export function BetaHistoryChart({ valuationId, ticker, valuationDate }: BetaHis
       case 'decreasing':
         return <TrendingUp className="h-4 w-4 rotate-180 text-red-500" />
       default:
-        return <Activity className="h-4 w-4 text-blue-500" />
+        return <Activity className="h-4 w-4 text-primary" />
     }
   }
 

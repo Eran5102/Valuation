@@ -14,8 +14,8 @@ const getStatusColors = (status: string, variant: 'default' | 'outline') => {
       outline: 'border-gray-300 text-gray-700 bg-transparent',
     },
     in_progress: {
-      default: 'bg-blue-100 text-blue-800',
-      outline: 'border-blue-300 text-blue-700 bg-transparent',
+      default: 'bg-primary/10 text-primary',
+      outline: 'border-primary/30 text-primary bg-transparent',
     },
     under_review: {
       default: 'bg-yellow-100 text-yellow-800',
@@ -30,8 +30,8 @@ const getStatusColors = (status: string, variant: 'default' | 'outline') => {
       outline: 'border-red-300 text-red-700 bg-transparent',
     },
     Common: {
-      default: 'bg-blue-100 text-blue-800',
-      outline: 'border-blue-300 text-blue-700 bg-transparent',
+      default: 'bg-primary/10 text-primary',
+      outline: 'border-primary/30 text-primary bg-transparent',
     },
     Preferred: {
       default: 'bg-purple-100 text-purple-800',

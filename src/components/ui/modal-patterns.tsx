@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { SaveButton, DeleteButton } from '@/components/ui/action-buttons'
@@ -40,7 +40,7 @@ export function ConfirmDialog({
   onCancel,
   variant = 'default',
   loading = false,
-  trigger
+  trigger,
 }: ConfirmDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -68,16 +68,16 @@ export function ConfirmDialog({
   const variantConfig = {
     default: {
       icon: CheckCircle,
-      iconColor: 'text-primary'
+      iconColor: 'text-primary',
     },
     destructive: {
       icon: AlertTriangle,
-      iconColor: 'text-destructive'
+      iconColor: 'text-destructive',
     },
     warning: {
       icon: Info,
-      iconColor: 'text-warning'
-    }
+      iconColor: 'text-warning',
+    },
   }
 
   const config = variantConfig[variant]
@@ -89,17 +89,13 @@ export function ConfirmDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Icon className={cn("h-5 w-5", config.iconColor)} />
+            <Icon className={cn('h-5 w-5', config.iconColor)} />
             {title}
           </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={loading || isLoading}
-          >
+          <Button variant="outline" onClick={handleCancel} disabled={loading || isLoading}>
             {cancelText}
           </Button>
           <Button
@@ -107,7 +103,7 @@ export function ConfirmDialog({
             onClick={handleConfirm}
             disabled={loading || isLoading}
           >
-            {(loading || isLoading) ? (
+            {loading || isLoading ? (
               <>
                 <LoadingSpinner size="xs" className="mr-2" />
                 Processing...
@@ -140,7 +136,7 @@ export function DeleteConfirmDialog({
   itemType = 'item',
   onDelete,
   loading,
-  trigger
+  trigger,
 }: DeleteConfirmDialogProps) {
   return (
     <ConfirmDialog
@@ -174,7 +170,7 @@ export function InfoDialog({
   title,
   description,
   content,
-  trigger
+  trigger,
 }: InfoDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const isOpen = open !== undefined ? open : uncontrolledOpen
@@ -191,15 +187,9 @@ export function InfoDialog({
           </DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        {content && (
-          <div className="py-4">
-            {content}
-          </div>
-        )}
+        {content && <div className="py-4">{content}</div>}
         <DialogFooter>
-          <Button onClick={() => setOpen(false)}>
-            Close
-          </Button>
+          <Button onClick={() => setOpen(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -232,7 +222,7 @@ export function FormDialog({
   submitText = 'Save',
   cancelText = 'Cancel',
   loading,
-  trigger
+  trigger,
 }: FormDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -267,9 +257,7 @@ export function FormDialog({
             <DialogTitle>{title}</DialogTitle>
             {description && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
-          <div className="py-4">
-            {children}
-          </div>
+          <div className="py-4">{children}</div>
           <DialogFooter>
             <Button
               type="button"
@@ -279,11 +267,7 @@ export function FormDialog({
             >
               {cancelText}
             </Button>
-            <SaveButton
-              loading={loading || isLoading}
-            >
-              {submitText}
-            </SaveButton>
+            <SaveButton loading={loading || isLoading}>{submitText}</SaveButton>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -309,33 +293,33 @@ export function AlertDialog({
   variant = 'info',
   onClose,
   actionText = 'OK',
-  onAction
+  onAction,
 }: AlertDialogProps) {
   const variantConfig = {
     info: {
       icon: Info,
-      iconColor: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200'
+      iconColor: 'text-primary',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
     },
     success: {
       icon: CheckCircle,
       iconColor: 'text-green-600',
       bgColor: 'bg-green-50',
-      borderColor: 'border-green-200'
+      borderColor: 'border-green-200',
     },
     warning: {
       icon: AlertTriangle,
       iconColor: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200'
+      borderColor: 'border-yellow-200',
     },
     error: {
       icon: X,
       iconColor: 'text-red-600',
       bgColor: 'bg-red-50',
-      borderColor: 'border-red-200'
-    }
+      borderColor: 'border-red-200',
+    },
   }
 
   const config = variantConfig[variant]
@@ -349,9 +333,9 @@ export function AlertDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
-        <div className={cn("p-4 rounded-lg border", config.bgColor, config.borderColor)}>
+        <div className={cn('rounded-lg border p-4', config.bgColor, config.borderColor)}>
           <div className="flex items-start gap-3">
-            <Icon className={cn("h-5 w-5 mt-0.5", config.iconColor)} />
+            <Icon className={cn('mt-0.5 h-5 w-5', config.iconColor)} />
             <div className="flex-1">
               <h3 className="font-semibold text-foreground">{title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -359,9 +343,7 @@ export function AlertDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleAction}>
-            {actionText}
-          </Button>
+          <Button onClick={handleAction}>{actionText}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -388,7 +370,7 @@ export function StepModal({
   title,
   steps,
   onComplete,
-  trigger
+  trigger,
 }: StepModalProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
@@ -431,26 +413,24 @@ export function StepModal({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <div className="flex items-center gap-2 mt-4">
+          <div className="mt-4 flex items-center gap-2">
             {steps.map((step, index) => (
-              <div key={index} className="flex items-center flex-1">
+              <div key={index} className="flex flex-1 items-center">
                 <div
                   className={cn(
-                    "h-2 flex-1 rounded-full transition-colors",
-                    index <= currentStep ? "bg-primary" : "bg-muted"
+                    'h-2 flex-1 rounded-full transition-colors',
+                    index <= currentStep ? 'bg-primary' : 'bg-muted'
                   )}
                 />
                 {index < steps.length - 1 && <div className="w-2" />}
               </div>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="mt-2 text-sm text-muted-foreground">
             Step {currentStep + 1} of {steps.length}: {steps[currentStep].label}
           </p>
         </DialogHeader>
-        <div className="py-4">
-          {steps[currentStep].content}
-        </div>
+        <div className="py-4">{steps[currentStep].content}</div>
         <DialogFooter>
           <Button
             variant="outline"
@@ -471,9 +451,7 @@ export function StepModal({
               )}
             </Button>
           ) : (
-            <Button onClick={handleNext}>
-              Next
-            </Button>
+            <Button onClick={handleNext}>Next</Button>
           )}
         </DialogFooter>
       </DialogContent>

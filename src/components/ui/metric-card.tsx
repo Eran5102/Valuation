@@ -13,7 +13,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const getColorClasses = () => {
     if (trend === 'up') return 'bg-green-50 text-green-600'
     if (trend === 'down') return 'bg-red-50 text-red-600'
-    return 'bg-blue-50 text-blue-600'
+    return 'bg-primary/10 text-primary'
   }
 
   const getTrendIcon = () => {

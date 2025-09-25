@@ -35,7 +35,7 @@ const clientStatusOptions: StatusOption[] = [
     value: 'prospect',
     label: 'Prospect',
     icon: Eye,
-    color: 'bg-blue-100 text-blue-800 border-blue-300',
+    color: 'bg-primary/10 text-primary border-primary/30',
   },
 ]
 
@@ -50,7 +50,7 @@ const valuationStatusOptions: StatusOption[] = [
     value: 'in_progress',
     label: 'In Progress',
     icon: Clock,
-    color: 'bg-blue-100 text-blue-800 border-blue-300',
+    color: 'bg-primary/10 text-primary border-primary/30',
   },
   {
     value: 'review',

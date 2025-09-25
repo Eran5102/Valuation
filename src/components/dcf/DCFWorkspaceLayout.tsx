@@ -232,11 +232,11 @@ export function DCFWorkspaceLayout({ children, valuationId }: DCFWorkspaceLayout
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Completed</span>
-                <span className="font-medium text-green-600">{stats.completedSections}</span>
+                <span className="font-medium text-accent">{stats.completedSections}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">With Data</span>
-                <span className="font-medium text-blue-600">{stats.sectionsWithData}</span>
+                <span className="font-medium text-primary">{stats.sectionsWithData}</span>
               </div>
             </div>
           </CardContent>

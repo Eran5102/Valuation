@@ -180,7 +180,7 @@ const FieldMappingsAdmin = () => {
 
   const getModuleBadgeColor = (module: string) => {
     const colors: Record<string, string> = {
-      assumptions: 'bg-blue-100 text-blue-800',
+      assumptions: 'bg-primary/10 text-primary',
       company: 'bg-green-100 text-green-800',
       valuation: 'bg-purple-100 text-purple-800',
       capTable: 'bg-orange-100 text-orange-800',

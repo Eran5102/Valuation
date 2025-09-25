@@ -1,5 +1,12 @@
 import React from 'react'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -13,7 +20,7 @@ import {
   ChevronRight,
   LucideIcon,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
@@ -39,14 +46,14 @@ export function StatCard({
   loading = false,
   variant = 'default',
   className,
-  onClick
+  onClick,
 }: StatCardProps) {
   const variantStyles = {
     default: 'border-border',
     primary: 'border-primary/20 bg-primary/5',
     success: 'border-green-200 bg-green-50',
     warning: 'border-yellow-200 bg-yellow-50',
-    danger: 'border-red-200 bg-red-50'
+    danger: 'border-red-200 bg-red-50',
   }
 
   const isPositiveChange = change && change > 0
@@ -56,15 +63,13 @@ export function StatCard({
     <Card
       className={cn(
         variantStyles[variant],
-        onClick && 'cursor-pointer hover:shadow-md transition-shadow',
+        onClick && 'cursor-pointer transition-shadow hover:shadow-md',
         className
       )}
       onClick={onClick}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
       </CardHeader>
       <CardContent>
@@ -76,12 +81,9 @@ export function StatCard({
             {change !== undefined && (
               <div className="flex items-center space-x-1 text-xs">
                 <ChangeIcon
-                  className={cn(
-                    "h-3 w-3",
-                    isPositiveChange ? "text-green-600" : "text-red-600"
-                  )}
+                  className={cn('h-3 w-3', isPositiveChange ? 'text-green-600' : 'text-red-600')}
                 />
-                <span className={isPositiveChange ? "text-green-600" : "text-red-600"}>
+                <span className={isPositiveChange ? 'text-green-600' : 'text-red-600'}>
                   {Math.abs(change)}%
                 </span>
                 {changeLabel && <span className="text-muted-foreground">{changeLabel}</span>}
@@ -114,34 +116,34 @@ export function InfoCard({
   children,
   actions,
   variant = 'default',
-  className
+  className,
 }: InfoCardProps) {
   const variantConfig = {
     default: {
       icon: Info,
       iconColor: 'text-primary',
-      borderColor: 'border-border'
+      borderColor: 'border-border',
     },
     info: {
       icon: Info,
-      iconColor: 'text-blue-600',
-      borderColor: 'border-blue-200'
+      iconColor: 'text-primary',
+      borderColor: 'border-primary/20',
     },
     success: {
       icon: CheckCircle,
       iconColor: 'text-green-600',
-      borderColor: 'border-green-200'
+      borderColor: 'border-green-200',
     },
     warning: {
       icon: AlertCircle,
       iconColor: 'text-yellow-600',
-      borderColor: 'border-yellow-200'
+      borderColor: 'border-yellow-200',
     },
     error: {
       icon: AlertCircle,
       iconColor: 'text-red-600',
-      borderColor: 'border-red-200'
-    }
+      borderColor: 'border-red-200',
+    },
   }
 
   const config = variantConfig[variant]
@@ -151,12 +153,10 @@ export function InfoCard({
     <Card className={cn(config.borderColor, className)}>
       <CardHeader>
         <div className="flex items-start gap-3">
-          <IconComponent className={cn("h-5 w-5 mt-0.5", iconColor || config.iconColor)} />
+          <IconComponent className={cn('mt-0.5 h-5 w-5', iconColor || config.iconColor)} />
           <div className="flex-1">
             <CardTitle className="text-base">{title}</CardTitle>
-            {description && (
-              <CardDescription className="mt-1">{description}</CardDescription>
-            )}
+            {description && <CardDescription className="mt-1">{description}</CardDescription>}
           </div>
         </div>
       </CardHeader>
@@ -188,7 +188,7 @@ export function ClickableCard({
   onClick,
   href,
   className,
-  children
+  children,
 }: ClickableCardProps) {
   const handleClick = () => {
     if (href) {
@@ -201,7 +201,7 @@ export function ClickableCard({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all hover:shadow-md hover:border-primary/50",
+        'cursor-pointer transition-all hover:border-primary/50 hover:shadow-md',
         className
       )}
       onClick={handleClick}
@@ -216,14 +216,10 @@ export function ClickableCard({
             )}
             <div>
               <CardTitle className="text-base">{title}</CardTitle>
-              {description && (
-                <CardDescription className="mt-1">{description}</CardDescription>
-              )}
+              {description && <CardDescription className="mt-1">{description}</CardDescription>}
             </div>
           </div>
-          {badge && (
-            <Badge variant={badgeVariant}>{badge}</Badge>
-          )}
+          {badge && <Badge variant={badgeVariant}>{badge}</Badge>}
         </div>
       </CardHeader>
       {children && <CardContent>{children}</CardContent>}
@@ -251,28 +247,22 @@ export function EmptyStateCard({
   description,
   icon: Icon,
   action,
-  className
+  className,
 }: EmptyStateCardProps) {
   return (
-    <Card className={cn("border-dashed", className)}>
+    <Card className={cn('border-dashed', className)}>
       <CardContent className="flex flex-col items-center justify-center py-12">
         {Icon && (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <Icon className="h-6 w-6 text-muted-foreground" />
           </div>
         )}
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         {description && (
-          <p className="mt-2 text-sm text-muted-foreground text-center max-w-sm">
-            {description}
-          </p>
+          <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">{description}</p>
         )}
         {action && (
-          <Button
-            onClick={action.onClick}
-            className="mt-4"
-            variant="outline"
-          >
+          <Button onClick={action.onClick} className="mt-4" variant="outline">
             {action.label}
           </Button>
         )}
@@ -308,18 +298,18 @@ export function TimelineCard({ title, items, className }: TimelineCardProps) {
               completed: {
                 iconColor: 'text-green-600',
                 bgColor: 'bg-green-100',
-                lineColor: 'bg-green-200'
+                lineColor: 'bg-green-200',
               },
               current: {
-                iconColor: 'text-blue-600',
-                bgColor: 'bg-blue-100',
-                lineColor: 'bg-gray-200'
+                iconColor: 'text-primary',
+                bgColor: 'bg-primary/10',
+                lineColor: 'bg-gray-200',
               },
               upcoming: {
                 iconColor: 'text-gray-400',
                 bgColor: 'bg-gray-100',
-                lineColor: 'bg-gray-200'
-              }
+                lineColor: 'bg-gray-200',
+              },
             }
 
             const config = statusConfig[item.status || 'upcoming']
@@ -327,26 +317,31 @@ export function TimelineCard({ title, items, className }: TimelineCardProps) {
             return (
               <div key={index} className="flex gap-3">
                 <div className="relative flex flex-col items-center">
-                  <div className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full",
-                    config.bgColor
-                  )}>
+                  <div
+                    className={cn(
+                      'flex h-8 w-8 items-center justify-center rounded-full',
+                      config.bgColor
+                    )}
+                  >
                     {item.icon ? (
-                      <item.icon className={cn("h-4 w-4", config.iconColor)} />
+                      <item.icon className={cn('h-4 w-4', config.iconColor)} />
                     ) : item.status === 'completed' ? (
-                      <CheckCircle className={cn("h-4 w-4", config.iconColor)} />
+                      <CheckCircle className={cn('h-4 w-4', config.iconColor)} />
                     ) : item.status === 'current' ? (
-                      <Clock className={cn("h-4 w-4", config.iconColor)} />
+                      <Clock className={cn('h-4 w-4', config.iconColor)} />
                     ) : (
-                      <div className={cn("h-2 w-2 rounded-full", config.iconColor.replace('text-', 'bg-'))} />
+                      <div
+                        className={cn(
+                          'h-2 w-2 rounded-full',
+                          config.iconColor.replace('text-', 'bg-')
+                        )}
+                      />
                     )}
                   </div>
-                  {!isLast && (
-                    <div className={cn("w-0.5 h-16 mt-2", config.lineColor)} />
-                  )}
+                  {!isLast && <div className={cn('mt-2 h-16 w-0.5', config.lineColor)} />}
                 </div>
                 <div className="flex-1 pb-8">
-                  <p className="font-medium text-sm">{item.label}</p>
+                  <p className="text-sm font-medium">{item.label}</p>
                   {item.description && (
                     <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
                   )}
@@ -375,14 +370,10 @@ export function CardGrid({ children, columns = 3, className }: CardGridProps) {
     1: 'grid-cols-1',
     2: 'grid-cols-1 md:grid-cols-2',
     3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   }
 
-  return (
-    <div className={cn('grid gap-4', gridClasses[columns], className)}>
-      {children}
-    </div>
-  )
+  return <div className={cn('grid gap-4', gridClasses[columns], className)}>{children}</div>
 }
 
 // Section Card for grouping related content
@@ -405,7 +396,7 @@ export function SectionCard({
   children,
   collapsible = false,
   defaultCollapsed = false,
-  className
+  className,
 }: SectionCardProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
 
@@ -417,25 +408,18 @@ export function SectionCard({
             {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
             <div>
               <CardTitle
-                className={cn(
-                  "text-lg",
-                  collapsible && "cursor-pointer select-none"
-                )}
+                className={cn('text-lg', collapsible && 'cursor-pointer select-none')}
                 onClick={collapsible ? () => setIsCollapsed(!isCollapsed) : undefined}
               >
                 {title}
               </CardTitle>
-              {description && !isCollapsed && (
-                <CardDescription>{description}</CardDescription>
-              )}
+              {description && !isCollapsed && <CardDescription>{description}</CardDescription>}
             </div>
           </div>
           {actions}
         </div>
       </CardHeader>
-      {!isCollapsed && (
-        <CardContent>{children}</CardContent>
-      )}
+      {!isCollapsed && <CardContent>{children}</CardContent>}
     </Card>
   )
 }
