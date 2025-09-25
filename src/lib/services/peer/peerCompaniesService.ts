@@ -9,6 +9,7 @@ interface CompanyFundamentals {
   ebitda: number
   netIncome: number
   totalDebt: number
+  cash: number
   totalEquity: number
   sharesOutstanding: number
   currentPrice: number
@@ -106,7 +107,8 @@ export async function fetchCompanyFundamentals(
     const revenue = parseFloat(overview.RevenueTTM) || 0
     const ebitda = parseFloat(overview.EBITDA) || 0
     const sharesOutstanding = parseFloat(overview.SharesOutstanding) || 0
-    const beta = parseFloat(overview.Beta) || undefined
+    // Beta should have a default value of 1.0 if not provided
+    const beta = parseFloat(overview.Beta) || 1.0
 
     // Fetch additional data if needed
     const incomeStatementUrl = `https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol=${ticker}&apikey=${apiKey}`
@@ -127,8 +129,11 @@ export async function fetchCompanyFundamentals(
     const shortTermDebt = parseFloat(latestBalance.shortTermDebt) || 0
     const totalDebt = longTermDebt + shortTermDebt
 
+    // Try to get cash from balance sheet
+    const cash = parseFloat(latestBalance.cashAndCashEquivalents) || 0
+
     // Calculate enterprise value
-    const enterpriseValue = marketCap + totalDebt - 0 // Assuming no cash data for simplicity
+    const enterpriseValue = marketCap + totalDebt - cash
 
     // Get current price
     const priceUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`
@@ -159,6 +164,7 @@ export async function fetchCompanyFundamentals(
       ebitda,
       netIncome,
       totalDebt,
+      cash,
       totalEquity,
       sharesOutstanding,
       currentPrice,

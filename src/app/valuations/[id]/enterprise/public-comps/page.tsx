@@ -50,6 +50,8 @@ interface ComparableCompany {
   name: string
   industry: string
   marketCap: number
+  netDebt: number
+  enterpriseValue: number
   revenue: number
   ebitda: number
   netIncome: number
@@ -68,6 +70,8 @@ const sampleComps: ComparableCompany[] = [
     name: 'Apple Inc.',
     industry: 'Technology',
     marketCap: 3000000,
+    netDebt: -50000, // Negative means net cash
+    enterpriseValue: 2950000,
     revenue: 380000,
     ebitda: 120000,
     netIncome: 95000,
@@ -84,11 +88,13 @@ const sampleComps: ComparableCompany[] = [
     name: 'Microsoft Corporation',
     industry: 'Technology',
     marketCap: 2800000,
+    netDebt: -100000,
+    enterpriseValue: 2700000,
     revenue: 210000,
     ebitda: 95000,
     netIncome: 75000,
-    evRevenue: 13.3,
-    evEbitda: 29.5,
+    evRevenue: 12.9,
+    evEbitda: 28.4,
     peRatio: 37.3,
     revenueGrowth: 12.3,
     ebitdaMargin: 45.2,
@@ -100,11 +106,13 @@ const sampleComps: ComparableCompany[] = [
     name: 'Alphabet Inc.',
     industry: 'Technology',
     marketCap: 1700000,
+    netDebt: -80000,
+    enterpriseValue: 1620000,
     revenue: 280000,
     ebitda: 90000,
     netIncome: 70000,
-    evRevenue: 6.1,
-    evEbitda: 18.9,
+    evRevenue: 5.8,
+    evEbitda: 18.0,
     peRatio: 24.3,
     revenueGrowth: 10.2,
     ebitdaMargin: 32.1,
@@ -116,11 +124,13 @@ const sampleComps: ComparableCompany[] = [
     name: 'Meta Platforms',
     industry: 'Technology',
     marketCap: 900000,
+    netDebt: -30000,
+    enterpriseValue: 870000,
     revenue: 120000,
     ebitda: 55000,
     netIncome: 40000,
-    evRevenue: 7.5,
-    evEbitda: 16.4,
+    evRevenue: 7.3,
+    evEbitda: 15.8,
     peRatio: 22.5,
     revenueGrowth: 15.8,
     ebitdaMargin: 45.8,
@@ -132,11 +142,13 @@ const sampleComps: ComparableCompany[] = [
     name: 'NVIDIA Corporation',
     industry: 'Technology',
     marketCap: 1100000,
+    netDebt: -20000,
+    enterpriseValue: 1080000,
     revenue: 60000,
     ebitda: 35000,
     netIncome: 30000,
-    evRevenue: 18.3,
-    evEbitda: 31.4,
+    evRevenue: 18.0,
+    evEbitda: 30.9,
     peRatio: 36.7,
     revenueGrowth: 61.2,
     ebitdaMargin: 58.3,
@@ -160,6 +172,7 @@ export default function PublicComparablesPage() {
     name: '',
     industry: '',
     marketCap: 0,
+    netDebt: 0,
     revenue: 0,
     ebitda: 0,
     netIncome: 0,
@@ -302,30 +315,29 @@ export default function PublicComparablesPage() {
 
   const addNewCompany = () => {
     if (newCompany.ticker && newCompany.name) {
+      const marketCap = newCompany.marketCap || 0
+      const netDebt = newCompany.netDebt || 0
+      const enterpriseValue = marketCap + netDebt
+      const revenue = newCompany.revenue || 0
+      const ebitda = newCompany.ebitda || 0
+      const netIncome = newCompany.netIncome || 0
+
       const company: ComparableCompany = {
         id: Date.now().toString(),
         ticker: newCompany.ticker!,
         name: newCompany.name!,
         industry: newCompany.industry || 'Other',
-        marketCap: newCompany.marketCap || 0,
-        revenue: newCompany.revenue || 0,
-        ebitda: newCompany.ebitda || 0,
-        netIncome: newCompany.netIncome || 0,
-        evRevenue:
-          newCompany.marketCap && newCompany.revenue
-            ? newCompany.marketCap / newCompany.revenue
-            : 0,
-        evEbitda:
-          newCompany.marketCap && newCompany.ebitda ? newCompany.marketCap / newCompany.ebitda : 0,
-        peRatio:
-          newCompany.marketCap && newCompany.netIncome
-            ? newCompany.marketCap / newCompany.netIncome
-            : 0,
+        marketCap,
+        netDebt,
+        enterpriseValue,
+        revenue,
+        ebitda,
+        netIncome,
+        evRevenue: revenue > 0 ? enterpriseValue / revenue : 0,
+        evEbitda: ebitda > 0 ? enterpriseValue / ebitda : 0,
+        peRatio: netIncome > 0 ? marketCap / netIncome : 0,
         revenueGrowth: 0,
-        ebitdaMargin:
-          newCompany.revenue && newCompany.ebitda
-            ? (newCompany.ebitda / newCompany.revenue) * 100
-            : 0,
+        ebitdaMargin: revenue > 0 ? (ebitda / revenue) * 100 : 0,
         selected: false,
       }
       setComparables((prev) => [...prev, company])
@@ -424,6 +436,19 @@ export default function PublicComparablesPage() {
                     />
                   </div>
                   <div className="grid gap-2">
+                    <Label>Net Debt ($M)</Label>
+                    <Input
+                      type="number"
+                      value={newCompany.netDebt || ''}
+                      onChange={(e) =>
+                        setNewCompany({ ...newCompany, netDebt: Number(e.target.value) })
+                      }
+                      placeholder="Use negative for net cash"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
                     <Label>Revenue ($M)</Label>
                     <Input
                       type="number"
@@ -433,8 +458,6 @@ export default function PublicComparablesPage() {
                       }
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>EBITDA ($M)</Label>
                     <Input
@@ -445,16 +468,16 @@ export default function PublicComparablesPage() {
                       }
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label>Net Income ($M)</Label>
-                    <Input
-                      type="number"
-                      value={newCompany.netIncome || ''}
-                      onChange={(e) =>
-                        setNewCompany({ ...newCompany, netIncome: Number(e.target.value) })
-                      }
-                    />
-                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Net Income ($M)</Label>
+                  <Input
+                    type="number"
+                    value={newCompany.netIncome || ''}
+                    onChange={(e) =>
+                      setNewCompany({ ...newCompany, netIncome: Number(e.target.value) })
+                    }
+                  />
                 </div>
               </div>
               <div className="flex justify-end">
@@ -484,22 +507,35 @@ export default function PublicComparablesPage() {
             <AlphaVantageImport
               valuationId={valuationId}
               onImport={(companies) => {
-                const newCompanies: ComparableCompany[] = companies.map((company) => ({
-                  id: `av_${company.ticker}_${Date.now()}`,
-                  ticker: company.ticker,
-                  name: company.name,
-                  industry: company.sector || 'Technology',
-                  marketCap: company.marketCap / 1000000, // Convert to millions
-                  revenue: company.revenue / 1000000,
-                  ebitda: company.ebitda / 1000000,
-                  netIncome: company.netIncome / 1000000,
-                  evRevenue: company.evToRevenue || 0,
-                  evEbitda: company.evToEbitda || 0,
-                  peRatio: company.peRatio || 0,
-                  revenueGrowth: 0, // Not provided by Alpha Vantage in basic call
-                  ebitdaMargin: company.profitMargin || 0,
-                  selected: false,
-                }))
+                const newCompanies: ComparableCompany[] = companies.map((company) => {
+                  const marketCap = company.marketCap / 1000000 // Convert to millions
+                  const netDebt =
+                    ((company as any).totalDebt || 0) / 1000000 -
+                    ((company as any).cash || 0) / 1000000
+                  const enterpriseValue = marketCap + netDebt
+                  const revenue = company.revenue / 1000000
+                  const ebitda = company.ebitda / 1000000
+                  const netIncome = company.netIncome / 1000000
+
+                  return {
+                    id: `av_${company.ticker}_${Date.now()}`,
+                    ticker: company.ticker,
+                    name: company.name,
+                    industry: company.sector || 'Technology',
+                    marketCap,
+                    netDebt,
+                    enterpriseValue,
+                    revenue,
+                    ebitda,
+                    netIncome,
+                    evRevenue: revenue > 0 ? enterpriseValue / revenue : 0,
+                    evEbitda: ebitda > 0 ? enterpriseValue / ebitda : 0,
+                    peRatio: company.peRatio || 0,
+                    revenueGrowth: 0, // Not provided by Alpha Vantage in basic call
+                    ebitdaMargin: company.profitMargin || 0,
+                    selected: false,
+                  }
+                })
 
                 // Avoid duplicates based on ticker
                 const existingTickers = new Set(comparables.map((c) => c.ticker))

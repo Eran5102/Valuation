@@ -309,14 +309,6 @@ export function PeerCompaniesAnalysis({ valuationId, onBetaSelect }: PeerCompani
                           />
                         </TableHead>
                         <TableHead>Company</TableHead>
-                        <TableHead
-                          className="cursor-pointer"
-                          onClick={() => handleSort('marketCap')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Market Cap <SortIcon field="marketCap" />
-                          </div>
-                        </TableHead>
                         <TableHead className="cursor-pointer" onClick={() => handleSort('beta')}>
                           <div className="flex items-center gap-1">
                             Beta <SortIcon field="beta" />
@@ -324,23 +316,34 @@ export function PeerCompaniesAnalysis({ valuationId, onBetaSelect }: PeerCompani
                         </TableHead>
                         <TableHead
                           className="cursor-pointer"
-                          onClick={() => handleSort('evToRevenue')}
+                          onClick={() => handleSort('debtToEquity')}
                         >
                           <div className="flex items-center gap-1">
-                            EV/Rev <SortIcon field="evToRevenue" />
+                            D/E Ratio <SortIcon field="debtToEquity" />
                           </div>
                         </TableHead>
                         <TableHead
                           className="cursor-pointer"
-                          onClick={() => handleSort('evToEbitda')}
+                          onClick={() => handleSort('totalDebt')}
                         >
                           <div className="flex items-center gap-1">
-                            EV/EBITDA <SortIcon field="evToEbitda" />
+                            Total Debt <SortIcon field="totalDebt" />
                           </div>
                         </TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('peRatio')}>
+                        <TableHead
+                          className="cursor-pointer"
+                          onClick={() => handleSort('totalEquity')}
+                        >
                           <div className="flex items-center gap-1">
-                            P/E <SortIcon field="peRatio" />
+                            Total Equity <SortIcon field="totalEquity" />
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="cursor-pointer"
+                          onClick={() => handleSort('marketCap')}
+                        >
+                          <div className="flex items-center gap-1">
+                            Market Cap <SortIcon field="marketCap" />
                           </div>
                         </TableHead>
                       </TableRow>
@@ -369,11 +372,11 @@ export function PeerCompaniesAnalysis({ valuationId, onBetaSelect }: PeerCompani
                               <div className="text-xs text-muted-foreground">{peer.name}</div>
                             </div>
                           </TableCell>
-                          <TableCell>{formatCurrency(peer.marketCap)}</TableCell>
                           <TableCell>{formatMetric(peer.beta)}</TableCell>
-                          <TableCell>{formatMetric(peer.evToRevenue, 1)}x</TableCell>
-                          <TableCell>{formatMetric(peer.evToEbitda, 1)}x</TableCell>
-                          <TableCell>{formatMetric(peer.peRatio, 1)}x</TableCell>
+                          <TableCell>{formatMetric(peer.debtToEquity, 2)}</TableCell>
+                          <TableCell>{formatCurrency(peer.totalDebt)}</TableCell>
+                          <TableCell>{formatCurrency(peer.totalEquity)}</TableCell>
+                          <TableCell>{formatCurrency(peer.marketCap)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

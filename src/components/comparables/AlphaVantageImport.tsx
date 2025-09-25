@@ -21,6 +21,8 @@ interface AlphaVantageCompany {
   revenue: number
   ebitda: number
   netIncome: number
+  totalDebt?: number
+  cash?: number
   evToRevenue?: number
   evToEbitda?: number
   peRatio?: number
