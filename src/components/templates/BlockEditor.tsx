@@ -20,6 +20,7 @@ import { Settings, Palette, Eye, EyeOff } from 'lucide-react'
 import type { TemplateBlock, TemplateVariable } from '@/lib/templates/types'
 
 import { VariablePicker } from './VariablePicker'
+import { LightweightTableEditor } from './LightweightTableEditor'
 
 interface BlockEditorProps {
   block: TemplateBlock
@@ -138,14 +139,11 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
       case 'table':
         return (
           <div className="space-y-4">
-            <div className="rounded border-2 border-dashed border-border p-4 text-center">
-              <p className="text-muted-foreground">
-                Table editor will be implemented in the next phase
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                This will include the table bank and advanced editing features
-              </p>
-            </div>
+            <LightweightTableEditor
+              value={block.content}
+              onChange={handleContentChange}
+              variables={variables.map((v) => ({ id: v.id, name: v.name }))}
+            />
           </div>
         )
 

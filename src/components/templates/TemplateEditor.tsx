@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, lazy, Suspense } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -42,10 +42,20 @@ import { BlockLibrary } from './BlockLibrary'
 import { TemplateCanvas } from './TemplateCanvas'
 import { BlockEditor } from './BlockEditor'
 import { VariablePicker } from './VariablePicker'
-import { EnhancedFieldPicker } from './EnhancedFieldPicker'
-import { SavedBlocksManager } from './SavedBlocksManager'
-import { TemplatePreview } from './TemplatePreview'
-import { TemplateSettings } from './TemplateSettings'
+
+// Lazy load heavy components for better performance
+const EnhancedFieldPicker = lazy(() =>
+  import('./EnhancedFieldPicker').then((mod) => ({ default: mod.EnhancedFieldPicker }))
+)
+const SavedBlocksManager = lazy(() =>
+  import('./SavedBlocksManager').then((mod) => ({ default: mod.SavedBlocksManager }))
+)
+const TemplatePreview = lazy(() =>
+  import('./TemplatePreview').then((mod) => ({ default: mod.TemplatePreview }))
+)
+const TemplateSettings = lazy(() =>
+  import('./TemplateSettings').then((mod) => ({ default: mod.TemplateSettings }))
+)
 
 interface TemplateEditorProps {
   template: ReportTemplate
@@ -528,27 +538,51 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
                       <BlockLibrary />
                     </TabsContent>
                     <TabsContent value="saved" className="flex-1 overflow-hidden p-3">
-                      <SavedBlocksManager
-                        currentBlock={selectedBlock}
-                        onBlockSelect={(block) => {
-                          if (currentSection) {
-                            handleBlockAdd(currentSection.id, block)
-                          }
-                        }}
-                      />
+                      <Suspense
+                        fallback={
+                          <div className="flex h-full items-center justify-center">
+                            <div className="text-center">
+                              <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                              <p className="text-sm text-muted-foreground">
+                                Loading saved blocks...
+                              </p>
+                            </div>
+                          </div>
+                        }
+                      >
+                        <SavedBlocksManager
+                          currentBlock={selectedBlock}
+                          onBlockSelect={(block) => {
+                            if (currentSection) {
+                              handleBlockAdd(currentSection.id, block)
+                            }
+                          }}
+                        />
+                      </Suspense>
                     </TabsContent>
                   </Tabs>
 
                   <div className="flex-shrink-0 border-t border-border">
-                    <EnhancedFieldPicker
-                      variables={currentTemplate.variables}
-                      onFieldSelect={(variable) => {
-                        // Copy field reference to clipboard
-                        navigator.clipboard.writeText(`{{${variable.id}}}`)
-                        console.log('Field copied:', variable)
-                      }}
-                      className="h-64"
-                    />
+                    <Suspense
+                      fallback={
+                        <div className="flex h-64 items-center justify-center">
+                          <div className="text-center">
+                            <div className="border-3 mx-auto h-6 w-6 animate-spin rounded-full border-primary border-t-transparent" />
+                            <p className="mt-2 text-xs text-muted-foreground">Loading fields...</p>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <EnhancedFieldPicker
+                        variables={currentTemplate.variables}
+                        onFieldSelect={(variable) => {
+                          // Copy field reference to clipboard
+                          navigator.clipboard.writeText(`{{${variable.id}}}`)
+                          console.log('Field copied:', variable)
+                        }}
+                        className="h-64"
+                      />
+                    </Suspense>
                   </div>
                 </div>
 
@@ -684,12 +718,34 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
 
           {/* Preview Tab */}
           <TabsContent value="preview" className="m-0 flex-1 overflow-y-auto p-0">
-            <TemplatePreview template={currentTemplate} />
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <div className="mx-auto mb-2 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-muted-foreground">Generating preview...</p>
+                  </div>
+                </div>
+              }
+            >
+              <TemplatePreview template={currentTemplate} />
+            </Suspense>
           </TabsContent>
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="flex-1 overflow-y-auto p-4">
-            <TemplateSettings template={currentTemplate} onChange={handleTemplateChange} />
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <div className="mx-auto mb-2 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-muted-foreground">Loading settings...</p>
+                  </div>
+                </div>
+              }
+            >
+              <TemplateSettings template={currentTemplate} onChange={handleTemplateChange} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
