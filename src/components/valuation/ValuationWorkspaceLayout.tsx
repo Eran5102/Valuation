@@ -13,6 +13,8 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
+  ArrowLeft,
   Building2,
   TrendingUp,
   DollarSign,
@@ -475,6 +477,20 @@ export default function ValuationWorkspaceLayout({
         collapsedWidth="w-20"
         header={
           <div>
+            {/* Back to Main App Button */}
+            <div className="mb-4">
+              <Link href="/valuations">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-gray-300 hover:bg-white/10 hover:text-white"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {!isCollapsed && <span>Back to Valuations</span>}
+                </Button>
+              </Link>
+            </div>
+
             <div className="mb-4 flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2 font-semibold text-gray-100">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
