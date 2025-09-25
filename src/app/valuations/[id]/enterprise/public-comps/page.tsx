@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,15 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { OptimizedDataTable } from '@/components/ui/optimized-data-table'
+import { ColumnDef } from '@tanstack/react-table'
 import {
   Dialog,
   DialogContent,
@@ -44,8 +37,12 @@ import {
   AlertCircle,
   Search,
   Filter,
+  Download,
+  RefreshCw,
 } from 'lucide-react'
 import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
+import { AlphaVantageImport } from '@/components/comparables/AlphaVantageImport'
+import { toast } from 'sonner'
 
 interface ComparableCompany {
   id: string
@@ -153,9 +150,9 @@ export default function PublicComparablesPage() {
   const { valuation, updateAssumptions } = useValuationWorkspace()
 
   const [comparables, setComparables] = useState<ComparableCompany[]>(sampleComps)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedIndustry, setSelectedIndustry] = useState<string>('all')
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showAlphaVantage, setShowAlphaVantage] = useState(false)
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
 
   // New company form state
   const [newCompany, setNewCompany] = useState<Partial<ComparableCompany>>({
@@ -169,7 +166,7 @@ export default function PublicComparablesPage() {
   })
 
   // Calculate statistics for selected companies
-  const selectedComps = comparables.filter((c) => c.selected)
+  const selectedComps = comparables.filter((c) => selectedRows.has(c.id))
 
   const calculateStats = () => {
     if (selectedComps.length === 0) {
@@ -223,20 +220,56 @@ export default function PublicComparablesPage() {
 
   const stats = calculateStats()
 
-  // Filter comparables based on search and industry
-  const filteredComps = comparables.filter((comp) => {
-    const matchesSearch =
-      comp.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      comp.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesIndustry = selectedIndustry === 'all' || comp.industry === selectedIndustry
-    return matchesSearch && matchesIndustry
-  })
-
-  const toggleCompanySelection = (id: string) => {
-    setComparables((prev) =>
-      prev.map((comp) => (comp.id === id ? { ...comp, selected: !comp.selected } : comp))
-    )
-  }
+  // Define columns for OptimizedDataTable
+  const columns: ColumnDef<ComparableCompany>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'ticker',
+        header: 'Ticker',
+        cell: ({ row }) => <span className="font-medium">{row.getValue('ticker')}</span>,
+      },
+      {
+        accessorKey: 'name',
+        header: 'Company',
+      },
+      {
+        accessorKey: 'industry',
+        header: 'Industry',
+        cell: ({ row }) => <Badge variant="outline">{row.getValue('industry')}</Badge>,
+      },
+      {
+        accessorKey: 'marketCap',
+        header: 'Market Cap',
+        cell: ({ row }) => `$${((row.getValue('marketCap') as number) / 1000).toFixed(0)}B`,
+      },
+      {
+        accessorKey: 'revenue',
+        header: 'Revenue',
+        cell: ({ row }) => `$${((row.getValue('revenue') as number) / 1000).toFixed(0)}B`,
+      },
+      {
+        accessorKey: 'ebitda',
+        header: 'EBITDA',
+        cell: ({ row }) => `$${((row.getValue('ebitda') as number) / 1000).toFixed(0)}B`,
+      },
+      {
+        accessorKey: 'evRevenue',
+        header: 'EV/Revenue',
+        cell: ({ row }) => `${(row.getValue('evRevenue') as number).toFixed(1)}x`,
+      },
+      {
+        accessorKey: 'evEbitda',
+        header: 'EV/EBITDA',
+        cell: ({ row }) => `${(row.getValue('evEbitda') as number).toFixed(1)}x`,
+      },
+      {
+        accessorKey: 'peRatio',
+        header: 'P/E Ratio',
+        cell: ({ row }) => `${(row.getValue('peRatio') as number).toFixed(1)}x`,
+      },
+    ],
+    []
+  )
 
   const removeCompany = (id: string) => {
     setComparables((prev) => prev.filter((comp) => comp.id !== id))
@@ -300,6 +333,10 @@ export default function PublicComparablesPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setShowAlphaVantage(!showAlphaVantage)} variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            {showAlphaVantage ? 'Hide Alpha Vantage' : 'Import from Alpha Vantage'}
+          </Button>
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button>
@@ -406,36 +443,59 @@ export default function PublicComparablesPage() {
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by ticker or name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Industries</SelectItem>
-                <SelectItem value="Technology">Technology</SelectItem>
-                <SelectItem value="Healthcare">Healthcare</SelectItem>
-                <SelectItem value="Financial">Financial</SelectItem>
-                <SelectItem value="Consumer">Consumer</SelectItem>
-                <SelectItem value="Industrial">Industrial</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Alpha Vantage Integration */}
+      {showAlphaVantage && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Alpha Vantage Market Data
+            </CardTitle>
+            <CardDescription>
+              Import peer companies and their fundamentals directly from Alpha Vantage
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlphaVantageImport
+              valuationId={valuationId}
+              onImport={(companies) => {
+                const newCompanies: ComparableCompany[] = companies.map((company) => ({
+                  id: `av_${company.ticker}_${Date.now()}`,
+                  ticker: company.ticker,
+                  name: company.name,
+                  industry: company.sector || 'Technology',
+                  marketCap: company.marketCap / 1000000, // Convert to millions
+                  revenue: company.revenue / 1000000,
+                  ebitda: company.ebitda / 1000000,
+                  netIncome: company.netIncome / 1000000,
+                  evRevenue: company.evToRevenue || 0,
+                  evEbitda: company.evToEbitda || 0,
+                  peRatio: company.peRatio || 0,
+                  revenueGrowth: 0, // Not provided by Alpha Vantage in basic call
+                  ebitdaMargin: company.profitMargin || 0,
+                  selected: false,
+                }))
+
+                // Avoid duplicates based on ticker
+                const existingTickers = new Set(comparables.map((c) => c.ticker))
+                const uniqueNewCompanies = newCompanies.filter(
+                  (c) => !existingTickers.has(c.ticker)
+                )
+
+                setComparables((prev) => [...prev, ...uniqueNewCompanies])
+
+                // Auto-select imported companies
+                const newIds = new Set(selectedRows)
+                uniqueNewCompanies.forEach((c) => newIds.add(c.id))
+                setSelectedRows(newIds)
+
+                toast.success(`Imported ${uniqueNewCompanies.length} companies from Alpha Vantage`)
+                setShowAlphaVantage(false)
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="comparables" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -454,74 +514,27 @@ export default function PublicComparablesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={filteredComps.every((c) => c.selected)}
-                        onCheckedChange={(checked) => {
-                          setComparables((prev) =>
-                            prev.map((c) => ({
-                              ...c,
-                              selected: checked as boolean,
-                            }))
-                          )
-                        }}
-                      />
-                    </TableHead>
-                    <TableHead>Ticker</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Industry</TableHead>
-                    <TableHead className="text-right">Market Cap</TableHead>
-                    <TableHead className="text-right">Revenue</TableHead>
-                    <TableHead className="text-right">EBITDA</TableHead>
-                    <TableHead className="text-right">EV/Revenue</TableHead>
-                    <TableHead className="text-right">EV/EBITDA</TableHead>
-                    <TableHead className="text-right">P/E</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredComps.map((comp) => (
-                    <TableRow key={comp.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={comp.selected}
-                          onCheckedChange={() => toggleCompanySelection(comp.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{comp.ticker}</TableCell>
-                      <TableCell>{comp.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{comp.industry}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ${(comp.marketCap / 1000).toFixed(0)}B
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ${(comp.revenue / 1000).toFixed(0)}B
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ${(comp.ebitda / 1000).toFixed(0)}B
-                      </TableCell>
-                      <TableCell className="text-right">{comp.evRevenue.toFixed(1)}x</TableCell>
-                      <TableCell className="text-right">{comp.evEbitda.toFixed(1)}x</TableCell>
-                      <TableCell className="text-right">{comp.peRatio.toFixed(1)}x</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => removeCompany(comp.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {filteredComps.length === 0 && (
-                <div className="py-8 text-center text-muted-foreground">
-                  No companies found matching your criteria
-                </div>
-              )}
+              <OptimizedDataTable
+                data={comparables}
+                columns={columns}
+                searchKey="name"
+                enableRowSelection={true}
+                selectedRows={selectedRows}
+                onRowSelectionChange={(selection) => {
+                  setSelectedRows(new Set(selection))
+                }}
+                getRowId={(row) => row.id}
+                enableColumnFilters={true}
+                enableSorting={true}
+                enablePagination={true}
+                pageSize={10}
+                onRowDelete={(rowIds) => {
+                  setComparables((prev) => prev.filter((c) => !rowIds.includes(c.id)))
+                  const newSelected = new Set(selectedRows)
+                  rowIds.forEach((id) => newSelected.delete(id))
+                  setSelectedRows(newSelected)
+                }}
+              />
             </CardContent>
           </Card>
         </TabsContent>
