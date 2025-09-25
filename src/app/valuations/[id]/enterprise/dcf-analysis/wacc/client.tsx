@@ -101,6 +101,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
   const [isCalculating, setIsCalculating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [activeTab, setActiveTab] = useState('peer-analysis')
 
   // New peer dialog state
   const [newPeerOpen, setNewPeerOpen] = useState(false)
@@ -398,7 +399,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
         </Card>
       </div>
 
-      <Tabs defaultValue="peer-analysis" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="peer-analysis">Peer Beta Analysis</TabsTrigger>
           <TabsTrigger value="alpha-vantage">Market Data</TabsTrigger>
@@ -419,7 +420,14 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setShowPeerAnalysis(true)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setActiveTab('alpha-vantage')
+                      setShowPeerAnalysis(true)
+                    }}
+                  >
                     <Download className="mr-2 h-4 w-4" />
                     Import from Alpha Vantage
                   </Button>
@@ -566,6 +574,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
                 setHasChanges(true)
                 toast.success(`Added ${source} beta: ${beta.toFixed(3)}`)
                 setShowPeerAnalysis(false)
+                setActiveTab('peer-analysis')
               }}
             />
           ) : (
