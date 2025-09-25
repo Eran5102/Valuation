@@ -91,48 +91,55 @@ export function AlphaVantageImport({ valuationId, onImport }: AlphaVantageImport
       {
         accessorKey: 'ticker',
         header: 'Ticker',
-        cell: ({ row }) => <span className="font-medium">{row.getValue('ticker')}</span>,
+        cell: ({ getValue }) => {
+          const value = getValue() as string
+          return <span className="font-medium">{value || '-'}</span>
+        },
       },
       {
         accessorKey: 'name',
         header: 'Company',
+        cell: ({ getValue }) => getValue() || '-',
       },
       {
         accessorKey: 'sector',
         header: 'Sector',
-        cell: ({ row }) => <Badge variant="outline">{row.getValue('sector')}</Badge>,
+        cell: ({ getValue }) => {
+          const value = getValue() as string
+          return value ? <Badge variant="outline">{value}</Badge> : '-'
+        },
       },
       {
         accessorKey: 'marketCap',
         header: 'Market Cap',
-        cell: ({ row }) => formatCurrency(row.getValue('marketCap')),
+        cell: ({ getValue }) => formatCurrency(getValue() as number),
       },
       {
         accessorKey: 'revenue',
         header: 'Revenue',
-        cell: ({ row }) => formatCurrency(row.getValue('revenue')),
+        cell: ({ getValue }) => formatCurrency(getValue() as number),
       },
       {
         accessorKey: 'evToRevenue',
         header: 'EV/Rev',
-        cell: ({ row }) => {
-          const value = row.getValue('evToRevenue') as number | undefined
+        cell: ({ getValue }) => {
+          const value = getValue() as number | undefined
           return value ? `${value.toFixed(1)}x` : '-'
         },
       },
       {
         accessorKey: 'evToEbitda',
         header: 'EV/EBITDA',
-        cell: ({ row }) => {
-          const value = row.getValue('evToEbitda') as number | undefined
+        cell: ({ getValue }) => {
+          const value = getValue() as number | undefined
           return value ? `${value.toFixed(1)}x` : '-'
         },
       },
       {
         accessorKey: 'peRatio',
         header: 'P/E',
-        cell: ({ row }) => {
-          const value = row.getValue('peRatio') as number | undefined
+        cell: ({ getValue }) => {
+          const value = getValue() as number | undefined
           return value ? `${value.toFixed(1)}x` : '-'
         },
       },

@@ -226,62 +226,69 @@ export default function PublicComparablesPage() {
       {
         accessorKey: 'ticker',
         header: 'Ticker',
-        cell: ({ row }) => <span className="font-medium">{row.getValue('ticker')}</span>,
+        cell: ({ getValue }) => {
+          const value = getValue() as string
+          return <span className="font-medium">{value || '-'}</span>
+        },
       },
       {
         accessorKey: 'name',
         header: 'Company',
+        cell: ({ getValue }) => getValue() || '-',
       },
       {
         accessorKey: 'industry',
         header: 'Industry',
-        cell: ({ row }) => <Badge variant="outline">{row.getValue('industry')}</Badge>,
+        cell: ({ getValue }) => {
+          const value = getValue() as string
+          return value ? <Badge variant="outline">{value}</Badge> : '-'
+        },
       },
       {
         accessorKey: 'marketCap',
         header: 'Market Cap',
-        cell: ({ row }) => {
-          const value = row.getValue('marketCap') as number
+        cell: ({ getValue }) => {
+          const value = getValue() as number
           return value != null ? `$${(value / 1000).toFixed(0)}B` : '-'
         },
       },
       {
         accessorKey: 'revenue',
         header: 'Revenue',
-        cell: ({ row }) => {
-          const value = row.getValue('revenue') as number
+        cell: ({ getValue }) => {
+          const value = getValue() as number
           return value != null ? `$${(value / 1000).toFixed(0)}B` : '-'
         },
       },
       {
         accessorKey: 'ebitda',
         header: 'EBITDA',
-        cell: ({ row }) => {
-          const value = row.getValue('ebitda') as number
+        cell: ({ getValue }) => {
+          const value = getValue() as number
           return value != null ? `$${(value / 1000).toFixed(0)}B` : '-'
         },
       },
       {
         accessorKey: 'evRevenue',
         header: 'EV/Revenue',
-        cell: ({ row }) => {
-          const value = row.getValue('evRevenue') as number
+        cell: ({ getValue }) => {
+          const value = getValue() as number
           return value != null ? `${value.toFixed(1)}x` : '-'
         },
       },
       {
         accessorKey: 'evEbitda',
         header: 'EV/EBITDA',
-        cell: ({ row }) => {
-          const value = row.getValue('evEbitda') as number
+        cell: ({ getValue }) => {
+          const value = getValue() as number
           return value != null ? `${value.toFixed(1)}x` : '-'
         },
       },
       {
         accessorKey: 'peRatio',
         header: 'P/E Ratio',
-        cell: ({ row }) => {
-          const value = row.getValue('peRatio') as number
+        cell: ({ getValue }) => {
+          const value = getValue() as number
           return value != null ? `${value.toFixed(1)}x` : '-'
         },
       },
