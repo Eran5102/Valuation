@@ -39,6 +39,9 @@ import {
   Filter,
   Download,
   RefreshCw,
+  Edit2,
+  Table,
+  Eye,
 } from 'lucide-react'
 import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
 import { AlphaVantageImport } from '@/components/comparables/AlphaVantageImport'
@@ -237,6 +240,37 @@ export default function PublicComparablesPage() {
   const columns: ColumnDef<ComparableCompany>[] = useMemo(
     () => [
       {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => {
+          const company = row.original
+          return (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  setNewCompany(company)
+                  setShowAddDialog(true)
+                }}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive"
+                onClick={() => removeCompany(company.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )
+        },
+        size: 100,
+      },
+      {
         accessorKey: 'ticker',
         header: 'Ticker',
         cell: ({ getValue }) => {
@@ -323,7 +357,7 @@ export default function PublicComparablesPage() {
       const netIncome = newCompany.netIncome || 0
 
       const company: ComparableCompany = {
-        id: Date.now().toString(),
+        id: newCompany.id || Date.now().toString(),
         ticker: newCompany.ticker!,
         name: newCompany.name!,
         industry: newCompany.industry || 'Other',
@@ -336,11 +370,21 @@ export default function PublicComparablesPage() {
         evRevenue: revenue > 0 ? enterpriseValue / revenue : 0,
         evEbitda: ebitda > 0 ? enterpriseValue / ebitda : 0,
         peRatio: netIncome > 0 ? marketCap / netIncome : 0,
-        revenueGrowth: 0,
+        revenueGrowth: newCompany.revenueGrowth || 0,
         ebitdaMargin: revenue > 0 ? (ebitda / revenue) * 100 : 0,
-        selected: false,
+        selected: newCompany.selected || false,
       }
-      setComparables((prev) => [...prev, company])
+
+      if (newCompany.id) {
+        // Update existing company
+        setComparables((prev) => prev.map((c) => (c.id === company.id ? company : c)))
+        toast.success('Company updated successfully')
+      } else {
+        // Add new company
+        setComparables((prev) => [...prev, company])
+        toast.success('Company added successfully')
+      }
+
       setNewCompany({})
       setShowAddDialog(false)
     }
@@ -360,7 +404,7 @@ export default function PublicComparablesPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
+    <div className="h-full space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -559,10 +603,19 @@ export default function PublicComparablesPage() {
       )}
 
       <Tabs defaultValue="comparables" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="comparables">Comparables Table</TabsTrigger>
-          <TabsTrigger value="statistics">Statistical Analysis</TabsTrigger>
-          <TabsTrigger value="visualization">Visualization</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="comparables" className="flex items-center gap-2">
+            <Table className="h-4 w-4" />
+            Comparables Table
+          </TabsTrigger>
+          <TabsTrigger value="statistics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Statistical Analysis
+          </TabsTrigger>
+          <TabsTrigger value="visualization" className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Visualization
+          </TabsTrigger>
         </TabsList>
 
         {/* Comparables Table */}

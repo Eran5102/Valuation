@@ -31,6 +31,11 @@ import {
   AlertCircle,
   Save,
   BarChart3,
+  Users,
+  Database,
+  DollarSign,
+  Building2,
+  Sliders,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
@@ -400,12 +405,27 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="peer-analysis">Peer Beta Analysis</TabsTrigger>
-          <TabsTrigger value="alpha-vantage">Market Data</TabsTrigger>
-          <TabsTrigger value="cost-of-equity">Cost of Equity</TabsTrigger>
-          <TabsTrigger value="capital-structure">Capital Structure</TabsTrigger>
-          <TabsTrigger value="optimization">Optimization</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="peer-analysis" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Peer Beta Analysis
+          </TabsTrigger>
+          <TabsTrigger value="alpha-vantage" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Market Data
+          </TabsTrigger>
+          <TabsTrigger value="cost-of-equity" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Cost of Equity
+          </TabsTrigger>
+          <TabsTrigger value="capital-structure" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Capital Structure
+          </TabsTrigger>
+          <TabsTrigger value="optimization" className="flex items-center gap-2">
+            <Sliders className="h-4 w-4" />
+            Optimization
+          </TabsTrigger>
         </TabsList>
 
         {/* Peer Beta Analysis Tab */}

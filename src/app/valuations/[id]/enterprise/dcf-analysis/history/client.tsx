@@ -458,10 +458,19 @@ export function ProjectHistoryClient({ valuationId }: ProjectHistoryClientProps)
       </div>
 
       <Tabs defaultValue="timeline" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="versions">Versions</TabsTrigger>
-          <TabsTrigger value="audit">Audit Trail</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="timeline" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Timeline
+          </TabsTrigger>
+          <TabsTrigger value="versions" className="flex items-center gap-2">
+            <GitBranch className="h-4 w-4" />
+            Versions
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Audit Trail
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="timeline" className="space-y-4">

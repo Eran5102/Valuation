@@ -841,12 +841,27 @@ export function ProjectedFinancialsClient({ valuationId }: ProjectedFinancialsCl
       </Card>
 
       <Tabs defaultValue="income" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="income">Income Statement</TabsTrigger>
-          <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
-          <TabsTrigger value="balance">Balance Sheet</TabsTrigger>
-          <TabsTrigger value="metrics">Metrics</TabsTrigger>
-          <TabsTrigger value="charts">Charts</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="income" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Income Statement
+          </TabsTrigger>
+          <TabsTrigger value="cashflow" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Cash Flow
+          </TabsTrigger>
+          <TabsTrigger value="balance" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Balance Sheet
+          </TabsTrigger>
+          <TabsTrigger value="metrics" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Metrics
+          </TabsTrigger>
+          <TabsTrigger value="charts" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Charts
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="income" className="space-y-4">

@@ -220,17 +220,29 @@ export default function EnterpriseValuationPage() {
 
       {/* Approach Details */}
       <Tabs value={activeApproach} onValueChange={setActiveApproach}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="market" disabled={!selectedMethods.market}>
-            <BarChart3 className="mr-2 h-4 w-4" />
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger
+            value="market"
+            disabled={!selectedMethods.market}
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
             Market
           </TabsTrigger>
-          <TabsTrigger value="income" disabled={!selectedMethods.income}>
-            <DollarSign className="mr-2 h-4 w-4" />
+          <TabsTrigger
+            value="income"
+            disabled={!selectedMethods.income}
+            className="flex items-center gap-2"
+          >
+            <DollarSign className="h-4 w-4" />
             Income
           </TabsTrigger>
-          <TabsTrigger value="asset" disabled={!selectedMethods.asset}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
+          <TabsTrigger
+            value="asset"
+            disabled={!selectedMethods.asset}
+            className="flex items-center gap-2"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
             Asset
           </TabsTrigger>
         </TabsList>

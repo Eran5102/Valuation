@@ -392,9 +392,15 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
       )}
 
       <Tabs defaultValue="projections" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="projections">Financial Projections</TabsTrigger>
-          <TabsTrigger value="sensitivity">Sensitivity Analysis</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="projections" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Financial Projections
+          </TabsTrigger>
+          <TabsTrigger value="sensitivity" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Sensitivity Analysis
+          </TabsTrigger>
         </TabsList>
 
         {/* Projections Tab */}

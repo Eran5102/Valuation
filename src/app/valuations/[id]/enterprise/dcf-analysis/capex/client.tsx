@@ -744,11 +744,23 @@ export function CapexDepreciationClient({ valuationId }: CapexDepreciationClient
       </div>
 
       <Tabs defaultValue="assets" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="assets">Asset Classes</TabsTrigger>
-          <TabsTrigger value="projections">Projections</TabsTrigger>
-          <TabsTrigger value="assumptions">Assumptions</TabsTrigger>
-          <TabsTrigger value="charts">Analysis</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="assets" className="flex items-center gap-2">
+            <Package2 className="h-4 w-4" />
+            Asset Classes
+          </TabsTrigger>
+          <TabsTrigger value="projections" className="flex items-center gap-2">
+            <TrendingDown className="h-4 w-4" />
+            Projections
+          </TabsTrigger>
+          <TabsTrigger value="assumptions" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Assumptions
+          </TabsTrigger>
+          <TabsTrigger value="charts" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Analysis
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="assets" className="space-y-4">

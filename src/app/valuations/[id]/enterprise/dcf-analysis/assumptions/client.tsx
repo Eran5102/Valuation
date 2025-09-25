@@ -211,11 +211,23 @@ export function DCFAssumptionsClient({ valuationId }: DCFAssumptionsClientProps)
       </div>
 
       <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="terminal">Terminal Year</TabsTrigger>
-          <TabsTrigger value="methods">Calculation Methods</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="terminal" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Terminal Year
+          </TabsTrigger>
+          <TabsTrigger value="methods" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Calculation Methods
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Advanced
+          </TabsTrigger>
         </TabsList>
 
         {/* General Assumptions */}

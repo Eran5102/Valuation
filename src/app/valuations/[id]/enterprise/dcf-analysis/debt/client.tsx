@@ -490,10 +490,19 @@ export function DebtScheduleClient({ valuationId }: DebtScheduleClientProps) {
       </div>
 
       <Tabs defaultValue="debt-items" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="debt-items">Debt Items</TabsTrigger>
-          <TabsTrigger value="projections">Projections</TabsTrigger>
-          <TabsTrigger value="assumptions">Assumptions</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="debt-items" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Debt Items
+          </TabsTrigger>
+          <TabsTrigger value="projections" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Projections
+          </TabsTrigger>
+          <TabsTrigger value="assumptions" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Assumptions
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="debt-items" className="space-y-4">

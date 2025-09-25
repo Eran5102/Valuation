@@ -398,11 +398,23 @@ export function QualitativeAssessmentClient({ valuationId }: QualitativeAssessme
       </div>
 
       <Tabs defaultValue="factors" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="factors">Qualitative Factors</TabsTrigger>
-          <TabsTrigger value="risks">Risk Assessment</TabsTrigger>
-          <TabsTrigger value="swot">SWOT Analysis</TabsTrigger>
-          <TabsTrigger value="visualization">Visualization</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="factors" className="flex items-center gap-2">
+            <Award className="h-4 w-4" />
+            Qualitative Factors
+          </TabsTrigger>
+          <TabsTrigger value="risks" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Risk Assessment
+          </TabsTrigger>
+          <TabsTrigger value="swot" className="flex items-center gap-2">
+            <Lightbulb className="h-4 w-4" />
+            SWOT Analysis
+          </TabsTrigger>
+          <TabsTrigger value="visualization" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Visualization
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="factors" className="space-y-4">

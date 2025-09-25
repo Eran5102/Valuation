@@ -400,11 +400,23 @@ export function ScenarioManagerClient({
 
                 <div className="border-t pt-4">
                   <Tabs defaultValue="core" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="core">Core</TabsTrigger>
-                      <TabsTrigger value="operations">Operations</TabsTrigger>
-                      <TabsTrigger value="balance">Balance Sheet</TabsTrigger>
-                      <TabsTrigger value="growth">Growth</TabsTrigger>
+                    <TabsList className="inline-flex w-auto">
+                      <TabsTrigger value="core" className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Core
+                      </TabsTrigger>
+                      <TabsTrigger value="operations" className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Operations
+                      </TabsTrigger>
+                      <TabsTrigger value="balance" className="flex items-center gap-2">
+                        <TrendingDown className="h-4 w-4" />
+                        Balance Sheet
+                      </TabsTrigger>
+                      <TabsTrigger value="growth" className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Growth
+                      </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="core" className="mt-4 space-y-4">

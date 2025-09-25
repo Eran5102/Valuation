@@ -463,11 +463,23 @@ export function WorkingCapitalClient({ valuationId }: WorkingCapitalClientProps)
       </div>
 
       <Tabs defaultValue="projections" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="projections">Projections</TabsTrigger>
-          <TabsTrigger value="assumptions">Assumptions</TabsTrigger>
-          <TabsTrigger value="analysis">Analysis</TabsTrigger>
-          <TabsTrigger value="charts">Charts</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="projections" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Projections
+          </TabsTrigger>
+          <TabsTrigger value="assumptions" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Assumptions
+          </TabsTrigger>
+          <TabsTrigger value="analysis" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analysis
+          </TabsTrigger>
+          <TabsTrigger value="charts" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Charts
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="projections" className="space-y-4">

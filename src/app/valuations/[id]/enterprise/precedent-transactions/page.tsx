@@ -46,6 +46,8 @@ import {
   Search,
   Filter,
   FileText,
+  BarChart3,
+  Clock,
 } from 'lucide-react'
 import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
 
@@ -503,10 +505,19 @@ export default function PrecedentTransactionsPage() {
       </Card>
 
       <Tabs defaultValue="transactions" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="transactions">Transactions Table</TabsTrigger>
-          <TabsTrigger value="statistics">Statistical Analysis</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline View</TabsTrigger>
+        <TabsList className="inline-flex w-auto">
+          <TabsTrigger value="transactions" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Transactions Table
+          </TabsTrigger>
+          <TabsTrigger value="statistics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Statistical Analysis
+          </TabsTrigger>
+          <TabsTrigger value="timeline" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Timeline View
+          </TabsTrigger>
         </TabsList>
 
         {/* Transactions Table */}

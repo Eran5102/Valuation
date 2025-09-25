@@ -495,15 +495,13 @@ export default function ValuationWorkspaceLayout({
           !isCollapsed && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Completion</span>
-                <span className="font-medium">65%</span>
+                <span className="text-white/70">Completion</span>
+                <span className="font-medium text-white">65%</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div className="h-full w-[65%] bg-primary transition-all" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Complete enterprise valuation to continue
-              </p>
+              <p className="text-xs text-white/70">Complete enterprise valuation to continue</p>
             </div>
           )
         }
