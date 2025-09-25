@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   CommandDialog,
   CommandEmpty,
@@ -74,6 +75,7 @@ export function AppHeader() {
   const { currentOrganization, organizations, switchOrganization } = useOrganization()
   const { theme, setTheme } = useTheme()
   const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
@@ -97,6 +99,10 @@ export function AppHeader() {
   useEffect(() => {
     setUnreadCount(notifications.filter((n) => !n.read).length)
   }, [notifications])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Command palette shortcut
   useEffect(() => {
@@ -255,35 +261,6 @@ export function AppHeader() {
 
             {/* Right side - User actions */}
             <div className="flex items-center gap-2">
-              {/* Theme Toggle */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-gray-200 hover:bg-gray-700 hover:text-white"
-                  >
-                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span className="sr-only">Toggle theme</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setTheme('light')}>
-                    <Sun className="mr-2 h-4 w-4" />
-                    Light
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme('dark')}>
-                    <Moon className="mr-2 h-4 w-4" />
-                    Dark
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme('system')}>
-                    <Laptop className="mr-2 h-4 w-4" />
-                    System
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -352,6 +329,37 @@ export function AppHeader() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Theme Toggle */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (!mounted) return
+                        setTheme(theme === 'dark' ? 'light' : 'dark')
+                      }}
+                      className="h-9 w-9 text-gray-200 hover:bg-gray-700 hover:text-white"
+                    >
+                      {mounted ? (
+                        theme === 'dark' ? (
+                          <Sun className="h-4 w-4" />
+                        ) : (
+                          <Moon className="h-4 w-4" />
+                        )
+                      ) : (
+                        <div className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">Toggle theme</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Toggle theme</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               <Separator orientation="vertical" className="mx-2 h-6 bg-gray-600" />
 

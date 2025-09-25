@@ -3,8 +3,80 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Light mode colors */
+    --background: #f6f7f6;
+    --foreground: #2e3944;
+    --primary: #124e66;
+    --primary-foreground: #ffffff;
+    --secondary: #d3d9d4;
+    --secondary-foreground: #2e3944;
+    --accent: #74bd92;
+    --accent-foreground: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #2e3944;
+    --popover: #ffffff;
+    --popover-foreground: #2e3944;
+    --muted: #d3d9d4;
+    --muted-foreground: #2e3944;
+    --border: #d3d9d4;
+    --input: #d3d9d4;
+    --ring: #74bd92;
+    --destructive: #d92121;
+    --destructive-foreground: #ffffff;
+    --chart-1: #124e66;
+    --chart-2: #74bd92;
+    --chart-3: #2e3944;
+    --chart-4: #d3d9d4;
+    --chart-5: #212a31;
+    --sidebar-background: #ffffff;
+    --sidebar-foreground: #2e3944;
+    --sidebar-primary: #124e66;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #74bd92;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #d3d9d4;
+    --sidebar-ring: #74bd92;
+  }
+
+  .dark {
+    /* Dark mode colors */
+    --background: #212a31;
+    --foreground: #d3d9d4;
+    --primary: #124e66;
+    --primary-foreground: #ffffff;
+    --secondary: #2e3944;
+    --secondary-foreground: #d3d9d4;
+    --accent: #74bd92;
+    --accent-foreground: #ffffff;
+    --card: #212a31;
+    --card-foreground: #d3d9d4;
+    --popover: #212a31;
+    --popover-foreground: #d3d9d4;
+    --muted: #2e3944;
+    --muted-foreground: #d3d9d4;
+    --border: #2e3944;
+    --input: #2e3944;
+    --ring: #74bd92;
+    --destructive: #d92121;
+    --destructive-foreground: #ffffff;
+    --chart-1: #124e66;
+    --chart-2: #74bd92;
+    --chart-3: #2e3944;
+    --chart-4: #d3d9d4;
+    --chart-5: #ffffff;
+    --sidebar-background: #212a31;
+    --sidebar-foreground: #d3d9d4;
+    --sidebar-primary: #124e66;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #74bd92;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #2e3944;
+    --sidebar-ring: #74bd92;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[var(--background)] text-[var(--foreground)];
     font-family:
       system-ui,
       -apple-system,

@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -10,67 +11,67 @@ const config: Config = {
     extend: {
       colors: {
         // Primary Theme Colors
-        background: '#f6f7f6',
-        foreground: '#2E3944',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
         primary: {
-          DEFAULT: '#124E66',
-          foreground: '#ffffff',
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)',
         },
-        
+
         // Secondary & Accent Colors
         secondary: {
-          DEFAULT: '#D3D9D4',
-          foreground: '#2E3944',
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)',
         },
         accent: {
-          DEFAULT: '#74BD92',
-          foreground: '#ffffff',
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
         },
-        
+
         // UI Component Colors
         card: {
-          DEFAULT: '#ffffff',
-          foreground: '#2E3944',
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)',
         },
         popover: {
-          DEFAULT: '#ffffff',
-          foreground: '#2E3944',
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)',
         },
         muted: {
-          DEFAULT: '#D3D9D4',
-          foreground: '#2E3944',
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)',
         },
-        
+
         // Utility & Form Colors
-        border: '#D3D9D4',
-        input: '#D3D9D4',
-        ring: '#74BD92',
-        
+        border: 'var(--border)',
+        input: 'var(--input)',
+        ring: 'var(--ring)',
+
         // Status & Feedback Colors
         destructive: {
-          DEFAULT: '#d92121',
-          foreground: '#ffffff',
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)',
         },
-        
+
         // Chart & Visualization Colors
         chart: {
-          1: '#124E66',
-          2: '#74BD92',
-          3: '#2E3944',
-          4: '#D3D9D4',
-          5: '#212A31',
+          1: 'var(--chart-1)',
+          2: 'var(--chart-2)',
+          3: 'var(--chart-3)',
+          4: 'var(--chart-4)',
+          5: 'var(--chart-5)',
         },
-        
+
         // Sidebar & Navigation Colors
         sidebar: {
-          DEFAULT: '#ffffff',
-          foreground: '#2E3944',
-          primary: '#124E66',
-          'primary-foreground': '#ffffff',
-          accent: '#74BD92',
-          'accent-foreground': '#ffffff',
-          border: '#D3D9D4',
-          ring: '#74BD92',
+          DEFAULT: 'var(--sidebar-background)',
+          foreground: 'var(--sidebar-foreground)',
+          primary: 'var(--sidebar-primary)',
+          'primary-foreground': 'var(--sidebar-primary-foreground)',
+          accent: 'var(--sidebar-accent)',
+          'accent-foreground': 'var(--sidebar-accent-foreground)',
+          border: 'var(--sidebar-border)',
+          ring: 'var(--sidebar-ring)',
         },
       },
     },
