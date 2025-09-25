@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Building2,
   Calculator,
@@ -24,6 +25,9 @@ import AppLayout from '@/components/layout/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOrganization } from '@/contexts/OrganizationContext'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { StatCard, ClickableCard } from '@/components/ui/card-patterns'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 interface DashboardStats {
   myActiveValuations: number
@@ -57,6 +61,7 @@ interface DeadlineItem {
 }
 
 export default function Dashboard() {
+  const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { currentOrganization, loading: orgLoading } = useOrganization()
   console.log('Dashboard render - authLoading:', authLoading, 'user:', !!user)
@@ -74,7 +79,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!authLoading && !orgLoading) {
+    // Don't wait for orgLoading if authLoading is done
+    if (!authLoading) {
       if (user) {
         fetchDashboardData()
       } else {
@@ -82,7 +88,7 @@ export default function Dashboard() {
         setLoading(false)
       }
     }
-  }, [user, currentOrganization, authLoading, orgLoading])
+  }, [user, currentOrganization, authLoading])
 
   const fetchDashboardData = async () => {
     console.log('Fetching dashboard data...')
@@ -314,7 +320,9 @@ export default function Dashboard() {
     }
   }
 
-  if (authLoading || loading) {
+  // Only show loading spinner if we're still fetching data
+  // Don't wait forever for orgLoading
+  if (authLoading || (loading && user)) {
     return (
       <AppLayout>
         <div className="flex h-64 items-center justify-center">
@@ -359,80 +367,35 @@ export default function Dashboard() {
           <div className="p-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {/* Add New Client */}
-              <Link
+              <ClickableCard
+                title="Add New Client"
+                description="Onboard a company for valuation services"
+                icon={PlusCircle}
                 href="/clients/new"
-                className="group relative overflow-hidden rounded-lg border-2 border-transparent bg-card p-6 shadow-md transition-all hover:border-primary/30 hover:shadow-xl"
-              >
-                <div className="absolute right-2 top-2">
-                  <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-primary/10 p-3 transition-colors group-hover:bg-primary/20">
-                    <PlusCircle className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-base font-semibold text-foreground">Add New Client</h4>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Onboard a company for valuation services
-                    </p>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-primary">
-                      <span className="font-medium">Quick setup</span>
-                      <span className="text-muted-foreground">• 2 min</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                badge="2 min"
+                badgeVariant="outline"
+              />
 
               {/* Create Valuation */}
-              <Link
+              <ClickableCard
+                title="Start Valuation"
+                description="409A, M&A, or LBO valuation models"
+                icon={Calculator}
                 href="/valuations/new"
-                className="group relative overflow-hidden rounded-lg border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-xl"
-              >
-                <div className="absolute right-2 top-2">
-                  <ArrowRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
-                </div>
-                <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10" />
-                <div className="relative flex items-start gap-4">
-                  <div className="rounded-lg bg-primary p-3 text-primary-foreground shadow-lg">
-                    <Calculator className="h-8 w-8" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-base font-semibold text-foreground">Start Valuation</h4>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      409A, M&A, or LBO valuation models
-                    </p>
-                    <div className="mt-3 flex items-center gap-2 text-xs">
-                      <span className="font-medium text-primary">Most used</span>
-                      <span className="text-muted-foreground">• Full workflow</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                badge="Most used"
+                badgeVariant="default"
+                className="border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5"
+              />
 
               {/* Generate Report */}
-              <Link
+              <ClickableCard
+                title="Generate Report"
+                description="Export professional PDF reports"
+                icon={FileSpreadsheet}
                 href="/reports/new"
-                className="group relative overflow-hidden rounded-lg border-2 border-transparent bg-card p-6 shadow-md transition-all hover:border-accent/30 hover:shadow-xl"
-              >
-                <div className="absolute right-2 top-2">
-                  <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-accent/10 p-3 transition-colors group-hover:bg-accent/20">
-                    <FileSpreadsheet className="h-8 w-8 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-base font-semibold text-foreground">Generate Report</h4>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Export professional PDF reports
-                    </p>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-accent">
-                      <span className="font-medium">Automated</span>
-                      <span className="text-muted-foreground">• Ready to share</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                badge="Automated"
+                badgeVariant="outline"
+              />
             </div>
 
             {/* Secondary actions */}
@@ -466,89 +429,31 @@ export default function Dashboard() {
           <h2 className="mb-4 text-lg font-semibold">My Work</h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {/* My Active Valuations */}
-            <div className="overflow-hidden rounded-lg border border-border bg-card shadow">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="rounded-md bg-primary/10 p-3">
-                      <Calculator className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-muted-foreground">
-                      My Active Valuations
-                    </p>
-                    <div className="flex items-baseline">
-                      <p className="text-2xl font-semibold text-card-foreground">
-                        {stats.myActiveValuations}
-                      </p>
-                      <Link
-                        href="/my-valuations"
-                        className="ml-2 text-sm text-primary hover:text-primary/80"
-                      >
-                        View all →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatCard
+              title="My Active Valuations"
+              value={stats.myActiveValuations}
+              icon={Calculator}
+              variant="primary"
+              onClick={() => router.push('/my-valuations')}
+            />
 
             {/* My Clients */}
-            <div className="overflow-hidden rounded-lg border border-border bg-card shadow">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="rounded-md bg-accent/10 p-3">
-                      <Users className="h-6 w-6 text-accent" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-muted-foreground">My Clients</p>
-                    <div className="flex items-baseline">
-                      <p className="text-2xl font-semibold text-card-foreground">
-                        {stats.myClients}
-                      </p>
-                      <Link
-                        href="/my-clients"
-                        className="ml-2 text-sm text-accent hover:text-accent/80"
-                      >
-                        Manage →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatCard
+              title="My Clients"
+              value={stats.myClients}
+              icon={Users}
+              variant="success"
+              onClick={() => router.push('/my-clients')}
+            />
 
             {/* Pending Reports */}
-            <div className="overflow-hidden rounded-lg border border-border bg-card shadow">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="rounded-md bg-chart-1/10 p-3">
-                      <FileText className="h-6 w-6 text-chart-1" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-muted-foreground">
-                      My Pending Reports
-                    </p>
-                    <div className="flex items-baseline">
-                      <p className="text-2xl font-semibold text-card-foreground">
-                        {stats.myPendingReports}
-                      </p>
-                      <Link
-                        href="/reports"
-                        className="ml-2 text-sm text-chart-1 hover:text-chart-1/80"
-                      >
-                        Generate →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatCard
+              title="My Pending Reports"
+              value={stats.myPendingReports}
+              icon={FileText}
+              variant="warning"
+              onClick={() => router.push('/reports')}
+            />
           </div>
         </div>
 
@@ -556,77 +461,36 @@ export default function Dashboard() {
         <div>
           <h2 className="mb-4 text-lg font-semibold">Team Overview</h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <div className="overflow-hidden rounded-lg border border-border bg-card shadow">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="rounded-md bg-chart-2/10 p-3">
-                      <BarChart3 className="h-6 w-6 text-chart-2" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-muted-foreground">
-                      Team Valuations
-                    </p>
-                    <p className="text-2xl font-semibold text-card-foreground">
-                      {stats.teamValuations}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatCard
+              title="Team Valuations"
+              value={stats.teamValuations}
+              icon={BarChart3}
+              variant="default"
+            />
 
-            <div className="overflow-hidden rounded-lg border border-border bg-card shadow">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="rounded-md bg-primary/10 p-3">
-                      <Building2 className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-muted-foreground">
-                      Total Clients
-                    </p>
-                    <p className="text-2xl font-semibold text-card-foreground">
-                      {stats.totalClients}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatCard
+              title="Total Clients"
+              value={stats.totalClients}
+              icon={Building2}
+              variant="primary"
+            />
 
-            <div className="overflow-hidden rounded-lg border border-border bg-card shadow">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="rounded-md bg-accent/10 p-3">
-                      <TrendingUp className="h-6 w-6 text-accent" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-muted-foreground">
-                      Completed This Month
-                    </p>
-                    <p className="text-2xl font-semibold text-card-foreground">
-                      {stats.completedThisMonth}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatCard
+              title="Completed This Month"
+              value={stats.completedThisMonth}
+              icon={TrendingUp}
+              variant="success"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Recent Activity - Now personalized */}
-          <div className="rounded-lg border border-border bg-card shadow">
-            <div className="border-b border-border px-4 py-5 sm:px-6">
+          <Card>
+            <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium leading-6 text-card-foreground">
-                    Recent Activity
-                  </h3>
+                  <CardTitle>Recent Activity</CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Your latest updates and team activity
                   </p>
@@ -638,8 +502,8 @@ export default function Dashboard() {
                   View all
                 </Link>
               </div>
-            </div>
-            <div className="px-4 py-5 sm:p-6">
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
                 {stats.recentActivity.map((activity) => {
                   const Icon = getActivityIcon(activity.type)
@@ -672,17 +536,15 @@ export default function Dashboard() {
                   )
                 })}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* My Upcoming Deadlines */}
-          <div className="rounded-lg border border-border bg-card shadow">
-            <div className="border-b border-border px-4 py-5 sm:px-6">
+          <Card>
+            <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium leading-6 text-card-foreground">
-                    My Deadlines
-                  </h3>
+                  <CardTitle>My Deadlines</CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">Tasks assigned to you</p>
                 </div>
                 <Link
@@ -692,8 +554,8 @@ export default function Dashboard() {
                   View all
                 </Link>
               </div>
-            </div>
-            <div className="px-4 py-5 sm:p-6">
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
                 {stats.upcomingDeadlines
                   .filter((deadline) => deadline.assignedTo === user?.user_metadata?.first_name)
@@ -727,8 +589,8 @@ export default function Dashboard() {
                     )
                   })}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AppLayout>

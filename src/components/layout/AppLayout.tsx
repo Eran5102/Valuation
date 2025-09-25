@@ -114,7 +114,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         href: item.href,
         icon: item.icon,
         isActive:
-          pathname === item.href ||
+          (item.href === '/'
+            ? pathname === '/' || pathname === '/dashboard'
+            : pathname === item.href) ||
           (item.submenu && item.submenu.some((sub) => pathname === sub.href)),
         submenu: item.submenu?.map((subItem) => ({
           id: subItem.name,
@@ -129,21 +131,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return items
   }, [pathname, isSuperAdmin])
 
-  const sidebarHeader = (
-    <div>
-      <div className={cn('flex items-center', isSidebarCollapsed ? 'justify-center' : 'space-x-3')}>
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-          <TrendingUp className="h-6 w-6 text-primary-foreground" />
-        </div>
-        {!isSidebarCollapsed && (
-          <div className="flex-1">
-            <h2 className="text-sm font-bold">Value8</h2>
-            <p className="text-xs text-muted-foreground">Valuation Platform</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+  const sidebarHeader = null
 
   const sidebarFooter = (
     <div>

@@ -442,7 +442,7 @@ export default function ValuationWorkspaceLayout({
         expandedMenus={expandedMenus}
         onExpandMenu={toggleSubmenu}
         showToggleButton={true}
-        width="w-80"
+        width="w-64"
         collapsedWidth="w-20"
         header={
           <div>

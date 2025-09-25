@@ -80,39 +80,7 @@ export default function ValuationOverviewPage() {
         </p>
       </div>
 
-      {/* Progress Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Valuation Progress</CardTitle>
-          <CardDescription>Overall completion status</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{progress}% Complete</span>
-            <Badge variant={progress === 100 ? 'default' : progress > 50 ? 'secondary' : 'outline'}>
-              {progress === 100 ? 'Completed' : progress > 50 ? 'In Progress' : 'Getting Started'}
-            </Badge>
-          </div>
-          <Progress value={progress} className="h-2" />
-
-          {progress < 100 && (
-            <div className="mt-4 rounded-lg border bg-muted/30 p-3">
-              <p className="mb-2 text-sm font-medium">Next Step</p>
-              <Link href={`/valuations/${valuation.id}/${nextStep.href}`}>
-                <Button variant="outline" className="w-full justify-between">
-                  <span className="flex items-center gap-2">
-                    <nextStep.icon className="h-4 w-4" />
-                    {nextStep.name}
-                  </span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Key Metrics */}
+      {/* Key Metrics - MOVED TO TOP */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
@@ -168,6 +136,79 @@ export default function ValuationOverviewPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               {(valuation.type || '409a') === '409a' ? 'IRC 409A Compliance' : 'Special Purpose'}
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Progress and Quick Actions - SIDE BY SIDE */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Progress Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Valuation Progress</CardTitle>
+            <CardDescription>Overall completion status</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{progress}% Complete</span>
+              <Badge
+                variant={progress === 100 ? 'default' : progress > 50 ? 'secondary' : 'outline'}
+              >
+                {progress === 100 ? 'Completed' : progress > 50 ? 'In Progress' : 'Getting Started'}
+              </Badge>
+            </div>
+            <Progress value={progress} className="h-2" />
+
+            {progress < 100 && (
+              <div className="mt-4 rounded-lg border bg-muted/30 p-3">
+                <p className="mb-2 text-sm font-medium">Next Step</p>
+                <Link href={`/valuations/${valuation.id}/${nextStep.href}`}>
+                  <Button variant="outline" className="w-full justify-between">
+                    <span className="flex items-center gap-2">
+                      <nextStep.icon className="h-4 w-4" />
+                      {nextStep.name}
+                    </span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common tasks and shortcuts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Link href={`/valuations/${valuation.id}/company`}>
+                <Button variant="outline" className="w-full justify-start">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Update Company Information
+                </Button>
+              </Link>
+              <Link href={`/valuations/${valuation.id}/assumptions`}>
+                <Button variant="outline" className="w-full justify-start">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Manage Assumptions
+                </Button>
+              </Link>
+              <Link href={`/valuations/${valuation.id}/report`}>
+                <Button variant="outline" className="w-full justify-start">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Report
+                </Button>
+              </Link>
+              <Link href={`/valuations/${valuation.id}/settings`}>
+                <Button variant="outline" className="w-full justify-start">
+                  <Users className="mr-2 h-4 w-4" />
+                  Team & Permissions
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -256,42 +297,6 @@ export default function ValuationOverviewPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks and shortcuts</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Link href={`/valuations/${valuation.id}/company`}>
-              <Button variant="outline" className="w-full justify-start">
-                <Building2 className="mr-2 h-4 w-4" />
-                Update Company Information
-              </Button>
-            </Link>
-            <Link href={`/valuations/${valuation.id}/assumptions`}>
-              <Button variant="outline" className="w-full justify-start">
-                <Settings className="mr-2 h-4 w-4" />
-                Manage Assumptions
-              </Button>
-            </Link>
-            <Link href={`/valuations/${valuation.id}/report`}>
-              <Button variant="outline" className="w-full justify-start">
-                <FileText className="mr-2 h-4 w-4" />
-                Generate Report
-              </Button>
-            </Link>
-            <Link href={`/valuations/${valuation.id}/settings`}>
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                Team & Permissions
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

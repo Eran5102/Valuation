@@ -9,18 +9,20 @@ import {
   FormCard,
   FormSection,
   FormGrid,
-  FormField,
   FormSelect,
   FormTextarea,
   FormActions,
-  SubmitButton
+  SubmitButton,
 } from '@/components/ui/form-components'
 import { Button } from '@/components/ui/button'
+import { ClientSelector } from '@/components/ui/client-selector'
+import { NewClientDialog } from '@/components/clients/NewClientDialog'
 
 export default function NewValuationPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
+  const [showNewClientDialog, setShowNewClientDialog] = useState(false)
   const [formData, setFormData] = useState({
     companyId: '',
     valuationType: '409A',
@@ -38,21 +40,38 @@ export default function NewValuationPage() {
     }))
   }
 
+  const handleClientChange = (clientId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      companyId: clientId,
+    }))
+  }
+
   // Fetch companies on component mount
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const response = await fetch('/api/companies')
-        if (response.ok) {
-          const data = await response.json()
-          setCompanies(data.data || [])
-        }
-      } catch (error) {
-        console.error('Failed to fetch companies:', error)
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch('/api/companies')
+      if (response.ok) {
+        const data = await response.json()
+        setCompanies(data.data || [])
       }
+    } catch (error) {
+      console.error('Failed to fetch companies:', error)
     }
+  }
+
+  useEffect(() => {
     fetchCompanies()
   }, [])
+
+  const handleClientCreated = (client: { id: string; name: string }) => {
+    // Add the new client to the list and select it
+    setCompanies((prev) => [...prev, client])
+    setFormData((prev) => ({
+      ...prev,
+      companyId: client.id,
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,7 +112,9 @@ export default function NewValuationPage() {
       router.push(`/valuations/${result.data.id}`)
     } catch (error) {
       console.error('Failed to save valuation:', error)
-      alert(error instanceof Error ? error.message : 'Failed to create valuation. Please try again.')
+      alert(
+        error instanceof Error ? error.message : 'Failed to create valuation. Please try again.'
+      )
     } finally {
       setLoading(false)
     }
@@ -108,9 +129,8 @@ export default function NewValuationPage() {
   const valuationTypeOptions = [
     { value: '409A', label: '409A Valuation' },
     { value: 'Company Valuation', label: 'Company Valuation' },
-    { value: 'Other', label: 'Other' }
+    { value: 'Other', label: 'Other' },
   ]
-
 
   return (
     <AppLayout>
@@ -130,14 +150,13 @@ export default function NewValuationPage() {
         <FormCard onSubmit={handleSubmit}>
           <FormSection title="Valuation Details" icon={Calculator}>
             <FormGrid columns={2}>
-              <FormSelect
+              <ClientSelector
                 label="Client/Company"
-                id="companyId"
-                name="companyId"
                 value={formData.companyId}
-                onChange={handleInputChange}
-                options={companyOptions}
-                placeholder="Select client"
+                onChange={handleClientChange}
+                clients={companies}
+                onAddNew={() => setShowNewClientDialog(true)}
+                placeholder="Select client..."
                 required
               />
 
@@ -186,11 +205,16 @@ export default function NewValuationPage() {
             >
               Cancel
             </Button>
-            <SubmitButton loading={loading}>
-              Create Valuation
-            </SubmitButton>
+            <SubmitButton loading={loading}>Create Valuation</SubmitButton>
           </FormActions>
         </FormCard>
+
+        {/* New Client Dialog */}
+        <NewClientDialog
+          open={showNewClientDialog}
+          onOpenChange={setShowNewClientDialog}
+          onClientCreated={handleClientCreated}
+        />
       </div>
     </AppLayout>
   )

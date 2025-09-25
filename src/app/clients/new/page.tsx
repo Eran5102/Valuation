@@ -178,7 +178,7 @@ export default function NewClientPage() {
                     name="industry"
                     value={formData.industry}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground hover:border-[#74BD92]/50 focus:border-[#74BD92] focus:outline-none focus:ring-2 focus:ring-[#74BD92]"
                   >
                     <option value="">Select industry</option>
                     <option value="Technology">Technology</option>

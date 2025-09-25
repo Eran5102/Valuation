@@ -197,11 +197,11 @@ export function SharedSidebar({
       )
 
       const itemClasses = cn(
-        'flex items-center rounded-lg font-medium transition-all duration-200',
+        'relative flex items-center rounded-lg font-medium transition-all duration-200',
         itemPadding,
         fontSize,
         isActive
-          ? 'bg-primary text-primary-foreground shadow-sm'
+          ? 'bg-primary text-primary-foreground shadow-sm before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-r-full before:bg-primary-foreground/60'
           : 'text-gray-200 hover:bg-gray-700 hover:text-white',
         item.disabled && 'cursor-not-allowed opacity-50',
         isCollapsed && 'justify-center px-0 py-3',

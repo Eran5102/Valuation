@@ -5,6 +5,52 @@
 @layer base {
   body {
     @apply bg-background text-foreground;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+
+  /* Global select/option hover colors */
+  select option:hover,
+  select option:focus,
+  select option:checked {
+    background-color: #74bd92 !important;
+    color: white !important;
+  }
+
+  /* Native select focus state */
+  select:focus {
+    outline: 2px solid #74bd92;
+    outline-offset: -2px;
+    border-color: #74bd92;
+  }
+
+  /* Option elements in dropdowns */
+  option:hover {
+    background-color: #74bd92 !important;
+    color: white !important;
+  }
+
+  /* Override Radix UI Select hover states */
+  [role='option']:hover,
+  [role='option'][data-highlighted] {
+    background-color: rgba(116, 189, 146, 0.2) !important;
+    color: #74bd92 !important;
+  }
+
+  [role='option'][aria-selected='true'],
+  [role='option'][data-state='checked'] {
+    background-color: #74bd92 !important;
+    color: white !important;
+  }
+
+  /* Override any remaining blue accent colors */
+  .bg-accent:hover {
+    background-color: rgba(116, 189, 146, 0.2) !important;
+  }
+
+  .text-accent-foreground:hover {
+    color: #74bd92 !important;
   }
 }

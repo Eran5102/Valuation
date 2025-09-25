@@ -28,14 +28,11 @@ export function FormField({
   required = false,
   className,
   disabled = false,
-  error
+  error,
 }: FormFieldProps) {
   return (
     <div className={className}>
-      <label
-        htmlFor={id}
-        className="mb-1 block text-sm font-medium text-card-foreground"
-      >
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-card-foreground">
         {label} {required && <span className="text-destructive">*</span>}
       </label>
       <input
@@ -53,9 +50,7 @@ export function FormField({
         )}
         placeholder={placeholder}
       />
-      {error && (
-        <p className="mt-1 text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -85,14 +80,11 @@ export function FormSelect({
   required = false,
   className,
   disabled = false,
-  error
+  error,
 }: FormSelectProps) {
   return (
     <div className={className}>
-      <label
-        htmlFor={id}
-        className="mb-1 block text-sm font-medium text-card-foreground"
-      >
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-card-foreground">
         {label} {required && <span className="text-destructive">*</span>}
       </label>
       <select
@@ -103,7 +95,7 @@ export function FormSelect({
         onChange={onChange}
         disabled={disabled}
         className={cn(
-          'w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring',
+          'w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground focus:border-[#74BD92] focus:outline-none focus:ring-2 focus:ring-[#74BD92]',
           disabled && 'cursor-not-allowed opacity-50',
           error && 'border-destructive focus:border-destructive focus:ring-destructive'
         )}
@@ -115,9 +107,7 @@ export function FormSelect({
           </option>
         ))}
       </select>
-      {error && (
-        <p className="mt-1 text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -147,14 +137,11 @@ export function FormTextarea({
   className,
   disabled = false,
   rows = 3,
-  error
+  error,
 }: FormTextareaProps) {
   return (
     <div className={className}>
-      <label
-        htmlFor={id}
-        className="mb-1 block text-sm font-medium text-card-foreground"
-      >
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-card-foreground">
         {label} {required && <span className="text-destructive">*</span>}
       </label>
       <textarea
@@ -166,15 +153,13 @@ export function FormTextarea({
         disabled={disabled}
         rows={rows}
         className={cn(
-          'w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring resize-y',
+          'w-full resize-y rounded-md border border-border bg-card px-3 py-2 text-card-foreground placeholder-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring',
           disabled && 'cursor-not-allowed opacity-50',
           error && 'border-destructive focus:border-destructive focus:ring-destructive'
         )}
         placeholder={placeholder}
       />
-      {error && (
-        <p className="mt-1 text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -225,14 +210,10 @@ export function FormGrid({ children, columns = 2, className }: FormGridProps) {
     1: 'grid-cols-1',
     2: 'grid-cols-1 md:grid-cols-2',
     3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   }
 
-  return (
-    <div className={cn('grid gap-4', gridClasses[columns], className)}>
-      {children}
-    </div>
-  )
+  return <div className={cn('grid gap-4', gridClasses[columns], className)}>{children}</div>
 }
 
 interface SubmitButtonProps {
@@ -248,12 +229,12 @@ export function SubmitButton({
   disabled = false,
   children,
   variant = 'primary',
-  className
+  className,
 }: SubmitButtonProps) {
   const variants = {
     primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
     secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-    destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+    destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
   }
 
   return (
@@ -288,7 +269,7 @@ export function FormActions({ children, alignment = 'right', className }: FormAc
   const alignmentClasses = {
     left: 'justify-start',
     center: 'justify-center',
-    right: 'justify-end'
+    right: 'justify-end',
   }
 
   return (
