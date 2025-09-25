@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useTheme } from 'next-themes'
+import { useAuth } from '@/contexts/AuthContext'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import {
-  ArrowLeft,
   Calculator,
   FileText,
   BarChart3,
@@ -25,6 +27,16 @@ import {
   Sliders,
   PanelLeftClose,
   PanelLeft,
+  Menu,
+  Moon,
+  Sun,
+  User,
+  LogOut,
+  CreditCard,
+  Users,
+  Bell,
+  Search,
+  Plus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -32,6 +44,15 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { SharedSidebar, SidebarNavItem } from '@/components/ui/shared-sidebar'
 import { useMethodologyStore } from '@/hooks/useMethodologyStore'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 
 interface ValuationWorkspaceLayoutProps {
   children: React.ReactNode
@@ -191,9 +212,17 @@ export default function ValuationWorkspaceLayout({
 }: ValuationWorkspaceLayoutProps) {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { methodologies } = useMethodologyStore()
+  const { theme, setTheme } = useTheme()
+  const { user, signOut } = useAuth()
+  const { organization } = useOrganization()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Build dynamic navigation based on selected methodologies
   const navigation = useMemo(() => {
@@ -436,28 +465,22 @@ export default function ValuationWorkspaceLayout({
       {/* Valuation Sidebar using SharedSidebar */}
       <SharedSidebar
         isCollapsed={isCollapsed}
-        onToggle={() => setIsCollapsed(!isCollapsed)}
         position="left"
         items={sidebarItems}
         expandedMenus={expandedMenus}
         onExpandMenu={toggleSubmenu}
-        showToggleButton={true}
+        showToggleButton={false}
         width="w-64"
         collapsedWidth="w-20"
         header={
           <div>
-            <div className="flex items-center justify-between">
-              {!isCollapsed && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push('/valuations')}
-                  className="-ml-2"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              )}
+            <div className="mb-4 flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2 font-semibold text-gray-100">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
+                  <TrendingUp className="h-5 w-5 text-primary-foreground" />
+                </div>
+                {!isCollapsed && <span className="text-lg">Value8</span>}
+              </Link>
             </div>
 
             {!isCollapsed && (
@@ -480,7 +503,7 @@ export default function ValuationWorkspaceLayout({
                 </div>
 
                 {valuationData.fair_market_value && (
-                  <div className="rounded-lg bg-primary/5 p-2">
+                  <div className="bg-primary/5 rounded-lg p-2">
                     <p className="text-xs text-muted-foreground">Fair Market Value</p>
                     <p className="text-lg font-semibold text-primary">
                       ${valuationData.fair_market_value.toLocaleString()}
@@ -508,7 +531,211 @@ export default function ValuationWorkspaceLayout({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto">{children}</div>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        <header
+          className="flex h-16 flex-shrink-0 items-center border-b border-gray-600 px-4 shadow-sm"
+          style={{ backgroundColor: '#2E3944' }}
+        >
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Sidebar Toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="text-gray-200 hover:bg-gray-700 hover:text-white"
+              >
+                {isCollapsed ? (
+                  <Menu className="h-5 w-5" />
+                ) : (
+                  <PanelLeftClose className="h-5 w-5" />
+                )}
+              </Button>
+
+              {/* Show logo and company when sidebar is collapsed */}
+              {isCollapsed && (
+                <div className="flex items-center gap-4">
+                  <Link href="/" className="flex items-center gap-2 font-semibold text-gray-100">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
+                      <TrendingUp className="h-5 w-5 text-primary-foreground" />
+                    </div>
+                    <span className="text-lg">Value8</span>
+                  </Link>
+                  <div className="text-sm text-gray-300">
+                    <span className="font-medium">{valuationData.company_name}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Search Bar */}
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search valuation..."
+                  className="border-gray-600 bg-gray-700 pl-8 text-gray-200 placeholder-gray-400 focus:bg-gray-600"
+                />
+              </div>
+
+              {/* New Valuation Button */}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => router.push('/valuations/new')}
+                className="hover:bg-primary/90 bg-primary"
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                New Valuation
+              </Button>
+
+              {/* Notifications */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-gray-200 hover:bg-gray-700 hover:text-white"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
+              </Button>
+
+              {/* Organization Switcher */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-200 hover:bg-gray-700 hover:text-white"
+                  >
+                    <Building2 className="mr-2 h-4 w-4" />
+                    <span className="font-medium">{organization?.name || 'My Organization'}</span>
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Organization</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/organization" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Organization Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/team" className="cursor-pointer">
+                      <Users className="mr-2 h-4 w-4" />
+                      Team Management
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/billing" className="cursor-pointer">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Billing & Plan
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Organization
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <ChevronRight className="mr-2 h-4 w-4" />
+                    Switch Organization
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Theme Toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                className="text-gray-200 hover:bg-gray-700 hover:text-white"
+              >
+                {mounted ? (
+                  theme === 'light' ? (
+                    <Moon className="h-5 w-5" />
+                  ) : (
+                    <Sun className="h-5 w-5" />
+                  )
+                ) : (
+                  <div className="h-5 w-5" />
+                )}
+              </Button>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-200 hover:bg-gray-700 hover:text-white"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div>
+                      <p className="font-medium">
+                        {(() => {
+                          const metadata = user?.user_metadata
+                          if (metadata?.first_name) {
+                            return `${metadata.first_name} ${metadata.last_name || ''}`.trim()
+                          }
+                          if (metadata?.full_name) {
+                            return metadata.full_name
+                          }
+                          return 'User'
+                        })()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/team" className="cursor-pointer">
+                      <Users className="mr-2 h-4 w-4" />
+                      Team Management
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/organization" className="cursor-pointer">
+                      <Building2 className="mr-2 h-4 w-4" />
+                      Organization Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/billing" className="cursor-pointer">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Billing & Plan
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={signOut}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto bg-background">{children}</main>
+      </div>
     </div>
   )
 }

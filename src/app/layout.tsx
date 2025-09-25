@@ -6,7 +6,6 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { PermissionsProvider } from '@/contexts/PermissionsContext'
 import { OrganizationProvider } from '@/contexts/OrganizationContext'
 import { ThemeProvider } from '@/providers/ThemeProvider'
-import { AppHeader } from '@/components/layout/AppHeader'
 import { Toaster } from 'sonner'
 
 const geistSans = Geist({
@@ -41,10 +40,7 @@ export default function RootLayout({
           <AuthProvider>
             <PermissionsProvider>
               <OrganizationProvider>
-                <QueryProvider>
-                  <AppHeader />
-                  {children}
-                </QueryProvider>
+                <QueryProvider>{children}</QueryProvider>
               </OrganizationProvider>
             </PermissionsProvider>
           </AuthProvider>

@@ -24,7 +24,7 @@ export interface SidebarNavItem {
 
 export interface SharedSidebarProps {
   isCollapsed: boolean
-  onToggle: () => void
+  onToggle?: () => void
   position?: 'left' | 'right'
   className?: string
   width?: string
@@ -201,7 +201,7 @@ export function SharedSidebar({
         itemPadding,
         fontSize,
         isActive
-          ? 'bg-primary text-primary-foreground shadow-sm before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-r-full before:bg-primary-foreground/60'
+          ? 'before:bg-primary-foreground/60 bg-primary text-primary-foreground shadow-sm before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-r-full'
           : 'text-gray-200 hover:bg-gray-700 hover:text-white',
         item.disabled && 'cursor-not-allowed opacity-50',
         isCollapsed && 'justify-center px-0 py-3',
@@ -252,59 +252,25 @@ export function SharedSidebar({
 
   return (
     <TooltipProvider>
-      <div className="relative flex">
-        {/* Sidebar Container */}
-        <div
-          className={cn(
-            'flex flex-col border-r shadow-sm transition-all duration-300',
-            isCollapsed ? collapsedWidth : width,
-            position === 'right' && 'border-l border-r-0',
-            className
-          )}
-          style={{ backgroundColor: '#2E3944' }}
-        >
-          {/* Header */}
-          {header && <div className="border-b border-gray-600 p-4 text-gray-100">{header}</div>}
-
-          {/* Navigation Items */}
-          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-            {items.map((item) => renderNavItem(item))}
-          </nav>
-
-          {/* Footer */}
-          {footer && <div className="border-t border-gray-600 p-4 text-gray-100">{footer}</div>}
-        </div>
-
-        {/* Toggle Button - Outside the sidebar */}
-        {showToggleButton && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggle}
-            className={cn(
-              'absolute top-9 z-50 h-6 w-6 rounded-md border bg-background shadow-sm transition-all hover:shadow-md',
-              position === 'right'
-                ? isCollapsed
-                  ? '-left-3'
-                  : '-left-3'
-                : isCollapsed
-                  ? '-right-3'
-                  : '-right-3'
-            )}
-          >
-            {position === 'right' ? (
-              isCollapsed ? (
-                <PanelLeft className="h-3 w-3" />
-              ) : (
-                <PanelLeftClose className="h-3 w-3" />
-              )
-            ) : isCollapsed ? (
-              <PanelLeft className="h-3 w-3" />
-            ) : (
-              <PanelLeftClose className="h-3 w-3" />
-            )}
-          </Button>
+      <div
+        className={cn(
+          'flex h-screen flex-shrink-0 flex-col border-r shadow-sm transition-all duration-300',
+          isCollapsed ? collapsedWidth : width,
+          position === 'right' && 'border-l border-r-0',
+          className
         )}
+        style={{ backgroundColor: '#2E3944' }}
+      >
+        {/* Header */}
+        {header && <div className="border-b border-gray-600 p-4 text-gray-100">{header}</div>}
+
+        {/* Navigation Items */}
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {items.map((item) => renderNavItem(item))}
+        </nav>
+
+        {/* Footer */}
+        {footer && <div className="border-t border-gray-600 p-4 text-gray-100">{footer}</div>}
       </div>
     </TooltipProvider>
   )
