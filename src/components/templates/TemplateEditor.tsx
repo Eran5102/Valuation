@@ -43,6 +43,7 @@ import { TemplateCanvas } from './TemplateCanvas'
 import { BlockEditor } from './BlockEditor'
 import { VariablePicker } from './VariablePicker'
 import { EnhancedFieldPicker } from './EnhancedFieldPicker'
+import { SavedBlocksManager } from './SavedBlocksManager'
 import { TemplatePreview } from './TemplatePreview'
 import { TemplateSettings } from './TemplateSettings'
 
@@ -60,6 +61,43 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
   const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'settings'>('editor')
   const [draggedBlock, setDraggedBlock] = useState<TemplateBlock | null>(null)
   const [isDirty, setIsDirty] = useState(false)
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+
+  // Check for auto-saved template on mount
+  React.useEffect(() => {
+    try {
+      const autosaved = localStorage.getItem('template_autosave')
+      const autosaveTime = localStorage.getItem('template_autosave_time')
+
+      if (autosaved && autosaveTime) {
+        const savedTemplate = JSON.parse(autosaved)
+        const savedTime = new Date(autosaveTime)
+        const timeDiff = Date.now() - savedTime.getTime()
+
+        // If auto-save is less than 24 hours old and different from current
+        if (timeDiff < 24 * 60 * 60 * 1000 && savedTemplate.id === template.id) {
+          if (
+            confirm(
+              `Found an auto-saved version from ${savedTime.toLocaleString()}. Would you like to restore it?`
+            )
+          ) {
+            setCurrentTemplate(savedTemplate)
+            setLastSaved(savedTime)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to restore auto-saved template:', error)
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+      }
+    }
+  }, [template.id])
 
   // Dialog states
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false)
@@ -161,10 +199,30 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
     input.click()
   }, [])
 
-  const handleTemplateChange = useCallback((updatedTemplate: ReportTemplate) => {
-    setCurrentTemplate(updatedTemplate)
-    setIsDirty(true)
-  }, [])
+  const handleTemplateChange = useCallback(
+    (updatedTemplate: ReportTemplate) => {
+      setCurrentTemplate(updatedTemplate)
+      setIsDirty(true)
+
+      // Auto-save with debouncing (5 seconds)
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+      }
+      const timer = setTimeout(() => {
+        // Store in localStorage as backup
+        try {
+          localStorage.setItem('template_autosave', JSON.stringify(updatedTemplate))
+          const now = new Date()
+          localStorage.setItem('template_autosave_time', now.toISOString())
+          setLastSaved(now)
+        } catch (error) {
+          console.error('Failed to auto-save template:', error)
+        }
+      }, 5000)
+      setAutoSaveTimer(timer)
+    },
+    [autoSaveTimer]
+  )
 
   const handleSectionUpdate = useCallback(
     (sectionId: string, updates: Partial<TemplateSection>) => {
@@ -371,10 +429,15 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">Template Editor</h2>
-            <p className="text-sm text-muted-foreground">
-              Editing: {currentTemplate.name}
-              {isDirty && <span className="ml-2 text-amber-600">• Unsaved changes</span>}
-            </p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Editing: {currentTemplate.name}</span>
+              {isDirty && <span className="text-amber-600">• Unsaved changes</span>}
+              {lastSaved && (
+                <span className="text-green-600">
+                  • Auto-saved {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -454,11 +517,27 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
           <TabsContent value="editor" className="m-0 flex-1 overflow-hidden p-0">
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <div className="flex h-full overflow-hidden">
-                {/* Left Sidebar - Block Library */}
-                <div className="bg-card/50 flex h-full w-56 flex-col overflow-hidden border-r border-border">
-                  <div className="flex-1 overflow-y-auto p-3">
-                    <BlockLibrary />
-                  </div>
+                {/* Left Sidebar - Block Library and Saved Blocks */}
+                <div className="bg-card/50 flex h-full w-64 flex-col overflow-hidden border-r border-border">
+                  <Tabs defaultValue="library" className="flex h-full flex-col">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="library">Library</TabsTrigger>
+                      <TabsTrigger value="saved">Saved</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="library" className="flex-1 overflow-hidden p-3">
+                      <BlockLibrary />
+                    </TabsContent>
+                    <TabsContent value="saved" className="flex-1 overflow-hidden p-3">
+                      <SavedBlocksManager
+                        currentBlock={selectedBlock}
+                        onBlockSelect={(block) => {
+                          if (currentSection) {
+                            handleBlockAdd(currentSection.id, block)
+                          }
+                        }}
+                      />
+                    </TabsContent>
+                  </Tabs>
 
                   <div className="flex-shrink-0 border-t border-border">
                     <EnhancedFieldPicker
