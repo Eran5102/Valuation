@@ -83,7 +83,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto h-full max-w-4xl space-y-6 overflow-y-auto pb-6">
       {/* Basic Information */}
       <Card>
         <CardHeader>
@@ -258,7 +258,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
           </div>
 
           {template.settings?.watermark?.enabled && (
-            <div className="space-y-4 border-l-2 border-primary/20 pl-6">
+            <div className="border-primary/20 space-y-4 border-l-2 pl-6">
               <div>
                 <Label htmlFor="watermarkText">Watermark Text</Label>
                 <Input

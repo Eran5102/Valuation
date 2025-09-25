@@ -12,6 +12,7 @@ import {
   BarChart3,
   Settings,
   ChevronDown,
+  ChevronRight,
   Building2,
   TrendingUp,
   DollarSign,

@@ -37,10 +37,10 @@ export function TemplateCanvas({
   })
 
   return (
-    <div className="h-full p-6">
-      <Card className="h-full">
+    <div className="h-full overflow-y-auto p-6">
+      <Card className="flex h-full flex-col">
         {/* Section Header */}
-        <CardHeader className="border-b border-border">
+        <CardHeader className="flex-shrink-0 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <Input
@@ -82,7 +82,7 @@ export function TemplateCanvas({
           <div
             ref={setNodeRef}
             className={`min-h-[400px] rounded-lg border-2 border-dashed transition-colors ${
-              isOver ? 'border-primary bg-primary/5' : 'border-border hover:border-border/60'
+              isOver ? 'bg-primary/5 border-primary' : 'hover:border-border/60 border-border'
             }`}
           >
             {section.blocks.length === 0 ? (

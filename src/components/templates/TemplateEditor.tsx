@@ -42,7 +42,7 @@ import { BlockLibrary } from './BlockLibrary'
 import { TemplateCanvas } from './TemplateCanvas'
 import { BlockEditor } from './BlockEditor'
 import { VariablePicker } from './VariablePicker'
-import { FieldMapping } from './FieldMapping'
+import { EnhancedFieldPicker } from './EnhancedFieldPicker'
 import { TemplatePreview } from './TemplatePreview'
 import { TemplateSettings } from './TemplateSettings'
 
@@ -435,11 +435,11 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as any)}
-          className="h-full"
+          className="flex h-full flex-col"
         >
           <TabsList className="rounded-none border-b border-border">
             <TabsTrigger value="editor">Editor</TabsTrigger>
@@ -451,29 +451,30 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
           </TabsList>
 
           {/* Editor Tab */}
-          <TabsContent value="editor" className="m-0 h-full p-0">
+          <TabsContent value="editor" className="m-0 flex-1 overflow-hidden p-0">
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-              <div className="flex h-full">
+              <div className="flex h-full overflow-hidden">
                 {/* Left Sidebar - Block Library */}
-                <div className="w-56 border-r border-border bg-card/50">
-                  <div className="p-3">
+                <div className="bg-card/50 flex h-full w-56 flex-col overflow-hidden border-r border-border">
+                  <div className="flex-1 overflow-y-auto p-3">
                     <BlockLibrary />
                   </div>
 
-                  <div className="border-t border-border p-3">
-                    <FieldMapping
+                  <div className="flex-shrink-0 border-t border-border">
+                    <EnhancedFieldPicker
+                      variables={currentTemplate.variables}
                       onFieldSelect={(variable) => {
                         // Copy field reference to clipboard
                         navigator.clipboard.writeText(`{{${variable.id}}}`)
                         console.log('Field copied:', variable)
                       }}
-                      compact
+                      className="h-64"
                     />
                   </div>
                 </div>
 
                 {/* Main Canvas */}
-                <div className="flex flex-1 flex-col">
+                <div className="flex flex-1 flex-col overflow-hidden">
                   {/* Section Tabs */}
                   <div className="border-b border-border bg-background">
                     <div className="flex items-center overflow-x-auto">
@@ -553,7 +554,7 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
                   </div>
 
                   {/* Template Canvas */}
-                  <div className="flex-1 overflow-auto">
+                  <div className="flex-1 overflow-y-auto">
                     {currentSection && (
                       <TemplateCanvas
                         section={currentSection}
@@ -569,7 +570,7 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
                 </div>
 
                 {/* Right Sidebar - Block Editor */}
-                <div className="w-72 border-l border-border bg-card/50">
+                <div className="bg-card/50 h-full w-72 overflow-y-auto border-l border-border">
                   <div className="p-3">
                     {selectedBlock ? (
                       <BlockEditor
@@ -603,12 +604,12 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
           </TabsContent>
 
           {/* Preview Tab */}
-          <TabsContent value="preview" className="m-0 h-full p-0">
+          <TabsContent value="preview" className="m-0 flex-1 overflow-y-auto p-0">
             <TemplatePreview template={currentTemplate} />
           </TabsContent>
 
           {/* Settings Tab */}
-          <TabsContent value="settings" className="h-full p-4">
+          <TabsContent value="settings" className="flex-1 overflow-y-auto p-4">
             <TemplateSettings template={currentTemplate} onChange={handleTemplateChange} />
           </TabsContent>
         </Tabs>
