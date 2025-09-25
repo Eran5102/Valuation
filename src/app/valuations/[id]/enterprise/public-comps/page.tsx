@@ -240,32 +240,50 @@ export default function PublicComparablesPage() {
       {
         accessorKey: 'marketCap',
         header: 'Market Cap',
-        cell: ({ row }) => `$${((row.getValue('marketCap') as number) / 1000).toFixed(0)}B`,
+        cell: ({ row }) => {
+          const value = row.getValue('marketCap') as number
+          return value != null ? `$${(value / 1000).toFixed(0)}B` : '-'
+        },
       },
       {
         accessorKey: 'revenue',
         header: 'Revenue',
-        cell: ({ row }) => `$${((row.getValue('revenue') as number) / 1000).toFixed(0)}B`,
+        cell: ({ row }) => {
+          const value = row.getValue('revenue') as number
+          return value != null ? `$${(value / 1000).toFixed(0)}B` : '-'
+        },
       },
       {
         accessorKey: 'ebitda',
         header: 'EBITDA',
-        cell: ({ row }) => `$${((row.getValue('ebitda') as number) / 1000).toFixed(0)}B`,
+        cell: ({ row }) => {
+          const value = row.getValue('ebitda') as number
+          return value != null ? `$${(value / 1000).toFixed(0)}B` : '-'
+        },
       },
       {
         accessorKey: 'evRevenue',
         header: 'EV/Revenue',
-        cell: ({ row }) => `${(row.getValue('evRevenue') as number).toFixed(1)}x`,
+        cell: ({ row }) => {
+          const value = row.getValue('evRevenue') as number
+          return value != null ? `${value.toFixed(1)}x` : '-'
+        },
       },
       {
         accessorKey: 'evEbitda',
         header: 'EV/EBITDA',
-        cell: ({ row }) => `${(row.getValue('evEbitda') as number).toFixed(1)}x`,
+        cell: ({ row }) => {
+          const value = row.getValue('evEbitda') as number
+          return value != null ? `${value.toFixed(1)}x` : '-'
+        },
       },
       {
         accessorKey: 'peRatio',
         header: 'P/E Ratio',
-        cell: ({ row }) => `${(row.getValue('peRatio') as number).toFixed(1)}x`,
+        cell: ({ row }) => {
+          const value = row.getValue('peRatio') as number
+          return value != null ? `${value.toFixed(1)}x` : '-'
+        },
       },
     ],
     []

@@ -154,7 +154,8 @@ export function AlphaVantageImport({ valuationId, onImport }: AlphaVantageImport
     setTickers('')
   }
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value == null) return '-'
     if (Math.abs(value) >= 1e9) {
       return `$${(value / 1e9).toFixed(2)}B`
     } else if (Math.abs(value) >= 1e6) {
