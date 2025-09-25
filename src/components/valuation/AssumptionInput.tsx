@@ -3,6 +3,7 @@ import { Percent } from 'lucide-react'
 import { Assumption } from './ValuationAssumptions'
 import { RiskFreeRateInput } from './RiskFreeRateInput'
 import { VolatilityInput } from './VolatilityInput'
+import { DatePicker } from '@/components/ui/date-picker'
 
 interface AssumptionInputProps {
   assumption: Assumption
@@ -115,12 +116,13 @@ export function AssumptionInput({
 
     case 'date':
       return (
-        <input
-          type="date"
-          value={assumption.value || ''}
-          onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
-          onBlur={onBlur}
+        <DatePicker
+          value={assumption.value ? new Date(assumption.value as string) : undefined}
+          onChange={(date) =>
+            onChange(categoryId, assumption.id, date?.toISOString().split('T')[0] || '')
+          }
           className={baseClasses}
+          placeholder="Select date"
         />
       )
 

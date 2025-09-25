@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import { DCFModelProvider } from '@/contexts/DCFModelOptimized'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const DebtScheduleClient = dynamic(
@@ -20,9 +19,7 @@ interface DebtScheduleWrapperProps {
 export function DebtScheduleWrapper({ valuationId }: DebtScheduleWrapperProps) {
   return (
     <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
-      <DCFModelProvider valuationId={valuationId}>
-        <DebtScheduleClient valuationId={valuationId} />
-      </DCFModelProvider>
+      <DebtScheduleClient valuationId={valuationId} />
     </Suspense>
   )
 }

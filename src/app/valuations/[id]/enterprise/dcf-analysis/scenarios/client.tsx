@@ -56,6 +56,7 @@ interface Scenario {
   description?: string
   type: 'Base' | 'Optimistic' | 'Pessimistic' | 'Custom'
   assumptions: {
+    // Core Financial Assumptions
     revenueGrowthRate: number
     ebitdaMargin: number
     taxRate: number
@@ -63,6 +64,29 @@ interface Scenario {
     workingCapitalPercent: number
     terminalGrowthRate: number
     discountRate: number
+
+    // Operational Metrics
+    daysReceivables?: number // Days Sales Outstanding (DSO)
+    daysPayables?: number // Days Payable Outstanding (DPO)
+    daysInventory?: number // Days Inventory Outstanding (DIO)
+    inventoryTurnover?: number
+
+    // Balance Sheet Metrics
+    debtToEquityRatio?: number
+    currentRatio?: number
+    cashConversionCycle?: number
+
+    // Margin Details
+    grossMargin?: number
+    sgaExpensePercent?: number
+    depreciationPercent?: number
+    interestCoverageRatio?: number
+
+    // Growth Drivers
+    averageSellingPrice?: number
+    unitGrowthRate?: number
+    marketShareGrowth?: number
+    priceInflation?: number
   }
   projections?: {
     revenue: number[]
@@ -109,6 +133,29 @@ export function ScenarioManagerClient({
       workingCapitalPercent: 0.02,
       terminalGrowthRate: 0.025,
       discountRate: 0.12,
+
+      // Operational Metrics
+      daysReceivables: 45,
+      daysPayables: 30,
+      daysInventory: 60,
+      inventoryTurnover: 6,
+
+      // Balance Sheet Metrics
+      debtToEquityRatio: 0.3,
+      currentRatio: 1.5,
+      cashConversionCycle: 75,
+
+      // Margin Details
+      grossMargin: 0.6,
+      sgaExpensePercent: 0.35,
+      depreciationPercent: 0.03,
+      interestCoverageRatio: 8,
+
+      // Growth Drivers
+      averageSellingPrice: 100,
+      unitGrowthRate: 0.08,
+      marketShareGrowth: 0.02,
+      priceInflation: 0.02,
     },
   })
 
@@ -352,122 +399,381 @@ export function ScenarioManagerClient({
                 </div>
 
                 <div className="border-t pt-4">
-                  <h4 className="mb-3 font-medium">Key Assumptions</h4>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Revenue Growth Rate</Label>
-                      <PercentageInput
-                        value={newScenario.assumptions.revenueGrowthRate * 100}
-                        onChange={(value) =>
-                          setNewScenario({
-                            ...newScenario,
-                            assumptions: {
-                              ...newScenario.assumptions,
-                              revenueGrowthRate: value / 100,
-                            },
-                          })
-                        }
-                        min={-50}
-                        max={100}
-                        decimals={1}
-                      />
-                    </div>
+                  <Tabs defaultValue="core" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="core">Core</TabsTrigger>
+                      <TabsTrigger value="operations">Operations</TabsTrigger>
+                      <TabsTrigger value="balance">Balance Sheet</TabsTrigger>
+                      <TabsTrigger value="growth">Growth</TabsTrigger>
+                    </TabsList>
 
-                    <div className="space-y-2">
-                      <Label>EBITDA Margin</Label>
-                      <PercentageInput
-                        value={newScenario.assumptions.ebitdaMargin * 100}
-                        onChange={(value) =>
-                          setNewScenario({
-                            ...newScenario,
-                            assumptions: {
-                              ...newScenario.assumptions,
-                              ebitdaMargin: value / 100,
-                            },
-                          })
-                        }
-                        min={0}
-                        max={50}
-                        decimals={1}
-                      />
-                    </div>
+                    <TabsContent value="core" className="mt-4 space-y-4">
+                      <h4 className="font-medium">Core Financial Assumptions</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Revenue Growth Rate</Label>
+                          <PercentageInput
+                            value={newScenario.assumptions.revenueGrowthRate * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  revenueGrowthRate: value / 100,
+                                },
+                              })
+                            }
+                            min={-50}
+                            max={100}
+                            decimals={1}
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label>Tax Rate</Label>
-                      <PercentageInput
-                        value={newScenario.assumptions.taxRate * 100}
-                        onChange={(value) =>
-                          setNewScenario({
-                            ...newScenario,
-                            assumptions: {
-                              ...newScenario.assumptions,
-                              taxRate: value / 100,
-                            },
-                          })
-                        }
-                        min={0}
-                        max={50}
-                        decimals={1}
-                      />
-                    </div>
+                        <div className="space-y-2">
+                          <Label>EBITDA Margin</Label>
+                          <PercentageInput
+                            value={newScenario.assumptions.ebitdaMargin * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  ebitdaMargin: value / 100,
+                                },
+                              })
+                            }
+                            min={0}
+                            max={50}
+                            decimals={1}
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label>CapEx (% of Revenue)</Label>
-                      <PercentageInput
-                        value={newScenario.assumptions.capexPercent * 100}
-                        onChange={(value) =>
-                          setNewScenario({
-                            ...newScenario,
-                            assumptions: {
-                              ...newScenario.assumptions,
-                              capexPercent: value / 100,
-                            },
-                          })
-                        }
-                        min={0}
-                        max={20}
-                        decimals={1}
-                      />
-                    </div>
+                        <div className="space-y-2">
+                          <Label>Tax Rate</Label>
+                          <PercentageInput
+                            value={newScenario.assumptions.taxRate * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  taxRate: value / 100,
+                                },
+                              })
+                            }
+                            min={0}
+                            max={50}
+                            decimals={1}
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label>Terminal Growth Rate</Label>
-                      <PercentageInput
-                        value={newScenario.assumptions.terminalGrowthRate * 100}
-                        onChange={(value) =>
-                          setNewScenario({
-                            ...newScenario,
-                            assumptions: {
-                              ...newScenario.assumptions,
-                              terminalGrowthRate: value / 100,
-                            },
-                          })
-                        }
-                        min={0}
-                        max={10}
-                        decimals={1}
-                      />
-                    </div>
+                        <div className="space-y-2">
+                          <Label>CapEx (% of Revenue)</Label>
+                          <PercentageInput
+                            value={newScenario.assumptions.capexPercent * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  capexPercent: value / 100,
+                                },
+                              })
+                            }
+                            min={0}
+                            max={20}
+                            decimals={1}
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label>Discount Rate (WACC)</Label>
-                      <PercentageInput
-                        value={newScenario.assumptions.discountRate * 100}
-                        onChange={(value) =>
-                          setNewScenario({
-                            ...newScenario,
-                            assumptions: {
-                              ...newScenario.assumptions,
-                              discountRate: value / 100,
-                            },
-                          })
-                        }
-                        min={5}
-                        max={30}
-                        decimals={1}
-                      />
-                    </div>
-                  </div>
+                        <div className="space-y-2">
+                          <Label>Terminal Growth Rate</Label>
+                          <PercentageInput
+                            value={newScenario.assumptions.terminalGrowthRate * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  terminalGrowthRate: value / 100,
+                                },
+                              })
+                            }
+                            min={0}
+                            max={10}
+                            decimals={1}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Discount Rate (WACC)</Label>
+                          <PercentageInput
+                            value={newScenario.assumptions.discountRate * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  discountRate: value / 100,
+                                },
+                              })
+                            }
+                            min={5}
+                            max={30}
+                            decimals={1}
+                          />
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="operations" className="mt-4 space-y-4">
+                      <h4 className="font-medium">Operational Metrics</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Days Sales Outstanding (DSO)</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.daysReceivables || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  daysReceivables: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={1}
+                            max={365}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Days Payable Outstanding (DPO)</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.daysPayables || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  daysPayables: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={1}
+                            max={365}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Days Inventory Outstanding (DIO)</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.daysInventory || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  daysInventory: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={1}
+                            max={365}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Inventory Turnover (x)</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.inventoryTurnover || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  inventoryTurnover: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={0.1}
+                            max={50}
+                            step={0.1}
+                          />
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="balance" className="mt-4 space-y-4">
+                      <h4 className="font-medium">Balance Sheet Metrics</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Debt-to-Equity Ratio</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.debtToEquityRatio || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  debtToEquityRatio: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={0}
+                            max={5}
+                            step={0.1}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Current Ratio</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.currentRatio || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  currentRatio: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={0.1}
+                            max={5}
+                            step={0.1}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Interest Coverage Ratio</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.interestCoverageRatio || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  interestCoverageRatio: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={1}
+                            max={50}
+                            step={0.1}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Cash Conversion Cycle (days)</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.cashConversionCycle || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  cashConversionCycle: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={-100}
+                            max={365}
+                          />
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="growth" className="mt-4 space-y-4">
+                      <h4 className="font-medium">Growth Drivers</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Unit Growth Rate</Label>
+                          <PercentageInput
+                            value={(newScenario.assumptions.unitGrowthRate || 0) * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  unitGrowthRate: value / 100,
+                                },
+                              })
+                            }
+                            min={-50}
+                            max={100}
+                            decimals={1}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Price Inflation</Label>
+                          <PercentageInput
+                            value={(newScenario.assumptions.priceInflation || 0) * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  priceInflation: value / 100,
+                                },
+                              })
+                            }
+                            min={-10}
+                            max={20}
+                            decimals={1}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Market Share Growth</Label>
+                          <PercentageInput
+                            value={(newScenario.assumptions.marketShareGrowth || 0) * 100}
+                            onChange={(value) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  marketShareGrowth: value / 100,
+                                },
+                              })
+                            }
+                            min={-20}
+                            max={50}
+                            decimals={1}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Average Selling Price ($)</Label>
+                          <Input
+                            type="number"
+                            value={newScenario.assumptions.averageSellingPrice || ''}
+                            onChange={(e) =>
+                              setNewScenario({
+                                ...newScenario,
+                                assumptions: {
+                                  ...newScenario.assumptions,
+                                  averageSellingPrice: parseFloat(e.target.value) || 0,
+                                },
+                              })
+                            }
+                            min={0.01}
+                            max={10000}
+                            step={0.01}
+                          />
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </div>
               <DialogFooter>

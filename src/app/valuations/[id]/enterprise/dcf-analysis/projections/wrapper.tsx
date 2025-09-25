@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import { DCFModelProvider } from '@/contexts/DCFModelOptimized'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // Dynamically import the client component for better performance
@@ -33,9 +32,7 @@ export function ProjectedFinancialsWrapper({ valuationId }: ProjectedFinancialsW
         </div>
       }
     >
-      <DCFModelProvider valuationId={valuationId}>
-        <ProjectedFinancialsClient valuationId={valuationId} />
-      </DCFModelProvider>
+      <ProjectedFinancialsClient valuationId={valuationId} />
     </Suspense>
   )
 }

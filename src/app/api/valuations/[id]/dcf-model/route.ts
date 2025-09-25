@@ -1,209 +1,156 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { dcfIntegrationService } from '@/lib/services/dcfIntegrationService'
-import { DCFModelData, DCFCoreAssumptions } from '@/types/dcf'
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
-// GET /api/valuations/[id]/dcf-model - Fetch entire DCF model
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: valuationId } = await params
+    const { id } = await params
+    const supabase = await createClient()
 
-    // Check cache first
-    let modelData = dcfIntegrationService.getCachedModel(valuationId)
+    // Get valuation data
+    const { data: valuation, error: valError } = await supabase
+      .from('valuations')
+      .select('*')
+      .eq('id', id)
+      .single()
 
-    if (!modelData) {
-      // Fetch all component data in parallel
-      const [
-        assumptionsResponse,
-        debtResponse,
-        workingCapitalResponse,
-        capexResponse,
-        waccResponse,
-      ] = await Promise.all([
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/assumptions`),
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/debt-schedule`),
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/working-capital`),
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/capex`),
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/wacc`),
-      ])
-
-      // Parse responses
-      const assumptionsData = assumptionsResponse.ok ? await assumptionsResponse.json() : null
-      const debtData = debtResponse.ok ? await debtResponse.json() : null
-      const wcData = workingCapitalResponse.ok ? await workingCapitalResponse.json() : null
-      const capexData = capexResponse.ok ? await capexResponse.json() : null
-      const waccData = waccResponse.ok ? await waccResponse.json() : null
-
-      // Create default assumptions if not found
-      const assumptions: DCFCoreAssumptions = assumptionsData || {
-        valuationDate: new Date().toISOString().split('T')[0],
-        mostRecentFiscalYearEnd: new Date().toISOString().split('T')[0],
-        currency: 'USD',
-        discountingConvention: 'Mid-Year',
-        historicalYears: 3,
-        maxProjectionYears: 10,
-        projectionYears: 5,
-        baseYear: new Date().getFullYear(),
-
-        // Tax configuration
-        taxRate: 21,
-        corporateTaxRate: 21,
-        stateTaxRate: 5,
-        effectiveTaxRate: 25.05,
-        taxCalculationMethod: 'effective',
-
-        // Financial parameters
-        discountRate: 12,
-        terminalGrowthRate: 2.5,
-        cashBalance: 1000000,
-        debtBalance: 5000000,
-
-        // Calculation methods
-        depreciationMethod: 'percentage',
-        workingCapitalMethod: 'percentage',
-        capexMethod: 'percentage',
-        debtMethod: 'schedule',
-        interestMethod: 'schedule',
-
-        // Default percentages
-        depreciationPercent: 3,
-        capexPercent: 5,
-        workingCapitalPercent: 10,
-        maintenanceCapexPercent: 3,
-        growthCapexPercent: 2,
-      }
-
-      // Integrate the model
-      modelData = await dcfIntegrationService.integrateModel(valuationId, assumptions, {
-        debt: debtData,
-        workingCapital: wcData,
-        capex: capexData,
-        wacc: waccData,
+    if (valError || !valuation) {
+      // Return default DCF model structure if valuation doesn't exist yet
+      return NextResponse.json({
+        valuationId: id,
+        assumptions: {
+          projectionYears: 5,
+          baseYear: new Date().getFullYear(),
+          historicalYears: 3,
+          discountRate: 0.1,
+          discountingConvention: 'Mid-Year',
+          effectiveTaxRate: 25,
+          terminalGrowthRate: 3,
+          exitMultiple: 8,
+          workingCapitalMethod: 'days',
+          daysReceivables: 45,
+          daysPayables: 30,
+          daysInventory: 60,
+          targetNWCPercent: 15,
+          capexMethod: 'percentage',
+          capexPercent: 5,
+          maintenanceCapexPercent: 3,
+          growthCapexPercent: 2,
+          depreciationMethod: 'percentage',
+          depreciationPercent: 5,
+        },
+        historicalData: null,
+        debtSchedule: null,
+        workingCapital: null,
+        capexDepreciation: null,
+        wacc: null,
+        financialStatements: null,
+        dcfValuation: null,
+        lastUpdated: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
       })
     }
 
-    // Validate the model
-    const validation = dcfIntegrationService.validateModel(modelData)
+    // Get DCF model data
+    const { data: dcfModel } = await supabase
+      .from('dcf_models')
+      .select('*')
+      .eq('valuation_id', id)
+      .single()
 
+    if (dcfModel) {
+      return NextResponse.json(dcfModel)
+    }
+
+    // Return default structure if no DCF model exists
     return NextResponse.json({
-      success: true,
-      data: modelData,
-      validation,
+      valuationId: id,
+      assumptions: {
+        projectionYears: 5,
+        baseYear: new Date().getFullYear(),
+        historicalYears: 3,
+        discountRate: 0.1,
+        discountingConvention: 'Mid-Year',
+        effectiveTaxRate: 25,
+        terminalGrowthRate: 3,
+        exitMultiple: 8,
+        workingCapitalMethod: 'days',
+        daysReceivables: 45,
+        daysPayables: 30,
+        daysInventory: 60,
+        targetNWCPercent: 15,
+        capexMethod: 'percentage',
+        capexPercent: 5,
+        maintenanceCapexPercent: 3,
+        growthCapexPercent: 2,
+        depreciationMethod: 'percentage',
+        depreciationPercent: 5,
+      },
+      historicalData: null,
+      debtSchedule: null,
+      workingCapital: null,
+      capexDepreciation: null,
+      wacc: null,
+      financialStatements: null,
+      dcfValuation: null,
+      lastUpdated: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     })
   } catch (error) {
     console.error('Error fetching DCF model:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch DCF model',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch DCF model' }, { status: 500 })
   }
 }
 
-// PUT /api/valuations/[id]/dcf-model - Update DCF model
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: valuationId } = await params
-    const modelData: DCFModelData = await request.json()
+    const { id } = await params
+    const body = await request.json()
+    const supabase = await createClient()
 
-    // Validate the model
-    const validation = dcfIntegrationService.validateModel(modelData)
+    // Check if DCF model exists
+    const { data: existingModel } = await supabase
+      .from('dcf_models')
+      .select('id')
+      .eq('valuation_id', id)
+      .single()
 
-    if (!validation.isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Model validation failed',
-          validation,
-        },
-        { status: 400 }
-      )
+    const modelData = {
+      valuation_id: id,
+      ...body,
+      updated_at: new Date().toISOString(),
     }
 
-    // Save components individually
-    // In a real implementation, these would be database operations
-    const savePromises = []
+    if (existingModel) {
+      // Update existing model
+      const { data, error } = await supabase
+        .from('dcf_models')
+        .update(modelData)
+        .eq('valuation_id', id)
+        .select()
+        .single()
 
-    // Save assumptions
-    if (modelData.assumptions) {
-      savePromises.push(
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/assumptions`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(modelData.assumptions),
+      if (error) throw error
+      return NextResponse.json(data)
+    } else {
+      // Create new model
+      const { data, error } = await supabase
+        .from('dcf_models')
+        .insert({
+          ...modelData,
+          created_at: new Date().toISOString(),
         })
-      )
+        .select()
+        .single()
+
+      if (error) throw error
+      return NextResponse.json(data)
     }
-
-    // Save debt schedule
-    if (modelData.debtSchedule) {
-      savePromises.push(
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/debt-schedule`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(modelData.debtSchedule),
-        })
-      )
-    }
-
-    // Save working capital
-    if (modelData.workingCapital) {
-      savePromises.push(
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/working-capital`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(modelData.workingCapital),
-        })
-      )
-    }
-
-    // Save capex
-    if (modelData.capexDepreciation) {
-      savePromises.push(
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/capex`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(modelData.capexDepreciation),
-        })
-      )
-    }
-
-    // Save financial statements
-    if (modelData.financialStatements) {
-      savePromises.push(
-        fetch(`${request.nextUrl.origin}/api/valuations/${valuationId}/financials`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            statements: modelData.financialStatements,
-            dcfSummary: modelData.dcfValuation,
-          }),
-        })
-      )
-    }
-
-    // Execute all saves in parallel
-    await Promise.all(savePromises)
-
-    // Update cache
-    dcfIntegrationService.clearCache(valuationId)
-
-    return NextResponse.json({
-      success: true,
-      data: modelData,
-      validation,
-    })
   } catch (error) {
     console.error('Error saving DCF model:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to save DCF model',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to save DCF model' }, { status: 500 })
   }
+}
+
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return POST(request, { params })
 }

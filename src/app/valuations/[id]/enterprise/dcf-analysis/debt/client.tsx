@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useDCFModel } from '@/contexts/DCFModelOptimized'
+import { useDCFModel } from '@/contexts/DCFModelContext'
 import { DebtItem as DCFDebtItem, DebtProjection, DebtScheduleData } from '@/types/dcf'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -376,10 +377,14 @@ export function DebtScheduleClient({ valuationId }: DebtScheduleClientProps) {
       accessorKey: 'maturityDate',
       header: 'Maturity Date',
       cell: ({ row }) => (
-        <Input
-          type="date"
-          value={row.original.maturityDate}
-          onChange={(e) => handleUpdateDebtItem(row.original.id, { maturityDate: e.target.value })}
+        <DatePicker
+          value={row.original.maturityDate ? new Date(row.original.maturityDate) : undefined}
+          onChange={(date) =>
+            handleUpdateDebtItem(row.original.id, {
+              maturityDate: date?.toISOString().split('T')[0] || '',
+            })
+          }
+          placeholder="Select date"
           className="w-[140px]"
         />
       ),

@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import { DCFModelProvider } from '@/contexts/DCFModelOptimized'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const CapexDepreciationClient = dynamic(
@@ -20,9 +19,7 @@ interface CapexDepreciationWrapperProps {
 export function CapexDepreciationWrapper({ valuationId }: CapexDepreciationWrapperProps) {
   return (
     <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
-      <DCFModelProvider valuationId={valuationId}>
-        <CapexDepreciationClient valuationId={valuationId} />
-      </DCFModelProvider>
+      <CapexDepreciationClient valuationId={valuationId} />
     </Suspense>
   )
 }

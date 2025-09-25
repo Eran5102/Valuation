@@ -33,7 +33,7 @@ import {
   Settings,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useDCFModel } from '@/contexts/DCFModelOptimized'
+import { useDCFModel } from '@/contexts/DCFModelContext'
 import {
   CapexDepreciationData,
   AssetClass as DCFAssetClass,

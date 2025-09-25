@@ -25,7 +25,7 @@ import {
   Settings,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useDCFModel } from '@/contexts/DCFModelOptimized'
+import { useDCFModel } from '@/contexts/DCFModelContext'
 import { WorkingCapitalData, WorkingCapitalPeriod } from '@/types/dcf'
 import { ColumnDef } from '@tanstack/react-table'
 import {

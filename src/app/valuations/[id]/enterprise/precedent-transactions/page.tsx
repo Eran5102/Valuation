@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { DatePicker, DateRangePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -152,7 +153,10 @@ export default function PrecedentTransactionsPage() {
   const [selectedIndustry, setSelectedIndustry] = useState<string>('all')
   const [selectedDealType, setSelectedDealType] = useState<string>('all')
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [dateRange, setDateRange] = useState({ start: '', end: '' })
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  })
 
   // New transaction form state
   const [newTransaction, setNewTransaction] = useState<Partial<Transaction>>({
@@ -227,11 +231,11 @@ export default function PrecedentTransactionsPage() {
     const matchesDealType = selectedDealType === 'all' || transaction.dealType === selectedDealType
 
     let matchesDate = true
-    if (dateRange.start) {
-      matchesDate = matchesDate && new Date(transaction.date) >= new Date(dateRange.start)
+    if (dateRange.from) {
+      matchesDate = matchesDate && new Date(transaction.date) >= dateRange.from
     }
-    if (dateRange.end) {
-      matchesDate = matchesDate && new Date(transaction.date) <= new Date(dateRange.end)
+    if (dateRange.to) {
+      matchesDate = matchesDate && new Date(transaction.date) <= dateRange.to
     }
 
     return matchesSearch && matchesIndustry && matchesDealType && matchesDate
@@ -335,12 +339,15 @@ export default function PrecedentTransactionsPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="grid gap-2">
                     <Label>Transaction Date</Label>
-                    <Input
-                      type="date"
-                      value={newTransaction.date || ''}
-                      onChange={(e) =>
-                        setNewTransaction({ ...newTransaction, date: e.target.value })
+                    <DatePicker
+                      value={newTransaction.date ? new Date(newTransaction.date) : undefined}
+                      onChange={(date) =>
+                        setNewTransaction({
+                          ...newTransaction,
+                          date: date?.toISOString().split('T')[0] || '',
+                        })
                       }
+                      placeholder="Select date"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -483,18 +490,12 @@ export default function PrecedentTransactionsPage() {
               </SelectContent>
             </Select>
 
-            <div className="flex gap-2">
-              <Input
-                type="date"
-                placeholder="Start date"
-                value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              />
-              <Input
-                type="date"
-                placeholder="End date"
-                value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+            <div className="w-full">
+              <DateRangePicker
+                value={dateRange}
+                onChange={(range) => setDateRange(range || { from: undefined, to: undefined })}
+                placeholder="Select date range"
+                numberOfMonths={2}
               />
             </div>
           </div>

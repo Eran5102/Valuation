@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import { DCFModelProvider } from '@/contexts/DCFModelOptimized'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const WorkingCapitalClient = dynamic(
@@ -20,9 +19,7 @@ interface WorkingCapitalWrapperProps {
 export function WorkingCapitalWrapper({ valuationId }: WorkingCapitalWrapperProps) {
   return (
     <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
-      <DCFModelProvider valuationId={valuationId}>
-        <WorkingCapitalClient valuationId={valuationId} />
-      </DCFModelProvider>
+      <WorkingCapitalClient valuationId={valuationId} />
     </Suspense>
   )
 }

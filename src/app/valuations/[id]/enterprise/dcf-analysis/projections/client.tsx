@@ -46,7 +46,7 @@ import {
   ComposedChart,
   Area,
 } from 'recharts'
-import { useDCFModel } from '@/contexts/DCFModelOptimized'
+import { useDCFModel } from '@/contexts/DCFModelContext'
 
 interface FinancialStatement {
   year: number

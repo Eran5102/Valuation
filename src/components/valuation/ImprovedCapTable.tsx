@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -524,10 +525,15 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
         if (isEditing) {
           return (
-            <Input
-              type="date"
-              defaultValue={shareClass.roundDate}
-              onBlur={(e) => updateShareClass(shareClass.id, 'roundDate', e.target.value)}
+            <DatePicker
+              value={shareClass.roundDate ? new Date(shareClass.roundDate) : undefined}
+              onChange={(date) =>
+                updateShareClass(
+                  shareClass.id,
+                  'roundDate',
+                  date?.toISOString().split('T')[0] || ''
+                )
+              }
               className="w-36 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
             />
           )

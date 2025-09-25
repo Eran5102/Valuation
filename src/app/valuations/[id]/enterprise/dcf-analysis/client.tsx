@@ -15,6 +15,10 @@ import {
 } from '@/components/ui/select'
 import { EditableDataTable, EditableCell } from '@/components/ui/editable-data-table'
 import { OptimizedDataTable } from '@/components/ui/optimized-data-table'
+import { VerticalDCFTable } from '@/components/dcf/VerticalDCFTable'
+import { ScenarioProjectionLink } from '@/components/dcf/ScenarioProjectionLink'
+import { DCFDataFlowDiagram } from '@/components/dcf/DCFDataFlowDiagram'
+import { useDCFModel } from '@/contexts/DCFModelContext'
 import { PercentageInput } from '@/components/ui/percentage-input'
 import {
   TrendingUp,
@@ -25,6 +29,9 @@ import {
   AlertCircle,
   Save,
   RefreshCw,
+  Settings,
+  GitBranch,
+  Info,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
@@ -34,8 +41,8 @@ import {
   saveDCFSettings,
   runSensitivityAnalysis,
 } from './actions'
-import { ColumnDef } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 interface DCFData {
   projections: {
@@ -78,26 +85,52 @@ interface DCFAnalysisClientProps {
 }
 
 export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClientProps) {
+  // Try to use DCF context, but fallback gracefully if not available
+  let assumptions = null
+  let updateAssumptions = null
+
+  try {
+    const dcfContext = useDCFModel()
+    assumptions = dcfContext.assumptions
+    updateAssumptions = dcfContext.updateAssumptions
+  } catch (error) {
+    // Context not available yet, will use local state
+    console.warn('DCF context not available, using local state')
+  }
+
   const [data, setData] = useState<DCFData>(initialData)
   const [results, setResults] = useState<DCFResults | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [activeScenario, setActiveScenario] = useState<any>(null)
+  const [availableScenarios, setAvailableScenarios] = useState<any[]>([])
 
-  // Calculate free cash flows for display
-  const calculateFCF = useCallback(() => {
-    const fcf: number[] = []
-    for (let i = 0; i < data.settings.forecastPeriod; i++) {
-      const nopat = (data.projections.ebit[i] || 0) - (data.projections.taxes[i] || 0)
-      const cashFlow =
-        nopat +
-        (data.projections.depreciation[i] || 0) -
-        (data.projections.capex[i] || 0) -
-        (data.projections.workingCapitalChange[i] || 0)
-      fcf.push(cashFlow)
+  // Load scenarios
+  useEffect(() => {
+    const loadScenarios = async () => {
+      try {
+        const response = await fetch(`/api/valuations/${valuationId}/scenarios`)
+        if (response.ok) {
+          const scenarios = await response.json()
+          setAvailableScenarios(scenarios)
+          const active = scenarios.find((s: any) => s.is_active)
+          if (active) {
+            setActiveScenario(active)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load scenarios:', error)
+      }
     }
-    return fcf
-  }, [data])
+    loadScenarios()
+  }, [valuationId])
+
+  // Use projection years from assumptions, with fallback to settings
+  const forecastPeriod = assumptions?.projectionYears || data.settings.forecastPeriod
+
+  // Use discount rate from assumptions (which gets updated by WACC), with fallback to settings
+  const currentDiscountRate = assumptions?.discountRate || data.settings.discountRate
 
   // Auto-calculate when data changes
   const debouncedCalculate = useDebouncedCallback(async () => {
@@ -108,7 +141,7 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
       const calculatedResults = await runDCFCalculation(valuationId, {
         projections: data.projections,
         settings: {
-          discountRate: data.settings.discountRate,
+          discountRate: currentDiscountRate,
           terminalGrowthRate: data.settings.terminalGrowthRate,
           terminalValueMethod: data.settings.terminalValueMethod,
           exitMultiple: data.settings.exitMultiple,
@@ -195,186 +228,6 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
     setHasChanges(true)
   }
 
-  // Create table data for projections
-  const projectionTableData = Array.from({ length: data.settings.forecastPeriod }, (_, i) => {
-    const fcf = calculateFCF()
-    return {
-      year: i + 1,
-      revenue: data.projections.revenue[i] || 0,
-      ebitda: data.projections.ebitda[i] || 0,
-      depreciation: data.projections.depreciation[i] || 0,
-      ebit: data.projections.ebit[i] || 0,
-      taxes: data.projections.taxes[i] || 0,
-      capex: data.projections.capex[i] || 0,
-      workingCapitalChange: data.projections.workingCapitalChange[i] || 0,
-      fcf: fcf[i] || 0,
-      discountFactor: results?.discountFactors[i] || 0,
-      pvFcf: results?.discountedCashFlows[i] || 0,
-    }
-  })
-
-  // Define columns for the projections table
-  const projectionColumns: ColumnDef<(typeof projectionTableData)[0]>[] = [
-    {
-      id: 'year',
-      header: 'Year',
-      accessorKey: 'year',
-      cell: ({ row }) => `Year ${row.getValue('year')}`,
-    },
-    {
-      id: 'revenue',
-      header: 'Revenue',
-      accessorKey: 'revenue',
-      cell: ({ row }) => {
-        const index = row.index
-        return (
-          <EditableCell
-            value={row.getValue('revenue')}
-            onChange={(value) => updateProjections('revenue', index, value)}
-            type="currency"
-            editable={true}
-          />
-        )
-      },
-    },
-    {
-      id: 'ebitda',
-      header: 'EBITDA',
-      accessorKey: 'ebitda',
-      cell: ({ row }) => {
-        const index = row.index
-        return (
-          <EditableCell
-            value={row.getValue('ebitda')}
-            onChange={(value) => updateProjections('ebitda', index, value)}
-            type="currency"
-            editable={true}
-          />
-        )
-      },
-    },
-    {
-      id: 'depreciation',
-      header: 'Depreciation',
-      accessorKey: 'depreciation',
-      cell: ({ row }) => {
-        const index = row.index
-        return (
-          <EditableCell
-            value={row.getValue('depreciation')}
-            onChange={(value) => updateProjections('depreciation', index, value)}
-            type="currency"
-            editable={true}
-          />
-        )
-      },
-    },
-    {
-      id: 'ebit',
-      header: 'EBIT',
-      accessorKey: 'ebit',
-      cell: ({ row }) => {
-        const index = row.index
-        return (
-          <EditableCell
-            value={row.getValue('ebit')}
-            onChange={(value) => updateProjections('ebit', index, value)}
-            type="currency"
-            editable={true}
-          />
-        )
-      },
-    },
-    {
-      id: 'taxes',
-      header: 'Taxes',
-      accessorKey: 'taxes',
-      cell: ({ row }) => {
-        const index = row.index
-        return (
-          <EditableCell
-            value={row.getValue('taxes')}
-            onChange={(value) => updateProjections('taxes', index, value)}
-            type="currency"
-            editable={true}
-          />
-        )
-      },
-    },
-    {
-      id: 'capex',
-      header: 'CapEx',
-      accessorKey: 'capex',
-      cell: ({ row }) => {
-        const index = row.index
-        return (
-          <EditableCell
-            value={row.getValue('capex')}
-            onChange={(value) => updateProjections('capex', index, value)}
-            type="currency"
-            editable={true}
-          />
-        )
-      },
-    },
-    {
-      id: 'workingCapitalChange',
-      header: 'NWC Change',
-      accessorKey: 'workingCapitalChange',
-      cell: ({ row }) => {
-        const index = row.index
-        return (
-          <EditableCell
-            value={row.getValue('workingCapitalChange')}
-            onChange={(value) => updateProjections('workingCapitalChange', index, value)}
-            type="currency"
-            editable={true}
-          />
-        )
-      },
-    },
-    {
-      id: 'fcf',
-      header: 'Free Cash Flow',
-      accessorKey: 'fcf',
-      cell: ({ row }) => (
-        <div className="font-medium">
-          {new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          }).format(row.getValue('fcf'))}
-        </div>
-      ),
-    },
-    {
-      id: 'discountFactor',
-      header: 'Discount Factor',
-      accessorKey: 'discountFactor',
-      cell: ({ row }) => (
-        <div className="text-muted-foreground">
-          {(row.getValue('discountFactor') as number).toFixed(4)}
-        </div>
-      ),
-    },
-    {
-      id: 'pvFcf',
-      header: 'PV of FCF',
-      accessorKey: 'pvFcf',
-      cell: ({ row }) => (
-        <div className="font-medium">
-          {new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          }).format(row.getValue('pvFcf'))}
-        </div>
-      ),
-    },
-  ]
-
   // Calculate implied share price
   const impliedSharePrice = results
     ? (results.enterpriseValue + data.balanceSheet.cashBalance - data.balanceSheet.debtBalance) /
@@ -386,10 +239,68 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">DCF Analysis</h1>
-          <p className="text-muted-foreground">Discounted Cash Flow valuation methodology</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">DCF Analysis</h1>
+            {activeScenario && (
+              <div className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4 text-muted-foreground" />
+                <Badge variant="outline" className="gap-1">
+                  {activeScenario.name}
+                </Badge>
+              </div>
+            )}
+          </div>
+          <p className="text-muted-foreground">
+            Discounted Cash Flow valuation methodology
+            {activeScenario && ` • ${activeScenario.type} scenario`}
+          </p>
         </div>
         <div className="flex gap-2">
+          {availableScenarios.length > 0 && (
+            <Select
+              value={activeScenario?.id || ''}
+              onValueChange={async (scenarioId) => {
+                try {
+                  const response = await fetch(
+                    `/api/valuations/${valuationId}/scenarios/${scenarioId}/activate`,
+                    {
+                      method: 'POST',
+                    }
+                  )
+                  if (response.ok) {
+                    const newActive = availableScenarios.find((s) => s.id === scenarioId)
+                    setActiveScenario(newActive)
+                    toast.success(`Switched to ${newActive?.name} scenario`)
+                    // Trigger recalculation with new scenario
+                  }
+                } catch (error) {
+                  toast.error('Failed to switch scenario')
+                }
+              }}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select scenario" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableScenarios.map((scenario) => (
+                  <SelectItem key={scenario.id} value={scenario.id}>
+                    <div className="flex items-center gap-2">
+                      <span>{scenario.name}</span>
+                      <Badge variant="outline" size="sm">
+                        {scenario.type}
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button variant="outline" size="sm" asChild>
+            <a href={`/valuations/${valuationId}/enterprise/dcf-analysis/scenarios`}>
+              <Settings className="mr-2 h-4 w-4" />
+              Manage Scenarios
+            </a>
+          </Button>
           {hasChanges && (
             <Button variant="outline" size="sm" disabled>
               <AlertCircle className="mr-2 h-4 w-4" />
@@ -456,9 +367,7 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(data.settings.discountRate * 100).toFixed(1)}%
-            </div>
+            <div className="text-2xl font-bold">{(currentDiscountRate * 100).toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">WACC</p>
           </CardContent>
         </Card>
@@ -483,180 +392,63 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
       )}
 
       <Tabs defaultValue="projections" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="projections">Financial Projections</TabsTrigger>
-          <TabsTrigger value="assumptions">DCF Assumptions</TabsTrigger>
           <TabsTrigger value="sensitivity">Sensitivity Analysis</TabsTrigger>
         </TabsList>
 
         {/* Projections Tab */}
-        <TabsContent value="projections">
+        <TabsContent value="projections" className="space-y-4">
+          {/* Projection Period Controls */}
           <Card>
-            <CardHeader>
-              <CardTitle>Cash Flow Projections</CardTitle>
-              <CardDescription>
-                Double-click any cell to edit the financial projections
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EditableDataTable
-                data={projectionTableData}
-                columns={projectionColumns}
-                tableId="dcf-projections"
-                showExport={true}
-                showColumnVisibility={true}
-                showPagination={false}
-                editable={false} // We're handling editable cells individually
-              />
-
-              {/* Summary rows */}
-              <div className="mt-4 space-y-2 border-t pt-4">
-                <div className="flex justify-between font-medium">
-                  <span>Sum of PV Cash Flows</span>
-                  <span>
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(results?.presentValueOfCashFlows || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between font-medium">
-                  <span>PV of Terminal Value</span>
-                  <span>
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(results?.presentValueOfTerminalValue || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t pt-2 text-lg font-bold">
-                  <span>Enterprise Value</span>
-                  <span className="text-primary">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(results?.enterpriseValue || 0)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Assumptions Tab */}
-        <TabsContent value="assumptions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Valuation Parameters</CardTitle>
-              <CardDescription>Key assumptions for the DCF model</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Discount Rate (WACC)</Label>
-                  <PercentageInput
-                    value={data.settings.discountRate * 100}
-                    onChange={(value) => updateSettings('discountRate', value / 100)}
-                    min={0}
-                    max={50}
-                    step={0.1}
-                    decimals={1}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Tax Rate</Label>
-                  <PercentageInput
-                    value={data.settings.taxRate * 100}
-                    onChange={(value) => updateSettings('taxRate', value / 100)}
-                    min={0}
-                    max={50}
-                    step={0.1}
-                    decimals={1}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Discounting Convention</Label>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Label className="whitespace-nowrap">Projection Years:</Label>
                   <Select
-                    value={data.settings.discountingConvention}
-                    onValueChange={(value: 'Mid-Year' | 'End-Year') =>
-                      updateSettings('discountingConvention', value)
-                    }
+                    value={String(assumptions?.projectionYears || 5)}
+                    onValueChange={(value) => {
+                      if (updateAssumptions) {
+                        updateAssumptions({ projectionYears: parseInt(value) })
+                      }
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-[100px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Mid-Year">Mid-Year</SelectItem>
-                      <SelectItem value="End-Year">End-Year</SelectItem>
+                      {[3, 4, 5, 6, 7, 8, 9, 10, 12, 15].map((years) => (
+                        <SelectItem key={years} value={String(years)}>
+                          {years} years
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <span className="text-sm text-muted-foreground">+ Terminal Year</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Info className="h-4 w-4" />
+                  <span>Scroll horizontally to view all years</span>
                 </div>
               </div>
             </CardContent>
           </Card>
+          {/* Scenario Integration */}
+          {activeScenario && (
+            <ScenarioProjectionLink valuationId={valuationId} activeScenario={activeScenario} />
+          )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Terminal Value</CardTitle>
-              <CardDescription>Method for calculating terminal value</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Terminal Value Method</Label>
-                <Select
-                  value={data.settings.terminalValueMethod}
-                  onValueChange={(value: 'PGM' | 'Exit Multiple') =>
-                    updateSettings('terminalValueMethod', value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PGM">Perpetual Growth Method</SelectItem>
-                    <SelectItem value="Exit Multiple">Exit Multiple</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* DCF Table */}
+          <VerticalDCFTable
+            projections={data.projections}
+            results={results}
+            forecastPeriod={forecastPeriod}
+            onUpdateProjection={updateProjections}
+            isCalculating={isCalculating}
+          />
 
-              {data.settings.terminalValueMethod === 'PGM' && (
-                <div className="space-y-2">
-                  <Label>Terminal Growth Rate</Label>
-                  <PercentageInput
-                    value={data.settings.terminalGrowthRate * 100}
-                    onChange={(value) => updateSettings('terminalGrowthRate', value / 100)}
-                    min={0}
-                    max={10}
-                    step={0.1}
-                    decimals={1}
-                  />
-                </div>
-              )}
-
-              {data.settings.terminalValueMethod === 'Exit Multiple' && (
-                <div className="space-y-2">
-                  <Label>Exit Multiple (x EBITDA)</Label>
-                  <input
-                    type="number"
-                    value={data.settings.exitMultiple}
-                    onChange={(e) => updateSettings('exitMultiple', parseFloat(e.target.value))}
-                    min={0}
-                    max={20}
-                    step={0.5}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Data Flow Diagram */}
+          <DCFDataFlowDiagram />
         </TabsContent>
 
         {/* Sensitivity Analysis Tab */}
@@ -674,7 +466,7 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
                 baseInputs={{
                   projections: data.projections,
                   settings: {
-                    discountRate: data.settings.discountRate,
+                    discountRate: currentDiscountRate,
                     terminalGrowthRate: data.settings.terminalGrowthRate,
                     terminalValueMethod: data.settings.terminalValueMethod,
                     exitMultiple: data.settings.exitMultiple,

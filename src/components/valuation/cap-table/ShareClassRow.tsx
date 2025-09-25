@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import { ShareClass } from '@/types/models'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -96,10 +97,11 @@ export function ShareClassRow({
           </Select>
         </td>
         <td className="whitespace-nowrap px-6 py-4">
-          <Input
-            type="date"
-            value={getValue('roundDate') as string}
-            onChange={(e) => handleFieldChange('roundDate', e.target.value)}
+          <DatePicker
+            value={getValue('roundDate') ? new Date(getValue('roundDate') as string) : undefined}
+            onChange={(date) =>
+              handleFieldChange('roundDate', date?.toISOString().split('T')[0] || '')
+            }
             className="w-full"
           />
         </td>

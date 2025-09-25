@@ -54,6 +54,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { cn } from '@/lib/utils'
+import { useDCFModel } from '@/contexts/DCFModelContext'
+import { PeerCompaniesAnalysis } from '@/components/peer-analysis/PeerCompaniesAnalysis'
 
 interface PeerCompany {
   id?: string
@@ -89,6 +91,9 @@ interface WACCCalculatorClientProps {
 }
 
 export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculatorClientProps) {
+  // Use DCF Model Context
+  const { updateWACC, updateAssumptions, recalculateAll } = useDCFModel()
+
   const [data, setData] = useState(initialData.waccData)
   const [peerCompanies, setPeerCompanies] = useState<PeerCompany[]>(initialData.peerCompanies)
   const [calculatedResults, setCalculatedResults] = useState<any>(null)
@@ -105,6 +110,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
     debtToEquity: 0.4,
     taxRate: 0.21,
   })
+  const [showPeerAnalysis, setShowPeerAnalysis] = useState(false)
 
   // Calculate WACC in real-time
   const calculateCurrentWACC = useCallback(() => {
@@ -127,7 +133,30 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
 
     const results = calculateWACC(inputs)
     setCalculatedResults(results)
-  }, [data, peerCompanies])
+
+    // Update DCF context with WACC data
+    if (results?.wacc) {
+      updateWACC({
+        costOfEquity: results.costOfEquity,
+        costOfDebt: results.afterTaxCostOfDebt,
+        taxRate: data.targetTaxRate,
+        debtWeight: data.debtWeight,
+        equityWeight: data.equityWeight,
+        calculatedWACC: results.wacc,
+        unleveredBeta: results.unleveredBeta,
+        leveredBeta: results.leveredBeta,
+        riskFreeRate: data.riskFreeRate,
+        equityRiskPremium: data.equityRiskPremium,
+        sizePremium: data.sizePremium,
+        specificRiskPremium: data.companySpecificPremium,
+      })
+
+      // Also update discount rate in assumptions
+      updateAssumptions({
+        discountRate: results.wacc,
+      })
+    }
+  }, [data, peerCompanies, updateWACC, updateAssumptions])
 
   // Auto-calculate on changes
   const debouncedCalculate = useDebouncedCallback(() => {
@@ -370,8 +399,9 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       </div>
 
       <Tabs defaultValue="peer-analysis" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="peer-analysis">Peer Beta Analysis</TabsTrigger>
+          <TabsTrigger value="alpha-vantage">Market Data</TabsTrigger>
           <TabsTrigger value="cost-of-equity">Cost of Equity</TabsTrigger>
           <TabsTrigger value="capital-structure">Capital Structure</TabsTrigger>
           <TabsTrigger value="optimization">Optimization</TabsTrigger>
@@ -389,6 +419,10 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setShowPeerAnalysis(true)}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Import from Alpha Vantage
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -513,6 +547,43 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Alpha Vantage Market Data Tab */}
+        <TabsContent value="alpha-vantage">
+          {showPeerAnalysis ? (
+            <PeerCompaniesAnalysis
+              valuationId={valuationId}
+              onBetaSelect={(beta, source) => {
+                // Add the beta as a new peer company
+                const newPeerFromAlpha: PeerCompany = {
+                  name: `${source} Beta`,
+                  leveredBeta: beta,
+                  debtToEquity: data.targetDebtToEquity,
+                  taxRate: data.targetTaxRate,
+                }
+                setPeerCompanies([...peerCompanies, newPeerFromAlpha])
+                setHasChanges(true)
+                toast.success(`Added ${source} beta: ${beta.toFixed(3)}`)
+                setShowPeerAnalysis(false)
+              }}
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Alpha Vantage Market Data</CardTitle>
+                <CardDescription>
+                  Import beta and peer companies data from Alpha Vantage based on valuation date
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={() => setShowPeerAnalysis(true)} className="w-full">
+                  <Download className="mr-2 h-4 w-4" />
+                  Load Peer Companies Analysis
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Cost of Equity Tab */}

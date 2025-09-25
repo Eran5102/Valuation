@@ -138,12 +138,25 @@ export default function ValuationAssumptionsConsolidated({
 
           if (data.report_date)
             formattedAssumptions['valuation_details.report_date'] = data.report_date
+          if (data.subject_security)
+            formattedAssumptions['valuation_details.subject_security'] = data.subject_security
           if (data.valuation_purpose)
             formattedAssumptions['valuation_details.valuation_purpose'] = data.valuation_purpose
           if (data.standard_of_value)
             formattedAssumptions['valuation_details.standard_of_value'] = data.standard_of_value
           if (data.premise_of_value)
             formattedAssumptions['valuation_details.premise_of_value'] = data.premise_of_value
+
+          if (data.designee_prefix)
+            formattedAssumptions['designee.designee_prefix'] = data.designee_prefix
+          if (data.designee_first_name)
+            formattedAssumptions['designee.designee_first_name'] = data.designee_first_name
+          if (data.designee_last_name)
+            formattedAssumptions['designee.designee_last_name'] = data.designee_last_name
+          if (data.designee_title)
+            formattedAssumptions['designee.designee_title'] = data.designee_title
+          if (data.engagement_letter_date)
+            formattedAssumptions['designee.engagement_letter_date'] = data.engagement_letter_date
 
           if (data.appraiser_name)
             formattedAssumptions['appraiser.appraiser_name'] = data.appraiser_name
@@ -188,6 +201,8 @@ export default function ValuationAssumptionsConsolidated({
             formattedAssumptions['company_profile.products_services'] = data.products_services
           if (data.industry_description)
             formattedAssumptions['company_profile.industry_description'] = data.industry_description
+          if (data.stage_description)
+            formattedAssumptions['company_profile.stage_description'] = data.stage_description
 
           // Load management team and investors if they exist
           if (data.management_team) {
@@ -312,6 +327,14 @@ export default function ValuationAssumptionsConsolidated({
           required: true,
         },
         {
+          id: 'stage_description',
+          name: 'Stage Description',
+          type: 'textarea',
+          value: '',
+          placeholder: 'Select a stage to auto-populate or enter custom description',
+          description: 'AICPA stage description - automatically populated when stage is selected',
+        },
+        {
           id: 'company_description',
           name: 'Company Description',
           type: 'textarea',
@@ -357,6 +380,15 @@ export default function ValuationAssumptionsConsolidated({
         { id: 'valuation_date', name: 'Valuation Date', type: 'date', value: '', required: true },
         { id: 'report_date', name: 'Report Date', type: 'date', value: '' },
         {
+          id: 'subject_security',
+          name: 'Subject Security',
+          type: 'text',
+          value: '',
+          placeholder: 'e.g., Common Stock, Series A Preferred Stock',
+          description: 'The type of security being valued',
+          required: true,
+        },
+        {
           id: 'valuation_purpose',
           name: 'Valuation Purpose',
           type: 'text',
@@ -377,6 +409,40 @@ export default function ValuationAssumptionsConsolidated({
           type: 'select',
           value: 'Going Concern',
           options: ['Going Concern', 'Liquidation', 'Orderly Liquidation', 'Forced Liquidation'],
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'designee',
+      name: 'Designee Information',
+      icon: Users,
+      description: 'Person the valuation report will be addressed to',
+      fields: [
+        {
+          id: 'designee_prefix',
+          name: 'Prefix',
+          type: 'select',
+          value: 'Mr.',
+          options: ['Mr.', 'Ms.', 'Mrs.', 'Dr.', 'Prof.'],
+          required: true,
+        },
+        { id: 'designee_first_name', name: 'First Name', type: 'text', value: '', required: true },
+        { id: 'designee_last_name', name: 'Last Name', type: 'text', value: '', required: true },
+        {
+          id: 'designee_title',
+          name: 'Title',
+          type: 'text',
+          value: '',
+          placeholder: 'e.g., CEO, CFO, Board Member',
+          required: true,
+        },
+        {
+          id: 'engagement_letter_date',
+          name: 'Engagement Letter Date',
+          type: 'date',
+          value: '',
+          description: 'Date the engagement letter was signed',
           required: true,
         },
       ],
@@ -487,6 +553,22 @@ export default function ValuationAssumptionsConsolidated({
     },
   ]
 
+  // AICPA stage descriptions
+  const stageDescriptions: Record<string, string> = {
+    'Stage 1: Ideation':
+      'The Idea - Ideation and Initial Concept: No tangible product exists. Management team typically incomplete. Initial funding from founders, friends, and family. No product revenue and limited expense history. Valuation highly subjective; Backsolve Method most reliable if recent transaction occurred.',
+    'Stage 2: Product Development':
+      'The Plan - Formalization and Early Development: Product development actively underway, business challenges better understood. Management team being assembled. First or second round of financing (preferred stock) to fund development. No product revenue but substantive expense history. Backsolve Method remains primary valuation tool.',
+    'Stage 3: Development Progress':
+      'The Product - Nearing Completion: Key development milestones met, product nearing completion with alpha/beta testing. More complete management team in place. Continued financing through preferred stock. Generally no product revenue yet. Valuation approaches expanded to include DCF and market comparables.',
+    'Stage 4: Early Revenue':
+      'First Sales - Initial Market Entry: Product launched to market with initial customer sales. Complete or near-complete management team. Additional financing rounds for market expansion. Initial product revenues but operating at a loss. Market approach gains prominence alongside DCF methodology.',
+    'Stage 5: Revenue Generation':
+      'Growth - Market Expansion: Growing sales to expanding customer base with potential market leadership. Management team complete and expanding. Later stage financing through multiple investor groups. Significant revenue growth approaching profitability. Comparable company analysis becomes primary valuation methodology.',
+    'Stage 6: Established Operations':
+      'Maturity - Profitable Operations: Established market position with sustainable competitive advantages. Experienced and stable management team. Potential for IPO or strategic exit. Profitable operations with positive cash flows. Market multiples and guideline transactions provide reliable valuation benchmarks.',
+  }
+
   // Handle field value changes
   const handleFieldChange = (sectionId: string, fieldId: string, value: any) => {
     setAssumptions((prev) => ({
@@ -494,6 +576,18 @@ export default function ValuationAssumptionsConsolidated({
       [`${sectionId}.${fieldId}`]: value,
     }))
     setHasChanges(true)
+
+    // Auto-populate stage description when company stage is selected
+    if (sectionId === 'company_profile' && fieldId === 'company_stage' && value) {
+      const description = stageDescriptions[value as string] || ''
+      if (description) {
+        // Also update the stage_description field
+        setAssumptions((prev) => ({
+          ...prev,
+          'company_profile.stage_description': description,
+        }))
+      }
+    }
   }
 
   // Team Member Management Functions
@@ -570,6 +664,9 @@ export default function ValuationAssumptionsConsolidated({
           }
         } else if (key.startsWith('valuation_details.')) {
           const fieldName = key.replace('valuation_details.', '')
+          dataToSave[fieldName] = value
+        } else if (key.startsWith('designee.')) {
+          const fieldName = key.replace('designee.', '')
           dataToSave[fieldName] = value
         } else if (key.startsWith('appraiser.')) {
           const fieldName = key.replace('appraiser.', '')
