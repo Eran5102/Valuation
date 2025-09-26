@@ -73,7 +73,6 @@ export default function ClientDetailPage() {
         setError('Failed to fetch client details')
       }
     } catch (error) {
-      console.error('Error fetching client:', error)
       setError('Failed to fetch client details')
     } finally {
       setLoading(false)
@@ -103,7 +102,6 @@ export default function ClientDetailPage() {
         throw new Error('Failed to update status')
       }
     } catch (error) {
-      console.error('Error updating client status:', error)
       throw error
     }
   }

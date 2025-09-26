@@ -77,7 +77,6 @@ export default function NewClientPage() {
       if (!contentType || !contentType.includes('application/json')) {
         // Non-JSON response, likely an error from Next.js or Vercel
         const text = await response.text()
-        console.error('Non-JSON response:', text)
         throw new Error(
           'Server error: Unable to process request. Please ensure Supabase environment variables are configured in Vercel.'
         )
@@ -101,7 +100,6 @@ export default function NewClientPage() {
       // Redirect back to clients page on success
       router.push('/clients')
     } catch (error) {
-      console.error('Error creating client:', error)
 
       // Show more informative error messages
       let errorMessage = 'Failed to create client. Please try again.'

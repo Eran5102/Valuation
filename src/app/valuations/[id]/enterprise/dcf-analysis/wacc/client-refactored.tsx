@@ -179,7 +179,6 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       setPeerCompanies([...peerCompanies, ...newPeers])
       toast.success(`Imported ${imported.length} peer companies`)
     } catch (error) {
-      console.error('Import error:', error)
       toast.error('Failed to import peer companies')
     } finally {
       setIsImporting(false)
@@ -197,7 +196,6 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       toast.success('WACC calculation saved successfully')
       setHasChanges(false)
     } catch (error) {
-      console.error('Save error:', error)
       toast.error('Failed to save WACC calculation')
     } finally {
       setIsSaving(false)
@@ -224,7 +222,6 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       setOptimalStructure(result)
       toast.success('Optimal capital structure calculated')
     } catch (error) {
-      console.error('Optimization error:', error)
       toast.error('Failed to calculate optimal structure')
     } finally {
       setIsCalculating(false)

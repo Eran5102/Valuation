@@ -54,7 +54,6 @@ export function ConfirmDialog({
       await onConfirm()
       setOpen(false)
     } catch (error) {
-      console.error('Confirmation error:', error)
     } finally {
       setIsLoading(false)
     }
@@ -237,7 +236,6 @@ export function FormDialog({
       await onSubmit()
       setOpen(false)
     } catch (error) {
-      console.error('Form submission error:', error)
     } finally {
       setIsLoading(false)
     }
@@ -401,7 +399,6 @@ export function StepModal({
       setOpen(false)
       setCurrentStep(0)
     } catch (error) {
-      console.error('Step modal completion error:', error)
     } finally {
       setIsLoading(false)
     }

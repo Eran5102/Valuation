@@ -241,7 +241,6 @@ export function CapexDepreciationClient({ valuationId }: CapexDepreciationClient
         setAssetClasses(generateSampleAssetClasses())
       }
     } catch (error) {
-      console.error('Error loading capex data:', error)
       setAssetClasses(generateSampleAssetClasses())
     }
   }
@@ -779,7 +778,11 @@ export function CapexDepreciationClient({ valuationId }: CapexDepreciationClient
             </CardHeader>
             <CardContent>
               {assetClasses.length > 0 ? (
-                <EditableDataTable columns={assetColumns} data={assetClasses} />
+                <EditableDataTable
+                  tableId="asset-classes"
+                  columns={assetColumns}
+                  data={assetClasses}
+                />
               ) : (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -801,7 +804,11 @@ export function CapexDepreciationClient({ valuationId }: CapexDepreciationClient
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <EditableDataTable columns={projectionColumns} data={projections} />
+              <EditableDataTable
+                tableId="capex-projections"
+                columns={projectionColumns}
+                data={projections}
+              />
             </CardContent>
           </Card>
         </TabsContent>

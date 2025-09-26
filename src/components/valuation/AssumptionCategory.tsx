@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AssumptionCategory as AssumptionCategoryType, Assumption } from './ValuationAssumptions'
+import { AssumptionSection as AssumptionCategoryType, Assumption } from './ValuationAssumptionsConsolidated'
 import { AssumptionInput } from './AssumptionInput'
 
 interface AssumptionCategoryProps {
@@ -37,7 +37,7 @@ export function AssumptionCategory({
             <div>
               <CardTitle className="text-lg">{category.name}</CardTitle>
               <CardDescription className="text-sm">
-                {category.assumptions.filter((a) => a.value).length} / {category.assumptions.length}{' '}
+                {category.fields.filter((a: any) => a.value).length} / {category.fields.length}{' '}
                 completed
               </CardDescription>
             </div>
@@ -45,7 +45,7 @@ export function AssumptionCategory({
           <div className="flex items-center space-x-2">
             <div className="text-sm text-muted-foreground">
               {Math.round(
-                (category.assumptions.filter((a) => a.value).length / category.assumptions.length) *
+                (category.fields.filter((a: any) => a.value).length / category.fields.length) *
                   100
               )}
               %
@@ -60,7 +60,7 @@ export function AssumptionCategory({
       {isExpanded && (
         <CardContent className="pt-0">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {category.assumptions.map((assumption) => (
+            {category.fields.map((assumption: any) => (
               <div key={assumption.id} className="space-y-1">
                 <label className="block text-xs font-medium text-foreground">
                   {assumption.name}

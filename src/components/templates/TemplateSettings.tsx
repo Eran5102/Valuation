@@ -19,6 +19,8 @@ import { Badge } from '@/components/ui/badge'
 import { Settings, FileText, Palette, Layout } from 'lucide-react'
 import type { ReportTemplate } from '@/lib/templates/types'
 import { TemplateThemeManager } from './TemplateThemeManager'
+import { WatermarkSettings } from './WatermarkSettings'
+import { TemplateVersioning } from './TemplateVersioning'
 
 interface TemplateSettingsProps {
   template: ReportTemplate
@@ -240,57 +242,7 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
       </Card>
 
       {/* Watermark Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Palette className="mr-2 h-5 w-5" />
-            Watermark
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="watermarkEnabled"
-              checked={template.settings?.watermark?.enabled || false}
-              onCheckedChange={(checked) => updateWatermark('enabled', checked)}
-            />
-            <Label htmlFor="watermarkEnabled">Enable watermark for draft documents</Label>
-          </div>
-
-          {template.settings?.watermark?.enabled && (
-            <div className="border-primary/20 space-y-4 border-l-2 pl-6">
-              <div>
-                <Label htmlFor="watermarkText">Watermark Text</Label>
-                <Input
-                  id="watermarkText"
-                  value={template.settings.watermark.text || 'DRAFT'}
-                  onChange={(e) => updateWatermark('text', e.target.value)}
-                  placeholder="DRAFT"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="watermarkOpacity">Opacity</Label>
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="range"
-                    id="watermarkOpacity"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={template.settings.watermark.opacity || 0.1}
-                    onChange={(e) => updateWatermark('opacity', parseFloat(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="w-12 text-sm text-muted-foreground">
-                    {Math.round((template.settings.watermark.opacity || 0.1) * 100)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <WatermarkSettings template={template} onChange={onChange} />
 
       {/* Metadata */}
       <Card>
@@ -355,6 +307,9 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
 
       {/* Theme Management */}
       <TemplateThemeManager template={template} onChange={onChange} />
+
+      {/* Version Control */}
+      <TemplateVersioning template={template} onChange={onChange} />
 
       {/* Template Statistics */}
       <Card>

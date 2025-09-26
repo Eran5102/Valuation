@@ -254,7 +254,7 @@ export function SharedSidebar({
     <TooltipProvider>
       <div
         className={cn(
-          'flex h-screen flex-shrink-0 flex-col border-r shadow-sm transition-all duration-300',
+          'flex h-screen flex-shrink-0 flex-col border-r border-gray-600 shadow-sm transition-all duration-300',
           isCollapsed ? collapsedWidth : width,
           position === 'right' && 'border-l border-r-0',
           className

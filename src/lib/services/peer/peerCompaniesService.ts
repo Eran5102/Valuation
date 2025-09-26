@@ -98,7 +98,6 @@ export async function fetchCompanyFundamentals(
     const overview: AlphaVantageOverviewResponse = await overviewResponse.json()
 
     if (!overview.Symbol) {
-      console.error(`No data found for ticker: ${ticker}`)
       return null
     }
 
@@ -177,7 +176,6 @@ export async function fetchCompanyFundamentals(
       returnOnEquity,
     }
   } catch (error) {
-    console.error(`Error fetching fundamentals for ${ticker}:`, error)
     return null
   }
 }
@@ -232,7 +230,6 @@ export async function searchPeerCompanies(
 
     return peers
   } catch (error) {
-    console.error('Error searching for peer companies:', error)
     return []
   }
 }
@@ -249,7 +246,6 @@ export async function fetchMultipleCompanies(
 
   for (let i = 0; i < tickers.length; i++) {
     const ticker = tickers[i]
-    console.log(`Fetching data for ${ticker} (${i + 1}/${tickers.length})...`)
 
     const fundamentals = await fetchCompanyFundamentals(ticker, apiKey)
     if (fundamentals) {
@@ -369,7 +365,6 @@ export async function performPeerComparison(
       percentileRankings,
     }
   } catch (error) {
-    console.error('Error performing peer comparison:', error)
     return null
   }
 }

@@ -80,7 +80,6 @@ export function BetaHistoryChart({ valuationId, ticker, valuationDate }: BetaHis
         setStatistics(data.statistics)
       }
     } catch (error) {
-      console.error('Error fetching beta history:', error)
     } finally {
       setLoading(false)
     }

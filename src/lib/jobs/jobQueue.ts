@@ -83,7 +83,6 @@ class JobQueue {
    */
   process(jobType: string, processor: JobProcessor): void {
     this.processors.set(jobType, processor)
-    console.log(`Registered processor for job type: ${jobType}`)
   }
 
   /**
@@ -133,7 +132,6 @@ class JobQueue {
       this.delayedJobs.set(jobId, timeout)
     }
 
-    console.log(`Job added: ${jobId} (type: ${type}, priority: ${priority})`)
     return jobId
   }
 
@@ -179,7 +177,6 @@ class JobQueue {
     }
 
     this.jobs.delete(jobId)
-    console.log(`Job cancelled: ${jobId}`)
     return true
   }
 
@@ -195,7 +192,6 @@ class JobQueue {
     job.error = undefined
     job.failedAt = undefined
 
-    console.log(`Job retried: ${jobId}`)
     return true
   }
 
@@ -217,7 +213,6 @@ class JobQueue {
       }
     }
 
-    console.log(`Cleaned ${cleaned} old jobs`)
     return cleaned
   }
 
@@ -285,7 +280,6 @@ class JobQueue {
   private async processJob(job: Job): Promise<void> {
     const processor = this.processors.get(job.type)
     if (!processor) {
-      console.error(`No processor found for job type: ${job.type}`)
       return
     }
 
@@ -294,7 +288,6 @@ class JobQueue {
     job.startedAt = new Date()
     job.attempts++
 
-    console.log(`Processing job: ${job.id} (type: ${job.type}, attempt: ${job.attempts})`)
 
     try {
       // Create timeout promise
@@ -313,18 +306,15 @@ class JobQueue {
       const processingTime = job.completedAt.getTime() - job.startedAt!.getTime()
       this.updateStats(processingTime)
 
-      console.log(`Job completed: ${job.id} (${processingTime}ms)`)
     } catch (error) {
       // Job failed
       const errorMessage = error instanceof Error ? error.message : String(error)
-      console.error(`Job failed: ${job.id} - ${errorMessage}`)
 
       job.error = errorMessage
 
       if (job.attempts >= job.maxAttempts) {
         job.status = 'failed'
         job.failedAt = new Date()
-        console.error(`Job permanently failed: ${job.id} (max attempts reached)`)
       } else {
         // Schedule retry with exponential backoff
         const retryDelay = this.options.retryDelay * Math.pow(2, job.attempts - 1)
@@ -339,7 +329,6 @@ class JobQueue {
         }, retryDelay)
 
         this.delayedJobs.set(job.id, timeout)
-        console.log(`Job scheduled for retry: ${job.id} (delay: ${retryDelay}ms)`)
       }
     } finally {
       this.processingJobs.delete(job.id)
@@ -402,7 +391,6 @@ class JobQueue {
    * Shutdown queue gracefully
    */
   async shutdown(): Promise<void> {
-    console.log('Shutting down job queue...')
 
     // Clear all delayed job timeouts
     for (const timeout of this.delayedJobs.values()) {
@@ -418,7 +406,6 @@ class JobQueue {
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
 
-    console.log('Job queue shutdown complete')
   }
 }
 

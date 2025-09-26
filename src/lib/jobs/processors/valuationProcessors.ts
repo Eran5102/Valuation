@@ -107,7 +107,6 @@ class BlackScholesCalculator {
 async function processValuationCalculation(job: any): Promise<any> {
   const { valuationId, companyId, assumptions, shareClasses }: ValuationCalculationData = job.data
 
-  console.log(`Starting valuation calculation for valuation ${valuationId}`)
 
   // Update job progress
   job.progress = 10
@@ -151,7 +150,6 @@ async function processValuationCalculation(job: any): Promise<any> {
   await saveValuationResults(valuationId, results)
   job.progress = 100
 
-  console.log(`Valuation calculation completed for valuation ${valuationId}`)
   return results
 }
 
@@ -161,7 +159,6 @@ async function processValuationCalculation(job: any): Promise<any> {
 async function processReportGeneration(job: any): Promise<any> {
   const { valuationId, templateId, format, includeCharts }: ReportGenerationData = job.data
 
-  console.log(`Generating ${format} report for valuation ${valuationId}`)
 
   job.progress = 10
 
@@ -238,7 +235,6 @@ async function processReportGeneration(job: any): Promise<any> {
     generatedAt: new Date().toISOString(),
   }
 
-  console.log(`Report generation completed: ${filename} (${reportBuffer.length} bytes)`)
   return result
 }
 
@@ -248,7 +244,6 @@ async function processReportGeneration(job: any): Promise<any> {
 async function processDataExport(job: any): Promise<any> {
   const { type, format, filters, dateRange }: DataExportData = job.data
 
-  console.log(`Exporting ${type} data as ${format}`)
 
   job.progress = 10
 
@@ -306,9 +301,6 @@ async function processDataExport(job: any): Promise<any> {
     exportedAt: new Date().toISOString(),
   }
 
-  console.log(
-    `Data export completed: ${filename} (${data.length} records, ${exportBuffer.length} bytes)`
-  )
   return result
 }
 
@@ -318,7 +310,6 @@ async function processDataExport(job: any): Promise<any> {
 async function processEmailNotification(job: any): Promise<any> {
   const { to, template, data, attachments }: EmailNotificationData = job.data
 
-  console.log(`Sending email notification to ${to.length} recipients`)
 
   job.progress = 20
 
@@ -346,7 +337,6 @@ async function processEmailNotification(job: any): Promise<any> {
 
   job.progress = 100
 
-  console.log(`Email notification sent successfully to ${to.length} recipients`)
   return emailResult
 }
 
@@ -409,7 +399,6 @@ async function calculateOptionValues(
 
 async function saveValuationResults(valuationId: number, results: any): Promise<void> {
   // Save results to database
-  console.log(`Saving valuation results for ${valuationId}`)
 }
 
 async function loadValuationData(valuationId: number): Promise<any> {
@@ -533,7 +522,6 @@ async function renderEmailTemplate(template: any, data: any): Promise<any> {
 
 async function sendEmail(emailData: any): Promise<any> {
   // Send email using service like SendGrid, AWS SES, etc.
-  console.log('Email sent (simulated):', emailData.subject)
   return { messageId: 'sim_' + Date.now() }
 }
 
@@ -544,5 +532,4 @@ export function registerValuationProcessors(queue: JobQueue): void {
   queue.process('data-export', processDataExport)
   queue.process('email-notification', processEmailNotification)
 
-  console.log('Valuation job processors registered')
 }

@@ -90,7 +90,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { isSuperAdmin, role } = usePermissions()
-  const { organization } = useOrganization()
+  const { currentOrganization } = useOrganization()
   const { theme, setTheme } = useTheme()
 
   useEffect(() => {
@@ -252,7 +252,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     className="text-gray-200 hover:bg-gray-700 hover:text-white"
                   >
                     <Building2 className="mr-2 h-4 w-4" />
-                    <span className="font-medium">{organization?.name || 'My Organization'}</span>
+                    <span className="font-medium">{currentOrganization?.name || 'My Organization'}</span>
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

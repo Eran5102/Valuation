@@ -73,7 +73,6 @@ export default function ProfileSettingsPage() {
         })
       }
     } catch (error) {
-      console.error('Error fetching profile:', error)
     } finally {
       setFetching(false)
     }

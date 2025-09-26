@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { TemplateDataMapper } from '@/lib/templates/templateDataMapper'
+import {
+  FieldMappingSchema,
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 export async function GET() {
   try {
@@ -12,7 +16,6 @@ export async function GET() {
       count: Object.keys(fieldMappings).length,
     })
   } catch (error) {
-    console.error('Error getting field mappings:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to get field mappings' },
       { status: 500 }
@@ -22,54 +25,34 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { fieldId, mapping } = body
+    const rawData = await request.json()
+    const { fieldId, mapping } = rawData
 
-    if (!fieldId || !mapping) {
+    if (!fieldId || typeof fieldId !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'fieldId and mapping are required' },
+        { success: false, error: 'fieldId is required and must be a string' },
         { status: 400 }
       )
     }
 
-    // Validate mapping structure
-    const requiredFields = ['sourceModule', 'sourcePath']
-    const validSourceModules = [
-      'assumptions',
-      'company',
-      'valuation',
-      'capTable',
-      'dlom',
-      'calculated',
-      'manual',
-    ]
-
-    for (const field of requiredFields) {
-      if (!mapping[field]) {
-        return NextResponse.json({ success: false, error: `${field} is required` }, { status: 400 })
-      }
-    }
-
-    if (!validSourceModules.includes(mapping.sourceModule)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Invalid sourceModule. Must be one of: ${validSourceModules.join(', ')}`,
-        },
-        { status: 400 }
-      )
-    }
+    // Validate mapping structure using Zod schema
+    const validatedMapping = validateRequest(FieldMappingSchema, mapping)
 
     const mapper = TemplateDataMapper.getInstance()
-    mapper.registerFieldMapping(fieldId, mapping)
+    mapper.registerFieldMapping(fieldId, validatedMapping)
 
     return NextResponse.json({
       success: true,
       message: `Field mapping '${fieldId}' added successfully`,
-      data: { fieldId, mapping },
+      data: { fieldId, mapping: validatedMapping },
     })
   } catch (error) {
-    console.error('Error adding field mapping:', error)
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { success: false, error: 'Validation Error', message: error.message },
+        { status: 400 }
+      )
+    }
     return NextResponse.json(
       { success: false, error: 'Failed to add field mapping' },
       { status: 500 }

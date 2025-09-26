@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,33 +44,17 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import type { ReportTemplate, TemplateCategory } from '@/lib/templates/types'
+import { toast } from 'sonner'
 
-// Sample templates data - in real app this would come from API
-const sampleTemplates: ReportTemplate[] = [
-  {
-    id: 'template_409a_standard',
-    name: 'Standard 409A Valuation Report',
-    description: 'Comprehensive 409A valuation report with all required sections for compliance.',
-    category: 'financial',
-    version: '2.1.0',
-    sections: [],
-    variables: [],
-    metadata: {
-      createdAt: '2024-01-15T10:30:00Z',
-      updatedAt: '2024-02-20T14:45:00Z',
-      author: 'Bridgeland Advisors',
-      tags: ['409A', 'valuation', 'compliance', 'standard'],
-    },
-  },
-  // Add more templates as needed
-]
+// Templates will be fetched from the API
 
 export default function TemplateLibraryClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all')
-  const [templates, setTemplates] = useState(sampleTemplates)
+  const [templates, setTemplates] = useState<ReportTemplate[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [newTemplate, setNewTemplate] = useState({
     name: '',
@@ -79,12 +63,29 @@ export default function TemplateLibraryClient() {
     tags: '',
   })
 
+  // Fetch templates from API
+  const fetchTemplates = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/report-templates')
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates')
+      }
+      const data = await response.json()
+      setTemplates(data)
+    } catch (error) {
+      toast.error('Failed to load templates')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
+    fetchTemplates()
     const preselectedValuation = searchParams.get('valuationId')
     if (preselectedValuation) {
-      console.log('Preselected valuation:', preselectedValuation)
     }
-  }, [searchParams])
+  }, [searchParams, fetchTemplates])
 
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch =
@@ -94,25 +95,38 @@ export default function TemplateLibraryClient() {
     return matchesSearch && matchesCategory
   })
 
-  const handleCreateTemplate = () => {
-    const template: ReportTemplate = {
-      id: `template_${Date.now()}`,
-      name: newTemplate.name,
-      description: newTemplate.description,
-      category: newTemplate.category,
-      version: '1.0.0',
-      sections: [],
-      variables: [],
-      metadata: {
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        author: 'Current User',
-        tags: newTemplate.tags.split(',').map((t) => t.trim()),
-      },
+  const handleCreateTemplate = async () => {
+    try {
+      const template = {
+        name: newTemplate.name,
+        description: newTemplate.description,
+        category: newTemplate.category,
+        version: '1.0.0',
+        sections: [],
+        variables: [],
+        metadata: {
+          tags: newTemplate.tags.split(',').map((t) => t.trim()),
+        },
+      }
+
+      const response = await fetch('/api/report-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(template),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create template')
+      }
+
+      const createdTemplate = await response.json()
+      setTemplates([...templates, createdTemplate])
+      toast.success('Template created successfully')
+      setIsCreateOpen(false)
+      setNewTemplate({ name: '', description: '', category: 'financial', tags: '' })
+    } catch (error) {
+      toast.error('Failed to create template')
     }
-    setTemplates([...templates, template])
-    setIsCreateOpen(false)
-    setNewTemplate({ name: '', description: '', category: 'financial', tags: '' })
   }
 
   const handleTemplateAction = (action: string, template: ReportTemplate) => {
@@ -133,34 +147,71 @@ export default function TemplateLibraryClient() {
         alert('Preview functionality coming soon')
         break
       case 'duplicate':
-        const duplicatedTemplate = {
-          ...template,
-          id: `template_${Date.now()}`,
-          name: `${template.name} (Copy)`,
-          metadata: {
-            ...template.metadata,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        }
-        setTemplates([...templates, duplicatedTemplate])
+        handleDuplicateTemplate(template)
         break
       case 'delete':
-        if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-          setTemplates(templates.filter((t) => t.id !== template.id))
-        }
+        handleDeleteTemplate(template)
         break
     }
   }
 
+  const handleDuplicateTemplate = async (template: ReportTemplate) => {
+    try {
+      const response = await fetch('/api/report-templates', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'duplicate', templateId: template.id }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to duplicate template')
+      }
+
+      const duplicatedTemplate = await response.json()
+      setTemplates([...templates, duplicatedTemplate])
+      toast.success('Template duplicated successfully')
+    } catch (error) {
+      toast.error('Failed to duplicate template')
+    }
+  }
+
+  const handleDeleteTemplate = async (template: ReportTemplate) => {
+    if (!confirm(`Are you sure you want to delete "${template.name}"?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/report-templates?id=${template.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete template')
+      }
+
+      setTemplates(templates.filter((t) => t.id !== template.id))
+      toast.success('Template deleted successfully')
+    } catch (error) {
+      toast.error('Failed to delete template')
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto flex h-[calc(100vh-200px)] items-center justify-center">
+          <div className="text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading templates...</p>
+          </div>
+        </div>
+      </AppLayout>
+    )
+  }
+
   return (
-    <AppLayout
-      navigation={[
-        { name: 'Reports', href: '/reports' },
-        { name: 'Template Library', href: '/reports/template-library', current: true },
-      ]}
-    >
-      <div className="space-y-6">
+    <AppLayout>
+      <div className="container mx-auto space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">

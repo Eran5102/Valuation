@@ -42,7 +42,6 @@ export class TableViewService {
       if (error) throw error
       return data
     } catch (error) {
-      console.error('Error saving table view:', error)
       return null
     }
   }
@@ -114,7 +113,6 @@ export class TableViewService {
         }
       }
     } catch (error) {
-      console.error('Error loading table views:', error)
       return { data: [], count: 0, hasMore: false }
     }
   }
@@ -136,7 +134,6 @@ export class TableViewService {
       if (result.error) throw result.error
       return result.data?.[0] || null
     } catch (error) {
-      console.error('Error loading table view:', error)
       return null
     }
   }
@@ -158,7 +155,6 @@ export class TableViewService {
       if (error) throw error
       return true
     } catch (error) {
-      console.error('Error deleting table view:', error)
       return false
     }
   }
@@ -198,7 +194,6 @@ export class TableViewService {
       if (error) throw error
       return data
     } catch (error) {
-      console.error('Error updating table view:', error)
       return null
     }
   }
@@ -220,7 +215,6 @@ export class TableViewService {
       if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows
       return data
     } catch (error) {
-      console.error('Error loading default view:', error)
       return null
     }
   }
@@ -265,9 +259,7 @@ export class TableViewService {
 
       // Clear localStorage after successful migration
       localStorage.removeItem(localStorageKey)
-      console.log(`Migrated ${views.length} views for table ${tableId}`)
     } catch (error) {
-      console.error('Error migrating local views:', error)
     }
   }
 }

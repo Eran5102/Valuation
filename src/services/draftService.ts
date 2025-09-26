@@ -26,7 +26,6 @@ class DraftService {
       const drafts = localStorage.getItem(this.STORAGE_KEY)
       return drafts ? JSON.parse(drafts) : []
     } catch (error) {
-      console.error('Error loading drafts:', error)
       return []
     }
   }
@@ -174,7 +173,6 @@ class DraftService {
       delete draft.id
       return this.saveDraft(draft)
     } catch (error) {
-      console.error('Error importing draft:', error)
       return null
     }
   }
@@ -193,7 +191,6 @@ class DraftService {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(drafts))
     } catch (error) {
-      console.error('Error saving drafts:', error)
     }
   }
 

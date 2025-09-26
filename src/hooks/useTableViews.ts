@@ -30,17 +30,16 @@ export function useTableViews({ tableId, valuationId, autoMigrate = true }: UseT
     try {
       setIsLoading(true)
       setError(null)
-      const loadedViews = await TableViewService.loadViewsForTable(tableId, valuationId)
-      setViews(loadedViews)
+      const response = await TableViewService.loadViewsForTable(tableId, valuationId)
+      setViews(response.data)
 
       // Load default view if exists
-      const defaultView = loadedViews.find((v) => v.isDefault)
+      const defaultView = response.data.find((v) => v.isDefault)
       if (defaultView) {
         setCurrentView(defaultView)
       }
     } catch (err) {
       setError('Failed to load table views')
-      console.error(err)
     } finally {
       setIsLoading(false)
     }
@@ -61,7 +60,6 @@ export function useTableViews({ tableId, valuationId, autoMigrate = true }: UseT
         return null
       } catch (err) {
         setError('Failed to save view')
-        console.error(err)
         return null
       }
     },
@@ -78,7 +76,6 @@ export function useTableViews({ tableId, valuationId, autoMigrate = true }: UseT
       return null
     } catch (err) {
       setError('Failed to load view')
-      console.error(err)
       return null
     }
   }, [])
@@ -96,7 +93,6 @@ export function useTableViews({ tableId, valuationId, autoMigrate = true }: UseT
         return success
       } catch (err) {
         setError('Failed to delete view')
-        console.error(err)
         return false
       }
     },
@@ -117,7 +113,6 @@ export function useTableViews({ tableId, valuationId, autoMigrate = true }: UseT
         return null
       } catch (err) {
         setError('Failed to update view')
-        console.error(err)
         return null
       }
     },
@@ -136,7 +131,6 @@ export function useTableViews({ tableId, valuationId, autoMigrate = true }: UseT
       return await TableViewService.exportViewForReport(viewId)
     } catch (err) {
       setError('Failed to export view')
-      console.error(err)
       return null
     }
   }, [])

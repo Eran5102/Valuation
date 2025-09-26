@@ -1,4 +1,5 @@
 import type { ReportTemplate, TemplateBlock, TemplateVariable, GeneratedReport } from './types'
+import { footnoteManager, type Footnote } from './footnoteManager'
 
 /**
  * Core template engine for processing templates and generating reports
@@ -25,7 +26,8 @@ export class TemplateEngine {
         ...template,
         sections: processedSections,
       },
-      options
+      options,
+      data
     )
 
     return {
@@ -204,27 +206,85 @@ export class TemplateEngine {
    */
   private static generateHTML(
     template: ReportTemplate,
-    options: { status?: 'draft' | 'final'; watermark?: boolean } = {}
+    options: { status?: 'draft' | 'final'; watermark?: boolean } = {},
+    data: Record<string, any> = {}
   ): string {
+    // Reset footnote manager for new document
+    footnoteManager.reset()
     const { watermark = false } = options
-    const watermarkHTML =
-      watermark && template.settings?.watermark?.enabled
-        ? `
-      <div class="watermark" style="
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: 72px;
-        color: rgba(0, 0, 0, ${template.settings.watermark.opacity || 0.1});
-        z-index: -1;
-        pointer-events: none;
-        user-select: none;
-      ">
-        ${template.settings.watermark.text || 'DRAFT'}
-      </div>
-    `
-        : ''
+    // Show watermark if either the option is true OR template settings enable it
+    const shouldShowWatermark = watermark || template.settings?.watermark?.enabled
+    const watermarkSettings = template.settings?.watermark || {}
+    const angle = (watermarkSettings as any).angle ?? -45
+    const fontSize = (watermarkSettings as any).fontSize || 72
+    const opacity = (watermarkSettings as any).opacity || 0.1
+    const text = (watermarkSettings as any).text || 'DRAFT'
+    const position = (watermarkSettings as any).position || 'center'
+
+    let watermarkHTML = ''
+    if (shouldShowWatermark) {
+      if (position === 'pattern') {
+        // Repeating pattern
+        watermarkHTML = `
+          <div class="watermark-pattern" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            pointer-events: none;
+            user-select: none;
+            overflow: hidden;
+          ">
+            ${Array(6).fill(0).map((_, i) => `
+              <div style="
+                position: absolute;
+                top: ${i * 20}%;
+                left: 0;
+                right: 0;
+                display: flex;
+                justify-content: space-around;
+                transform: rotate(${angle}deg);
+              ">
+                ${Array(3).fill(0).map(() => `
+                  <span style="
+                    font-size: ${fontSize}px;
+                    color: rgba(0, 0, 0, ${opacity});
+                    font-weight: bold;
+                    text-transform: uppercase;
+                  ">${text}</span>
+                `).join('')}
+              </div>
+            `).join('')}
+          </div>
+        `
+      } else {
+        // Single watermark
+        const positionStyles = {
+          center: 'top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(' + angle + 'deg);',
+          diagonal: 'top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(' + angle + 'deg);',
+          top: 'top: 20%; left: 50%; transform: translateX(-50%) rotate(' + angle + 'deg);',
+          bottom: 'bottom: 20%; left: 50%; transform: translateX(-50%) rotate(' + angle + 'deg);',
+        }
+
+        watermarkHTML = `
+          <div class="watermark" style="
+            position: fixed;
+            ${positionStyles[position as keyof typeof positionStyles] || positionStyles.center}
+            font-size: ${fontSize}px;
+            color: rgba(0, 0, 0, ${opacity});
+            z-index: -1;
+            pointer-events: none;
+            user-select: none;
+            font-weight: bold;
+            text-transform: uppercase;
+          ">
+            ${text}
+          </div>
+        `
+      }
+    }
 
     const sectionsHTML = template.sections
       .map((section) => {
@@ -256,6 +316,7 @@ export class TemplateEngine {
         ${watermarkHTML}
         <div class="report-container">
           ${sectionsHTML}
+          ${footnoteManager.generateFootnotesHTML(data, 'footnote')}
         </div>
       </body>
       </html>
@@ -294,6 +355,40 @@ export class TemplateEngine {
       case 'pageBreak':
         return `<div class="page-break"${blockId}></div>`
 
+      case 'footnote':
+        const fnContent = block.content as any
+        if (fnContent && typeof fnContent === 'object') {
+          const footnote = footnoteManager.addFootnote(
+            fnContent.footnoteContent || '',
+            block.id,
+            fnContent.type || 'footnote'
+          )
+          const refHTML = footnoteManager.generateReferenceHTML(footnote.id)
+          return `<span class="footnote-text"${blockId}${styleAttr}>${fnContent.text || ''}${refHTML}</span>`
+        }
+        return ''
+
+      case 'tableOfContents':
+        return this.generateTableOfContents(block, styleAttr, blockId)
+
+      case 'coverPage':
+        return this.generateCoverPage(block, styleAttr, blockId)
+
+      case 'executiveSummary':
+        return this.generateExecutiveSummary(block, styleAttr, blockId)
+
+      case 'appendix':
+        return this.generateAppendix(block, styleAttr, blockId)
+
+      case 'bibliography':
+        return this.generateBibliography(block, styleAttr, blockId)
+
+      case 'glossary':
+        return this.generateGlossary(block, styleAttr, blockId)
+
+      case 'signatureBlock':
+        return this.generateSignatureBlock(block, styleAttr, blockId)
+
       default:
         return `<div class="template-text"${blockId}${styleAttr}>${block.content}</div>`
     }
@@ -322,6 +417,163 @@ export class TemplateEngine {
   }
 
   /**
+   * Generate Table of Contents HTML
+   */
+  private static generateTableOfContents(block: TemplateBlock, styleAttr: string, blockId: string): string {
+    const content = block.content as any
+    const title = content?.title || 'Table of Contents'
+    // In a real implementation, this would scan the document for headers
+    return `
+      <div class="table-of-contents"${blockId}${styleAttr}>
+        <h2>${title}</h2>
+        <nav>
+          <ul class="toc-list">
+            <li><a href="#executive-summary">Executive Summary</a></li>
+            <li><a href="#valuation-overview">Valuation Overview</a></li>
+            <li><a href="#methodology">Methodology</a></li>
+            <li><a href="#conclusion">Conclusion</a></li>
+          </ul>
+        </nav>
+      </div>
+    `
+  }
+
+  /**
+   * Generate Cover Page HTML
+   */
+  private static generateCoverPage(block: TemplateBlock, styleAttr: string, blockId: string): string {
+    const content = block.content as any
+    const title = content?.title || '409A Valuation Report'
+    const subtitle = content?.subtitle || ''
+    const confidentialityNotice = content?.includeConfidentiality ?
+      '<div class="confidentiality-notice">CONFIDENTIAL - PROPRIETARY INFORMATION</div>' : ''
+
+    return `
+      <div class="cover-page"${blockId}${styleAttr}>
+        <div class="cover-content">
+          <h1 class="cover-title">${title}</h1>
+          ${subtitle ? `<h2 class="cover-subtitle">${subtitle}</h2>` : ''}
+          <div class="cover-company">{{company.name}}</div>
+          <div class="cover-date">{{valuation_date}}</div>
+          ${confidentialityNotice}
+        </div>
+      </div>
+    `
+  }
+
+  /**
+   * Generate Executive Summary HTML
+   */
+  private static generateExecutiveSummary(block: TemplateBlock, styleAttr: string, blockId: string): string {
+    const content = block.content as any
+    const title = content?.title || 'Executive Summary'
+
+    return `
+      <div class="executive-summary"${blockId}${styleAttr}>
+        <h2>${title}</h2>
+        <div class="summary-content">
+          ${content?.content || 'Executive summary content goes here...'}
+        </div>
+      </div>
+    `
+  }
+
+  /**
+   * Generate Appendix HTML
+   */
+  private static generateAppendix(block: TemplateBlock, styleAttr: string, blockId: string): string {
+    const content = block.content as any
+    const title = content?.title || 'Appendix'
+
+    return `
+      <div class="appendix"${blockId}${styleAttr}>
+        <h2>${title}</h2>
+        <div class="appendix-content">
+          ${content?.content || ''}
+        </div>
+      </div>
+    `
+  }
+
+  /**
+   * Generate Bibliography HTML
+   */
+  private static generateBibliography(block: TemplateBlock, styleAttr: string, blockId: string): string {
+    const content = block.content as any
+    const title = content?.title || 'References'
+    const entries = content?.entries || []
+
+    const entriesHTML = entries.map((entry: any) =>
+      `<li class="bibliography-entry">${entry}</li>`
+    ).join('\n')
+
+    return `
+      <div class="bibliography"${blockId}${styleAttr}>
+        <h2>${title}</h2>
+        <ol class="bibliography-list">
+          ${entriesHTML}
+        </ol>
+      </div>
+    `
+  }
+
+  /**
+   * Generate Glossary HTML
+   */
+  private static generateGlossary(block: TemplateBlock, styleAttr: string, blockId: string): string {
+    const content = block.content as any
+    const title = content?.title || 'Glossary'
+    const terms = content?.terms || []
+
+    const termsHTML = terms.map((item: any) => `
+      <dt class="glossary-term">${item.term}</dt>
+      <dd class="glossary-definition">${item.definition}</dd>
+    `).join('\n')
+
+    return `
+      <div class="glossary"${blockId}${styleAttr}>
+        <h2>${title}</h2>
+        <dl class="glossary-list">
+          ${termsHTML}
+        </dl>
+      </div>
+    `
+  }
+
+  /**
+   * Generate Signature Block HTML
+   */
+  private static generateSignatureBlock(block: TemplateBlock, styleAttr: string, blockId: string): string {
+    const content = block.content as any
+    const signatories = content?.signatories || []
+
+    const signaturesHTML = signatories.map((sig: any) => `
+      <div class="signature-item">
+        <div class="signature-line"></div>
+        <div class="signature-name">${sig.name || ''}</div>
+        <div class="signature-title">${sig.title || ''}</div>
+        <div class="signature-credentials">${sig.credentials || ''}</div>
+        <div class="signature-date">${sig.date || ''}</div>
+      </div>
+    `).join('\n')
+
+    const disclaimer = content?.includeDisclaimer ? `
+      <div class="signature-disclaimer">
+        This valuation report is prepared solely for the use specified herein and may not be relied upon for any other purpose.
+      </div>
+    ` : ''
+
+    return `
+      <div class="signature-block"${blockId}${styleAttr}>
+        <div class="signatures-container">
+          ${signaturesHTML}
+        </div>
+        ${disclaimer}
+      </div>
+    `
+  }
+
+  /**
    * Returns default CSS styles for the report
    */
   private static getDefaultStyles(template: ReportTemplate): string {
@@ -332,17 +584,78 @@ export class TemplateEngine {
       left: '1in',
     }
 
+    // Apply theme settings - Check both settings and metadata for theme
+    const theme = (template.settings as any)?.theme || (template.metadata as any)?.theme || 'default'
+    const themeColors = (template.settings as any)?.themeColors || (template.metadata as any)?.themeColors
+
+    // Use custom theme colors if available, otherwise use predefined themes
+    const themes = {
+      default: {
+        bgColor: '#ffffff',
+        textColor: '#1f2937',
+        headerColor: '#111827',
+        accentColor: '#3b82f6',
+      },
+      value8: {
+        bgColor: '#f6f7f6',
+        textColor: '#2e3944',
+        headerColor: '#124e66',
+        accentColor: '#74bd92',
+      },
+      professional: {
+        bgColor: '#ffffff',
+        textColor: '#1e293b',
+        headerColor: '#1e40af',
+        accentColor: '#0ea5e9',
+      },
+      minimal: {
+        bgColor: '#ffffff',
+        textColor: '#000000',
+        headerColor: '#000000',
+        accentColor: '#333333',
+      },
+      corporate: {
+        bgColor: '#ffffff',
+        textColor: '#111827',
+        headerColor: '#b91c1c',
+        accentColor: '#dc2626',
+      },
+      modern: {
+        bgColor: '#fafafa',
+        textColor: '#1f2937',
+        headerColor: '#7c3aed',
+        accentColor: '#06b6d4',
+      },
+      classic: {
+        bgColor: '#fffef9',
+        textColor: '#3f3f46',
+        headerColor: '#27272a',
+        accentColor: '#dc2626',
+      },
+    }
+
+    // If custom theme colors are provided, use them
+    const selectedTheme = themeColors
+      ? {
+          bgColor: themeColors.background || '#ffffff',
+          textColor: themeColors.text || '#1f2937',
+          headerColor: themeColors.primary || '#111827',
+          accentColor: themeColors.accent || '#3b82f6',
+        }
+      : themes[theme as keyof typeof themes] || themes.default
+
     return `
       @page {
         size: ${template.settings?.paperSize || 'letter'} ${template.settings?.orientation || 'portrait'};
         margin: ${margins.top} ${margins.right} ${margins.bottom} ${margins.left};
       }
-      
+
       body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         font-size: 12px;
         line-height: 1.5;
-        color: #1f2937;
+        color: ${selectedTheme.textColor};
+        background-color: ${selectedTheme.bgColor};
         margin: 0;
         padding: 0;
       }
@@ -368,23 +681,51 @@ export class TemplateEngine {
         page-break-after: always;
       }
       
+      h1, h2, h3, h4, h5, h6,
       .template-header {
         margin: 1rem 0;
         font-weight: bold;
+        color: ${selectedTheme.headerColor};
       }
-      
+
+      h1 { font-size: 2em; }
+      h2 { font-size: 1.5em; }
+      h3 { font-size: 1.25em; }
+      h4 { font-size: 1.1em; }
+      h5 { font-size: 1em; }
+      h6 { font-size: 0.9em; }
+
       .template-paragraph {
         margin: 0.5rem 0;
         text-align: justify;
+        color: ${selectedTheme.textColor};
       }
-      
+
       .template-list {
         margin: 1rem 0;
         padding-left: 1.5rem;
+        color: ${selectedTheme.textColor};
       }
-      
+
       .template-list li {
         margin: 0.25rem 0;
+      }
+
+      a {
+        color: ${selectedTheme.accentColor};
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      blockquote {
+        border-left: 4px solid ${selectedTheme.accentColor};
+        padding-left: 1rem;
+        margin: 1rem 0;
+        font-style: italic;
+        color: ${selectedTheme.textColor};
       }
       
       .template-table {
@@ -423,6 +764,147 @@ export class TemplateEngine {
         .template-header {
           page-break-after: avoid;
         }
+      }
+
+      /* Footnote Styles */
+      .footnote-ref {
+        font-size: 0.85em;
+        vertical-align: super;
+        line-height: 0;
+      }
+
+      .footnote-ref a {
+        text-decoration: none;
+        color: ${selectedTheme.accentColor};
+      }
+
+      .footnote-ref a:hover {
+        text-decoration: underline;
+      }
+
+      .footnotes-section {
+        margin-top: 40px;
+        padding-top: 20px;
+        font-size: 0.9em;
+        border-top: 1px solid #ddd;
+      }
+
+      .footnote-item {
+        display: flex;
+        margin-bottom: 10px;
+      }
+
+      .footnote-number {
+        min-width: 25px;
+        font-weight: 600;
+      }
+
+      .footnote-content {
+        flex: 1;
+        padding-right: 10px;
+      }
+
+      /* Table of Contents Styles */
+      .table-of-contents {
+        margin: 40px 0;
+        padding: 20px;
+        background: ${selectedTheme.bgColor};
+        border: 1px solid #e5e7eb;
+      }
+
+      .toc-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .toc-list li {
+        margin: 8px 0;
+        padding-left: 20px;
+      }
+
+      .toc-list a {
+        color: ${selectedTheme.accentColor};
+        text-decoration: none;
+      }
+
+      .toc-list a:hover {
+        text-decoration: underline;
+      }
+
+      /* Cover Page Styles */
+      .cover-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        page-break-after: always;
+      }
+
+      .cover-title {
+        font-size: 36px;
+        color: ${selectedTheme.headerColor};
+        margin-bottom: 20px;
+      }
+
+      .cover-subtitle {
+        font-size: 24px;
+        color: ${selectedTheme.textColor};
+        margin-bottom: 40px;
+      }
+
+      .cover-company {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 20px 0;
+        color: ${selectedTheme.accentColor};
+      }
+
+      .confidentiality-notice {
+        margin-top: 60px;
+        padding: 10px;
+        background: #fee;
+        color: #c00;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      /* Executive Summary Styles */
+      .executive-summary {
+        background: ${selectedTheme.bgColor};
+        border-left: 4px solid ${selectedTheme.accentColor};
+        padding: 20px;
+        margin: 30px 0;
+      }
+
+      /* Signature Block Styles */
+      .signature-block {
+        margin-top: 60px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+      }
+
+      .signature-item {
+        margin: 40px 0;
+      }
+
+      .signature-line {
+        width: 300px;
+        border-bottom: 1px solid #000;
+        margin-bottom: 5px;
+      }
+
+      .signature-name {
+        font-weight: bold;
+      }
+
+      .signature-disclaimer {
+        margin-top: 30px;
+        padding: 15px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        font-size: 10px;
+        font-style: italic;
       }
     `
   }

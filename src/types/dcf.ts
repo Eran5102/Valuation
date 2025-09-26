@@ -21,6 +21,7 @@ export interface DCFCoreAssumptions {
   // Core Financial Parameters
   discountRate: number // Can be overridden by WACC
   terminalGrowthRate: number
+  exitMultiple?: number // Exit multiple for terminal value calculation
   cashBalance: number
   debtBalance: number
 
@@ -37,6 +38,30 @@ export interface DCFCoreAssumptions {
   workingCapitalPercent?: number // As % of revenue
   maintenanceCapexPercent?: number
   growthCapexPercent?: number
+
+  // Working Capital Days (for days-based calculation)
+  daysReceivables?: number
+  daysPayables?: number
+  daysInventory?: number
+  inventoryTurnover?: number
+  targetNWCPercent?: number
+
+  // Growth Rates
+  revenueGrowthRates?: number[]
+  revenueGrowthRate?: number
+  ebitdaMargin?: number
+
+  // Additional Financial Metrics
+  grossMargin?: number
+  operatingMargin?: number
+  sgaPercent?: number
+  rdPercent?: number
+  otherExpensePercent?: number
+  depreciation?: number
+  amortization?: number
+  changeInNWC?: number
+  otherOperatingExpenses?: number
+  priceInflation?: number
 }
 
 export interface DCFModelData {
@@ -265,14 +290,14 @@ export interface DCFModelUpdateEvent {
 
 // Calculation Method Options
 export interface CalculationMethodOptions {
-  depreciation: {
+  depreciation?: {
     method: 'schedule' | 'manual' | 'percentage'
     manualValues?: number[] // Array of values by year
     percentageValue?: number // Single percentage
     percentageBasis?: 'revenue' | 'ppe' // What to apply percentage to
   }
 
-  workingCapital: {
+  workingCapital?: {
     method: 'detailed' | 'percentage' | 'days'
     percentageValue?: number
     daysSalesOutstanding?: number
@@ -280,14 +305,14 @@ export interface CalculationMethodOptions {
     daysPayablesOutstanding?: number
   }
 
-  capex: {
+  capex?: {
     method: 'schedule' | 'percentage' | 'growth'
     percentageValue?: number
     growthRate?: number
     maintenanceSplit?: number // % that is maintenance vs growth
   }
 
-  interest: {
+  interest?: {
     method: 'schedule' | 'average' | 'fixed'
     fixedRate?: number
     averageRate?: number

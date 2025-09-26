@@ -221,7 +221,6 @@ export const performanceMarker = {
 export function reportWebVitals(metric: any) {
   // Log to console in development
   if (process.env.NODE_ENV === 'development') {
-    console.log(metric)
   }
 
   // In production, send to analytics

@@ -4,19 +4,26 @@ import ApiHandler from '@/lib/middleware/apiHandler'
 import {
   CreateCompanySchema,
   PaginationSchema,
-  FilterSchema,
-  Company,
-} from '@/lib/validation/schemas'
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 // GET /api/companies - Get all companies with pagination and filtering
 export const GET = async (request: NextRequest) => {
-  const { searchParams } = new URL(request.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '20')
-  const companyId = searchParams.get('company_id')
-  const dateFrom = searchParams.get('date_from')
-  const dateTo = searchParams.get('date_to')
-  const offset = (page - 1) * limit
+  try {
+    const { searchParams } = new URL(request.url)
+
+    // Validate query parameters
+    const queryParams = validateRequest(PaginationSchema, {
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      sort: searchParams.get('sort'),
+      order: searchParams.get('order'),
+    })
+
+    const companyId = searchParams.get('company_id')
+    const dateFrom = searchParams.get('date_from')
+    const dateTo = searchParams.get('date_to')
+    const offset = (queryParams.page - 1) * queryParams.limit
 
   const supabase = await createClient()
 
@@ -59,55 +66,48 @@ export const GET = async (request: NextRequest) => {
   }
 
   // Apply sorting and pagination
-  query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
+  const sortField = queryParams.sort || 'created_at'
+  const ascending = queryParams.order === 'asc'
+  query = query.order(sortField, { ascending }).range(offset, offset + queryParams.limit - 1)
 
   const { data: companies, error, count } = await query
 
   if (error) {
-    console.error('Error fetching companies:', error)
     return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
   }
 
-  return NextResponse.json({
-    data: companies || [],
-    pagination: {
-      page,
-      limit,
-      total: count || 0,
-      pages: Math.ceil((count || 0) / limit),
-    },
-  })
+    return NextResponse.json({
+      data: companies || [],
+      pagination: {
+        page: queryParams.page,
+        limit: queryParams.limit,
+        total: count || 0,
+        pages: Math.ceil((count || 0) / queryParams.limit),
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', message: error.message },
+        { status: 400 }
+      )
+    }
+    return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
+  }
 }
 
 // POST /api/companies - Create new company
 export const POST = async (request: NextRequest) => {
   try {
-    // Parse request body
-    let companyData
-    try {
-      companyData = await request.json()
-    } catch (parseError) {
-      console.error('Error parsing request body:', parseError)
-      return NextResponse.json(
-        { error: 'Invalid request body', message: 'Request body must be valid JSON' },
-        { status: 400 }
-      )
-    }
-
-    // Validate required fields
-    if (!companyData.name) {
-      return NextResponse.json(
-        { error: 'Validation Error', message: 'Company name is required' },
-        { status: 400 }
-      )
-    }
+    // Parse and validate request body
+    const rawData = await request.json()
+    const companyData = validateRequest(CreateCompanySchema, rawData)
 
     // Create Supabase client
     let supabase
     try {
       supabase = await createClient()
     } catch (clientError) {
-      console.error('Error creating Supabase client:', clientError)
       return NextResponse.json(
         {
           error: 'Database Connection Error',
@@ -120,7 +120,6 @@ export const POST = async (request: NextRequest) => {
 
     // Check if Supabase URL and key are configured
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error('Missing Supabase environment variables')
       return NextResponse.json(
         {
           error: 'Configuration Error',
@@ -138,7 +137,6 @@ export const POST = async (request: NextRequest) => {
       .ilike('name', companyData.name)
 
     if (checkError) {
-      console.error('Error checking company name:', checkError)
       return NextResponse.json(
         {
           error: 'Database Query Error',
@@ -190,7 +188,6 @@ export const POST = async (request: NextRequest) => {
       .single()
 
     if (createError) {
-      console.error('Error creating company:', createError)
       return NextResponse.json(
         {
           error: 'Database Insert Error',
@@ -218,13 +215,19 @@ export const POST = async (request: NextRequest) => {
       },
       { status: 201 }
     )
-  } catch (unexpectedError) {
-    console.error('Unexpected error in POST /api/companies:', unexpectedError)
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: error.message },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
       {
         error: 'Internal Server Error',
         message: 'An unexpected error occurred while creating the company',
-        details: process.env.NODE_ENV === 'development' ? String(unexpectedError) : undefined,
+        details: process.env.NODE_ENV === 'development' ? String(error) : undefined,
       },
       { status: 500 }
     )

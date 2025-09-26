@@ -21,6 +21,7 @@ import { DLOMInputs, DLOMResults, ModelWeights } from '@/types'
 
 interface DLOMModelsProps {
   assumptions?: any
+  valuationId?: string
 }
 
 interface ModelData {
@@ -32,7 +33,7 @@ interface ModelData {
   weight: number
 }
 
-const DLOMModels: React.FC<DLOMModelsProps> = ({ assumptions }) => {
+const DLOMModels: React.FC<DLOMModelsProps> = ({ assumptions, valuationId }) => {
   // Pull values from assumptions if available - handles array format (current structure)
   const getAssumptionValue = (categoryId: string, assumptionId: string, defaultValue: number) => {
     if (!assumptions) return defaultValue

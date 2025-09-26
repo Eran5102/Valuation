@@ -11,18 +11,66 @@ import { useDCFModel } from '@/contexts/DCFModelContext'
 
 interface ScenarioProjectionLinkProps {
   valuationId: string
-  activeScenario?: any
+  activeScenario?: {
+    name: string
+    type: 'bull' | 'base' | 'bear'
+    assumptions: {
+      revenueGrowthRate?: number
+      unitGrowthRate?: number
+      priceInflation?: number
+      marketShareGrowth?: number
+      ebitdaMargin?: number
+      daysReceivables?: number
+      daysInventory?: number
+      daysPayables?: number
+      maintenanceCapexPercent?: number
+      growthCapexPercent?: number
+      depreciationRate?: number
+      taxRate?: number
+      terminalGrowthRate?: number
+      exitMultiple?: number
+      debtToEquityRatio?: number
+      currentRatio?: number
+      interestCoverageRatio?: number
+    }
+  }
 }
 
 export function ScenarioProjectionLink({
   valuationId,
   activeScenario,
 }: ScenarioProjectionLinkProps) {
-  const { updateFinancials, updateWorkingCapital, updateAssumptions, recalculateAll } =
+  const { updateWorkingCapital, updateAssumptions, recalculateAll } =
     useDCFModel()
 
   const [isApplying, setIsApplying] = useState(false)
-  const [scenarioImpact, setScenarioImpact] = useState<any>(null)
+  const [scenarioImpact, setScenarioImpact] = useState<{
+    revenue: {
+      growthRates: number[]
+      drivers: Array<{type: string; value: number; impact: string}>
+    }
+    margins: {
+      grossMargin: number | null
+      ebitdaMargin: number | null
+      netMargin: number | null
+    }
+    workingCapital: {
+      dso: number | undefined
+      dio: number | undefined
+      dpo: number | undefined
+      cashConversionCycle: number
+    }
+    capex: {
+      maintenancePercent: number | undefined
+      growthPercent: number | undefined
+      totalPercent: number
+    }
+    balanceSheet: {
+      debtToEquity: number | undefined
+      currentRatio: number | undefined
+      interestCoverage: number | undefined
+    }
+  } | null>(null)
 
   // Calculate the impact of scenario on projections
   useEffect(() => {
@@ -37,13 +85,13 @@ export function ScenarioProjectionLink({
     const assumptions = activeScenario.assumptions
     const impact = {
       revenue: {
-        growthRates: [],
-        drivers: [],
+        growthRates: [] as number[],
+        drivers: [] as Array<{type: string; value: number; impact: string}>,
       },
       margins: {
-        grossMargin: null,
-        ebitdaMargin: null,
-        netMargin: null,
+        grossMargin: null as number | null,
+        ebitdaMargin: null as number | null,
+        netMargin: null as number | null,
       },
       workingCapital: {
         dso: assumptions.daysReceivables,
@@ -129,8 +177,8 @@ export function ScenarioProjectionLink({
         revenueGrowthRates: scenarioImpact.revenue.growthRates,
 
         // Margin assumptions
-        grossMargin: scenarioImpact.margins.grossMargin,
-        ebitdaMargin: scenarioImpact.margins.ebitdaMargin,
+        grossMargin: scenarioImpact.margins.grossMargin ?? undefined,
+        ebitdaMargin: scenarioImpact.margins.ebitdaMargin ?? undefined,
 
         // Working capital assumptions
         daysReceivables: assumptions.daysReceivables || 45,
@@ -165,7 +213,6 @@ export function ScenarioProjectionLink({
       document.body.appendChild(notification)
       setTimeout(() => notification.remove(), 3000)
     } catch (error) {
-      console.error('Error applying scenario:', error)
     } finally {
       setIsApplying(false)
     }
@@ -228,7 +275,7 @@ export function ScenarioProjectionLink({
               </div>
               {scenarioImpact.revenue.drivers.length > 0 && (
                 <div className="mt-2 space-y-1">
-                  {scenarioImpact.revenue.drivers.map((driver: any, i: number) => (
+                  {scenarioImpact.revenue.drivers.map((driver, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                       <div className="h-2 w-2 rounded-full bg-primary" />
                       <span>

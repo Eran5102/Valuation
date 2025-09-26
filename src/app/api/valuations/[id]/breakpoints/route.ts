@@ -88,7 +88,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       analysis_timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error performing breakpoint analysis:', error)
     return NextResponse.json(
       {
         success: false,
@@ -191,7 +190,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
   } catch (error) {
-    console.error('Error performing fresh breakpoint analysis:', error)
     return NextResponse.json(
       {
         success: false,

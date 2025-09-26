@@ -144,6 +144,7 @@ export function PeerBetaAnalysis({
       </CardHeader>
       <CardContent className="space-y-4">
         <EditableDataTable
+          tableId="peer-beta-analysis"
           columns={peerColumns}
           data={peerCompanies}
           className="rounded-lg border"

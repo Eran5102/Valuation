@@ -10,6 +10,7 @@ export interface VolatilityResult {
     region?: string
     tickers?: string[]
     timePeriod?: number // in years
+    frequency?: 'daily' | 'weekly' | 'monthly'
     dataPoints?: number
     lastUpdated?: string
   }

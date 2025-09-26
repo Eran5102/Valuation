@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import Link from 'next/link'
 import {
   Building2,
   Plus,
@@ -12,6 +13,7 @@ import {
   User,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
@@ -26,7 +28,7 @@ const OptimizedDataTable = dynamic(
 import AppLayout from '@/components/layout/AppLayout'
 import { getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'
-import { PageHeader } from '@/components/ui/page-header'
+import { PageHeader } from '@/components/common/PageHeader'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
 import { StatusSelector } from '@/components/ui/status-selector'
 import { AssignmentSelector } from '@/components/assignment/AssignmentSelector'
@@ -95,7 +97,6 @@ export default function ClientsPage() {
         setClients([])
       }
     } catch (error) {
-      console.error('Error fetching clients:', error)
       // Set empty array on error
       setClients([])
     } finally {
@@ -310,7 +311,6 @@ export default function ClientsPage() {
                     )
                   }
                 } catch (error) {
-                  console.error('Failed to update assignment:', error)
                 }
               }}
               entityType="client"
@@ -388,38 +388,42 @@ export default function ClientsPage() {
         <PageHeader
           title="Client Management"
           description="Manage your clients and their valuation projects"
-          actionButton={{
-            href: '/clients/new',
-            icon: Plus,
-            text: 'Add Client',
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={viewMode === 'all' ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => setViewMode('all')}
-            >
-              All Clients
-            </Badge>
-            <Badge
-              variant={viewMode === 'my' ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => setViewMode('my')}
-            >
-              <User className="mr-1 h-3 w-3" />
-              My Clients
-            </Badge>
-            <Badge
-              variant={viewMode === 'team' ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => setViewMode('team')}
-            >
-              <UsersIcon className="mr-1 h-3 w-3" />
-              Team Clients
-            </Badge>
-          </div>
-        </PageHeader>
+          actions={
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={viewMode === 'all' ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setViewMode('all')}
+                >
+                  All Clients
+                </Badge>
+                <Badge
+                  variant={viewMode === 'my' ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setViewMode('my')}
+                >
+                  <User className="mr-1 h-3 w-3" />
+                  My Clients
+                </Badge>
+                <Badge
+                  variant={viewMode === 'team' ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setViewMode('team')}
+                >
+                  <UsersIcon className="mr-1 h-3 w-3" />
+                  Team Clients
+                </Badge>
+              </div>
+              <Link href="/clients/new">
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Client
+                </Button>
+              </Link>
+            </div>
+          }
+        />
 
         {/* Summary Cards */}
         <SummaryCardsGrid cards={summaryCards} />

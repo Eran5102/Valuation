@@ -67,7 +67,7 @@ export function AssumptionInput({
     case 'select':
       return (
         <select
-          value={assumption.value || ''}
+          value={Array.isArray(assumption.value) ? '' : (assumption.value || '')}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
           onBlur={onBlur}
           className={baseClasses}
@@ -86,7 +86,7 @@ export function AssumptionInput({
         <div className="relative">
           <input
             type="number"
-            value={assumption.value || ''}
+            value={Array.isArray(assumption.value) ? '' : (assumption.value || '')}
             onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
             onBlur={onBlur}
             className={`${baseClasses} pr-8`}
@@ -105,7 +105,7 @@ export function AssumptionInput({
           </span>
           <input
             type="number"
-            value={assumption.value || ''}
+            value={Array.isArray(assumption.value) ? '' : (assumption.value || '')}
             onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
             onBlur={onBlur}
             className={`${baseClasses} pl-8`}
@@ -130,7 +130,7 @@ export function AssumptionInput({
       return (
         <input
           type="number"
-          value={assumption.value || ''}
+          value={Array.isArray(assumption.value) ? '' : (assumption.value || '')}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
           onBlur={onBlur}
           className={baseClasses}
@@ -141,7 +141,7 @@ export function AssumptionInput({
     case 'textarea':
       return (
         <textarea
-          value={assumption.value || ''}
+          value={Array.isArray(assumption.value) ? '' : (assumption.value || '')}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
           onBlur={onBlur}
           className={`${baseClasses} min-h-[80px] resize-y`}
@@ -158,7 +158,7 @@ export function AssumptionInput({
       return (
         <input
           type="text"
-          value={assumption.value || ''}
+          value={Array.isArray(assumption.value) ? '' : (assumption.value || '')}
           onChange={(e) => onChange(categoryId, assumption.id, e.target.value)}
           onBlur={onBlur}
           className={baseClasses}

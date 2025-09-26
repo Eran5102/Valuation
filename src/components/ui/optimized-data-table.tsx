@@ -220,10 +220,18 @@ interface OptimizedDataTableProps<TData, TValue> {
   enableColumnPinning?: boolean
   enableRowReordering?: boolean
   enablePagination?: boolean
+  enableRowSelection?: boolean
   pageSize?: number
   className?: string
   tableId?: string
+  selectedRows?: Set<string>
+  onRowSelectionChange?: (selection: string[]) => void
+  getRowId?: (row: TData) => string
   onStateChange?: (state: any) => void
+  showExport?: boolean
+  showColumnVisibility?: boolean
+  showPagination?: boolean
+  stickyHeader?: boolean
   initialState?: Partial<{
     columnVisibility: VisibilityState
     columnOrder: string[]
@@ -337,6 +345,10 @@ export function OptimizedDataTable<TData, TValue>({
   enableColumnPinning = true,
   enableRowReordering = false,
   enablePagination = true,
+  enableRowSelection = false,
+  selectedRows,
+  onRowSelectionChange,
+  getRowId,
   pageSize = 10,
   className,
   tableId = 'default',
@@ -694,7 +706,6 @@ export function OptimizedDataTable<TData, TValue>({
       const { exportTableToExcel } = await import('./excel-exporter')
       exportTableToExcel(table, tableId)
     } catch (error) {
-      console.error('Failed to export to Excel:', error)
     }
   }, [table, tableId])
 

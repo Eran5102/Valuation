@@ -57,8 +57,6 @@ export default function ComprehensiveWaterfall({
   ]
 
   const calculateWaterfall = async () => {
-    console.log('Calculating waterfall with exit value:', exitValue)
-    console.log('Cap table config:', capTableConfig)
 
     // In a real implementation, this would call the comprehensive waterfall engine
     setIsCalculated(true)

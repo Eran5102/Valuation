@@ -86,7 +86,6 @@ export function StatusSelector({
       await onStatusChange(newStatus)
       setIsOpen(false)
     } catch (error) {
-      console.error('Failed to update status:', error)
     } finally {
       setIsUpdating(false)
     }

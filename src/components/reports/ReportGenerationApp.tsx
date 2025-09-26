@@ -114,7 +114,6 @@ export function ReportGenerationApp({ preselectedValuationId }: ReportGeneration
         setValuationData(sampleValuationData)
       }
     } catch (error) {
-      console.error('Error fetching valuation data:', error)
       // Use sample data from template engine
       const { sampleValuationData } = await import('@/lib/templates')
       setValuationData(sampleValuationData)
@@ -163,7 +162,6 @@ export function ReportGenerationApp({ preselectedValuationId }: ReportGeneration
         printWindow.print()
       }
     } catch (error) {
-      console.error('Error generating PDF:', error)
       alert('Error generating PDF. Please try again.')
     } finally {
       setIsGenerating(false)

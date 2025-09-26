@@ -164,28 +164,14 @@ class QueryMonitor {
     // Alert on high slow query rate
     const slowQueryRate = stats.slowQueries / stats.totalQueries
     if (slowQueryRate > this.alertThresholds.slowQueryRate) {
-      console.error('Performance Alert: High slow query rate', {
-        rate: `${(slowQueryRate * 100).toFixed(1)}%`,
-        threshold: `${(this.alertThresholds.slowQueryRate * 100).toFixed(1)}%`,
-        slowQueries: stats.slowQueries,
-        totalQueries: stats.totalQueries,
-      })
     }
 
     // Alert on high error rate
     if (stats.errorRate > this.alertThresholds.errorRate) {
-      console.error('Performance Alert: High error rate', {
-        rate: `${(stats.errorRate * 100).toFixed(1)}%`,
-        threshold: `${(this.alertThresholds.errorRate * 100).toFixed(1)}%`,
-      })
     }
 
     // Alert on high average response time
     if (stats.averageResponseTime > this.alertThresholds.avgResponseTime) {
-      console.error('Performance Alert: High average response time', {
-        current: `${stats.averageResponseTime.toFixed(0)}ms`,
-        threshold: `${this.alertThresholds.avgResponseTime}ms`,
-      })
     }
   }
 

@@ -38,12 +38,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+      }
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
-        fetchUserOrganizations(session.user.id)
+        fetchUserOrganizations(session.user.id).catch((err) => {
+        })
       }
+      setLoading(false)
+    }).catch((err) => {
       setLoading(false)
     })
 
@@ -55,7 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        await fetchUserOrganizations(session.user.id)
+        try {
+          await fetchUserOrganizations(session.user.id)
+        } catch (err) {
+        }
       } else {
         setOrganization(null)
         setOrganizations([])
@@ -133,7 +141,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganizations([defaultOrg])
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error)
     }
   }
 

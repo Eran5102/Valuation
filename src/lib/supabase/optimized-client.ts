@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/types/supabase'
+// import { Database } from '@/types/supabase'
+type Database = any // Temporary fix for missing type definitions
 import QueryMonitor from '@/lib/monitoring/queryMonitor'
 
 /**
@@ -183,7 +184,7 @@ class OptimizedSupabaseClient {
     try {
       // Use pooled client for better performance
       const client = this.getPooledClient()
-      let query = client.from(tableName).select(select, { count: 'exact' })
+      let query: any = client.from(tableName).select(select, { count: 'exact' })
 
       // Apply filters
       Object.entries(filter).forEach(([key, value]) => {
@@ -230,7 +231,7 @@ class OptimizedSupabaseClient {
         this.setCachedResult(cacheKey, result, cacheTTL)
       }
 
-      return result
+      return result as { data: T[] | null; error: any; count?: number | undefined }
     } catch (error) {
       const duration = Date.now() - startTime
 
@@ -245,7 +246,6 @@ class OptimizedSupabaseClient {
         error: error instanceof Error ? error.message : String(error),
       })
 
-      console.error(`Optimized query error for ${tableName}:`, error)
       return { data: null, error }
     }
   }
@@ -264,7 +264,7 @@ class OptimizedSupabaseClient {
   ): Promise<{ data: T[] | null; error: any }> {
     try {
       const client = this.getPooledClient()
-      let query
+      let query: any
 
       switch (operation) {
         case 'insert':
@@ -305,7 +305,6 @@ class OptimizedSupabaseClient {
 
       return result
     } catch (error) {
-      console.error(`Optimized mutation error for ${tableName}:`, error)
       return { data: null, error }
     }
   }

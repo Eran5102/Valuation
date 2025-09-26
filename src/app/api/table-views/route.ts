@@ -31,13 +31,11 @@ export async function GET(request: NextRequest) {
     const { data: views, error } = await query
 
     if (error) {
-      console.error('Error fetching table views:', error)
       return NextResponse.json({ error: 'Failed to fetch table views' }, { status: 500 })
     }
 
     return NextResponse.json(views || [])
   } catch (error) {
-    console.error('Error in GET /api/table-views:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -77,13 +75,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error creating table view:', error)
       return NextResponse.json({ error: 'Failed to create table view' }, { status: 500 })
     }
 
     return NextResponse.json(view, { status: 201 })
   } catch (error) {
-    console.error('Error in POST /api/table-views:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -129,13 +125,11 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error updating table view:', error)
       return NextResponse.json({ error: 'Failed to update table view' }, { status: 500 })
     }
 
     return NextResponse.json(view)
   } catch (error) {
-    console.error('Error in PATCH /api/table-views:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -155,13 +149,11 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase.from('saved_table_views').delete().eq('id', viewId)
 
     if (error) {
-      console.error('Error deleting table view:', error)
       return NextResponse.json({ error: 'Failed to delete table view' }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'View deleted successfully' })
   } catch (error) {
-    console.error('Error in DELETE /api/table-views:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

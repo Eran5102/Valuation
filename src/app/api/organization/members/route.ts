@@ -1,18 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import {
+  PaginationSchema,
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
+    // Validate query parameters
+    const { searchParams } = new URL(request.url)
+    const queryParams = validateRequest(PaginationSchema, {
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      sort: searchParams.get('sort'),
+      order: searchParams.get('order'),
+    })
+
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // Get user's organization
     const { data: membership } = await supabase
       .from('organization_members')
@@ -65,20 +78,26 @@ export async function GET(request: NextRequest) {
         const authUser = users?.find((u) => u.id === member.user_id)
 
         return {
-          id: member.user_id,
-          email: authUser?.email || '',
-          first_name: profile?.first_name || authUser?.raw_user_meta_data?.first_name || '',
-          last_name: profile?.last_name || authUser?.raw_user_meta_data?.last_name || '',
+          id: member.id,
+          user_id: member.user_id,
           role: member.role,
           joined_at: member.joined_at,
           is_active: member.is_active,
-          avatar_url: profile?.avatar_url,
+          email: authUser?.email || '',
+          first_name: profile?.first_name || authUser?.raw_user_meta_data?.first_name || '',
+          last_name: profile?.last_name || authUser?.raw_user_meta_data?.last_name || '',
+          avatar_url: profile?.avatar_url || authUser?.raw_user_meta_data?.avatar_url || '',
         }
       }) || []
 
     return NextResponse.json(formattedMembers)
   } catch (error) {
-    console.error('Error fetching team members:', error)
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', message: error.message },
+        { status: 400 }
+      )
+    }
     return NextResponse.json([], { status: 200 }) // Return empty array on error
   }
 }

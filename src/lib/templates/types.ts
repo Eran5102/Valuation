@@ -20,6 +20,15 @@ export type BlockType =
   | 'managementTable'
   | 'valuationSummary'
   | 'dateBlock'
+  | 'footnote'
+  | 'tableOfContents'
+  | 'coverPage'
+  | 'executiveSummary'
+  | 'appendix'
+  | 'bibliography'
+  | 'glossary'
+  | 'signatureBlock'
+  | 'footer'
 export type VariableType = 'text' | 'number' | 'date' | 'currency' | 'percentage' | 'boolean'
 
 export interface TemplateVariable {
@@ -80,6 +89,7 @@ export interface ReportTemplate {
     updatedAt?: string
     author?: string
     tags?: string[]
+    lastVersion?: string
   }
   settings?: {
     paperSize?: 'letter' | 'legal' | 'a4'
@@ -94,6 +104,9 @@ export interface ReportTemplate {
       enabled: boolean
       text: string
       opacity: number
+      angle?: number
+      fontSize?: number
+      position?: string
     }
   }
 }

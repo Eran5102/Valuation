@@ -350,10 +350,10 @@ export const commonColumns = {
           itemId={item.id}
           viewHref={config.viewHref?.(item)}
           editHref={config.editHref?.(item)}
-          onView={config.onView ? () => config.onView(item) : undefined}
-          onEdit={config.onEdit ? () => config.onEdit(item) : undefined}
-          onDelete={config.onDelete ? () => config.onDelete(item) : undefined}
-          onDownload={config.onDownload ? () => config.onDownload(item) : undefined}
+          onView={config.onView ? () => config.onView!(item) : undefined}
+          onEdit={config.onEdit ? () => config.onEdit!(item) : undefined}
+          onDelete={config.onDelete ? () => config.onDelete!(item) : undefined}
+          onDownload={config.onDownload ? () => config.onDownload!(item) : undefined}
           showView={!!(config.onView || config.viewHref)}
           showEdit={!!(config.onEdit || config.editHref)}
           showDelete={!!config.onDelete}

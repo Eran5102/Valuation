@@ -18,7 +18,7 @@ const OptimizedDataTable = dynamic(
 import AppLayout from '@/components/layout/AppLayout'
 import { getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'
-import { PageHeader } from '@/components/ui/page-header'
+import { PageHeader } from '@/components/common/PageHeader'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
 import { Button } from '@/components/ui/button'
 import draftService, { SavedDraft } from '@/services/draftService'
@@ -95,7 +95,6 @@ export default function ReportsPage() {
 
       setReports(allReports)
     } catch (error) {
-      console.error('Error loading reports:', error)
       setReports([])
     } finally {
       setLoading(false)

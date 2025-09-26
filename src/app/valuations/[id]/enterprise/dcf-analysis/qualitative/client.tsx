@@ -229,7 +229,6 @@ export function QualitativeAssessmentClient({ valuationId }: QualitativeAssessme
         setOverallAssessment(data.overallAssessment || overallAssessment)
       }
     } catch (error) {
-      console.error('Error loading qualitative data:', error)
     }
   }
 
@@ -886,7 +885,7 @@ export function QualitativeAssessmentClient({ valuationId }: QualitativeAssessme
                 <ResponsiveContainer width="100%" height={300}>
                   <RadarChart data={radarData}>
                     <PolarGrid />
-                    <PolarAngleAxis dataKey="category" />
+                    <PolarAngleAxis dataKey="category" tick={{ display: 'none' }} reversed={false} scale="auto" />
                     <PolarRadiusAxis angle={90} domain={[0, 10]} />
                     <Radar
                       name="Score"

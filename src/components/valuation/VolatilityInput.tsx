@@ -89,7 +89,6 @@ export function VolatilityInput({
             setSelectedIndustry(currentIndustry)
           }
         } catch (error) {
-          console.error('Failed to load industries:', error)
           setAvailableIndustries([])
         }
       }
@@ -173,7 +172,7 @@ export function VolatilityInput({
           <div className="relative flex-1">
             <input
               type="number"
-              value={assumption.value}
+              value={Array.isArray(assumption.value) ? '' : (assumption.value || '')}
               onChange={(e) => handleManualInput(e.target.value)}
               className={`${baseClasses} pr-8 ${selectedSource !== 'manual' ? 'bg-muted/50' : ''}`}
               step="0.1"

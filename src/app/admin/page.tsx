@@ -85,7 +85,6 @@ export default function AdminDashboard() {
         setStats(data)
       }
     } catch (error) {
-      console.error('Failed to fetch system stats:', error)
     } finally {
       setLoading(false)
     }

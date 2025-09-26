@@ -2,12 +2,13 @@
 
 import React, { memo } from 'react'
 import { EditableDataTable } from '@/components/ui/editable-data-table'
-import { DataTable } from '@/components/ui/data-table'
+import OptimizedDataTable from '@/components/ui/optimized-data-table'
+import { MetricCard } from '@/components/common/SummaryCard'
 import type { ColumnDef } from '@tanstack/react-table'
 
 // Memoized DataTable for large datasets
 export const MemoizedDataTable = memo(
-  function MemoizedDataTable<TData, TValue>({
+  function MemoizedDataTable<TData = any, TValue = unknown>({
     columns,
     data,
     className,
@@ -18,7 +19,7 @@ export const MemoizedDataTable = memo(
     className?: string
     [key: string]: any
   }) {
-    return <DataTable columns={columns} data={data} className={className} {...props} />
+    return <OptimizedDataTable columns={columns} data={data} className={className} {...props} />
   },
   (prevProps, nextProps) => {
     // Custom comparison - only re-render if data or columns change
@@ -32,24 +33,27 @@ export const MemoizedDataTable = memo(
 
 // Memoized EditableDataTable for editable tables
 export const MemoizedEditableDataTable = memo(
-  function MemoizedEditableDataTable<TData, TValue>({
+  function MemoizedEditableDataTable<TData = Record<string, any>, TValue = unknown>({
     columns,
     data,
     onUpdate,
     className,
+    tableId = 'memoized-table',
     ...props
   }: {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     onUpdate?: (rowIndex: number, field: string, value: any) => void
     className?: string
+    tableId?: string
     [key: string]: any
   }) {
     return (
       <EditableDataTable
-        columns={columns}
-        data={data}
-        onUpdate={onUpdate}
+        tableId={tableId}
+        columns={columns as ColumnDef<Record<string, any>>[]}
+        data={data as Record<string, any>[]}
+        onCellChange={onUpdate}
         className={className}
         {...props}
       />
@@ -111,7 +115,7 @@ export const MemoizedMetricCard = memo(
     value,
     change,
     trend,
-    icon: Icon,
+    icon,
     className,
   }: {
     title: string
@@ -121,30 +125,20 @@ export const MemoizedMetricCard = memo(
     icon?: React.ComponentType<{ className?: string }>
     className?: string
   }) {
+    const trendData = change !== undefined && trend ? {
+      direction: trend,
+      value: `${change > 0 ? '+' : ''}${change}%`,
+      label: undefined
+    } : undefined
+
     return (
-      <div className={`rounded-lg border bg-card p-6 ${className || ''}`}>
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {change !== undefined && (
-              <p
-                className={`text-sm ${
-                  trend === 'up'
-                    ? 'text-green-600'
-                    : trend === 'down'
-                      ? 'text-red-600'
-                      : 'text-muted-foreground'
-                }`}
-              >
-                {change > 0 ? '+' : ''}
-                {change}%
-              </p>
-            )}
-          </div>
-          {Icon && <Icon className="h-8 w-8 text-muted-foreground" />}
-        </div>
-      </div>
+      <MetricCard
+        title={title}
+        value={value}
+        trend={trendData}
+        icon={icon}
+        className={className}
+      />
     )
   },
   (prevProps, nextProps) => {

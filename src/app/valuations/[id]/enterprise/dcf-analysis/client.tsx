@@ -120,7 +120,6 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
           }
         }
       } catch (error) {
-        console.error('Failed to load scenarios:', error)
       }
     }
     loadScenarios()
@@ -150,7 +149,6 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
       })
       setResults(calculatedResults)
     } catch (error) {
-      console.error('DCF calculation error:', error)
       toast.error('Failed to calculate DCF')
     } finally {
       setIsCalculating(false)
@@ -178,7 +176,6 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
         })
         setResults(calculatedResults)
       } catch (error) {
-        console.error('Initial DCF calculation error:', error)
       } finally {
         setIsCalculating(false)
       }
@@ -197,7 +194,6 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
       toast.success('DCF analysis saved successfully')
       setHasChanges(false)
     } catch (error) {
-      console.error('Save error:', error)
       toast.error('Failed to save DCF analysis')
     } finally {
       setIsSaving(false)
@@ -286,7 +282,7 @@ export function DCFAnalysisClient({ valuationId, initialData }: DCFAnalysisClien
                   <SelectItem key={scenario.id} value={scenario.id}>
                     <div className="flex items-center gap-2">
                       <span>{scenario.name}</span>
-                      <Badge variant="outline" size="sm">
+                      <Badge variant="outline">
                         {scenario.type}
                       </Badge>
                     </div>
@@ -517,7 +513,6 @@ function SensitivityTable({
         )
         setSensitivityData(results)
       } catch (error) {
-        console.error('Sensitivity analysis error:', error)
       } finally {
         setIsCalculating(false)
       }

@@ -642,10 +642,10 @@ export default function PublicComparablesPage() {
                 enableSorting={true}
                 enablePagination={true}
                 pageSize={10}
-                onRowDelete={(rowIds) => {
-                  setComparables((prev) => prev.filter((c) => !rowIds.includes(c.id)))
+                onRowDelete={(row) => {
+                  setComparables((prev) => prev.filter((c) => c.id !== row.id))
                   const newSelected = new Set(selectedRows)
-                  rowIds.forEach((id) => newSelected.delete(id))
+                  newSelected.delete(row.id)
                   setSelectedRows(newSelected)
                 }}
               />

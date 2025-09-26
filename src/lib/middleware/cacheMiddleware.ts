@@ -86,7 +86,6 @@ class CacheMiddleware {
             vary,
           })
           .catch((error) => {
-            console.error('Error caching response:', error)
           })
 
         // Add cache headers to original response
@@ -141,10 +140,6 @@ class CacheMiddleware {
     if (invalidationTags.length > 0) {
       const invalidated = this.cache.invalidateByTags(invalidationTags)
       if (invalidated > 0) {
-        console.log(
-          `Cache invalidation: ${invalidated} entries invalidated for tags:`,
-          invalidationTags
-        )
       }
     }
   }
@@ -191,7 +186,6 @@ class CacheMiddleware {
    */
   createWarmer(routes: Array<{ path: string; method?: string; headers?: Record<string, string> }>) {
     return async () => {
-      console.log('Starting cache warm-up...')
 
       for (const route of routes) {
         try {
@@ -227,14 +221,11 @@ class CacheMiddleware {
               tags: this.generateAutoTags(request),
             })
 
-            console.log(`Cache warmed: ${method} ${path}`)
           }
         } catch (error) {
-          console.error(`Cache warm-up failed for ${route.path}:`, error)
         }
       }
 
-      console.log('Cache warm-up completed')
     }
   }
 

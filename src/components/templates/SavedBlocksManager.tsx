@@ -15,6 +15,7 @@ import {
   X,
   Tag,
   Folder,
+  MoreVertical,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -37,11 +38,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { TemplateBlock } from '@/lib/templates/types'
-import savedBlocksService, { type SavedBlock } from '@/lib/templates/savedBlocksService'
+import savedBlocksServiceDB, { type SavedBlock } from '@/lib/templates/savedBlocksServiceDB'
 
 interface SavedBlocksManagerProps {
   onBlockSelect?: (block: TemplateBlock) => void
@@ -120,7 +126,7 @@ function DraggableSavedBlock({
                 <Badge variant="outline" className="px-1 py-0 text-xs">
                   {savedBlock.block.type}
                 </Badge>
-                {savedBlock.tags.slice(0, 2).map((tag) => (
+                {savedBlock.tags?.slice(0, 2).map((tag) => (
                   <Badge key={tag} variant="secondary" className="px-1 py-0 text-xs">
                     {tag}
                   </Badge>
@@ -205,6 +211,10 @@ export function SavedBlocksManager({
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [editingBlock, setEditingBlock] = useState<SavedBlock | null>(null)
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false)
+  const [categoryAction, setCategoryAction] = useState<'create' | 'rename' | 'delete'>('create')
+  const [selectedCategoryForAction, setSelectedCategoryForAction] = useState('')
+  const [newCategoryName, setNewCategoryName] = useState('')
 
   // Form states
   const [blockName, setBlockName] = useState('')
@@ -219,16 +229,18 @@ export function SavedBlocksManager({
   const loadSavedBlocks = async () => {
     setIsLoading(true)
     try {
-      // Initialize default blocks if needed
-      await savedBlocksService.createDefaultBlocks()
+      // Initialize the service (will fetch from database or localStorage)
+      await savedBlocksServiceDB.initialize()
 
-      const blocks = await savedBlocksService.getSavedBlocks()
+      // Create default blocks if none exist
+      await savedBlocksServiceDB.createDefaultBlocks()
+
+      const blocks = await savedBlocksServiceDB.getSavedBlocks()
       setSavedBlocks(blocks)
 
-      const cats = await savedBlocksService.getCategories()
+      const cats = await savedBlocksServiceDB.getCategories()
       setCategories(cats)
     } catch (error) {
-      console.error('Failed to load saved blocks:', error)
     } finally {
       setIsLoading(false)
     }
@@ -238,7 +250,7 @@ export function SavedBlocksManager({
     if (!currentBlock || !blockName.trim()) return
 
     try {
-      const newBlock = await savedBlocksService.saveBlock({
+      const newBlock = await savedBlocksServiceDB.saveBlock({
         name: blockName.trim(),
         description: blockDescription.trim(),
         category: blockCategory || 'Uncategorized',
@@ -263,7 +275,6 @@ export function SavedBlocksManager({
       setBlockCategory('')
       setBlockTags('')
     } catch (error) {
-      console.error('Failed to save block:', error)
     }
   }
 
@@ -271,7 +282,7 @@ export function SavedBlocksManager({
     if (!editingBlock || !blockName.trim()) return
 
     try {
-      const updated = await savedBlocksService.updateBlock(editingBlock.id, {
+      const updated = await savedBlocksServiceDB.updateBlock(editingBlock.id, {
         name: blockName.trim(),
         description: blockDescription.trim(),
         category: blockCategory || 'Uncategorized',
@@ -290,7 +301,6 @@ export function SavedBlocksManager({
       setEditingBlock(null)
       resetForm()
     } catch (error) {
-      console.error('Failed to update block:', error)
     }
   }
 
@@ -298,18 +308,17 @@ export function SavedBlocksManager({
     if (!confirm(`Are you sure you want to delete "${block.name}"?`)) return
 
     try {
-      const deleted = await savedBlocksService.deleteBlock(block.id)
+      const deleted = await savedBlocksServiceDB.deleteBlock(block.id)
       if (deleted) {
         setSavedBlocks((prev) => prev.filter((b) => b.id !== block.id))
       }
     } catch (error) {
-      console.error('Failed to delete block:', error)
     }
   }
 
   const handleDuplicateBlock = async (block: SavedBlock) => {
     try {
-      const duplicated = await savedBlocksService.saveBlock({
+      const duplicated = await savedBlocksServiceDB.saveBlock({
         name: `${block.name} (Copy)`,
         description: block.description,
         category: block.category,
@@ -319,7 +328,6 @@ export function SavedBlocksManager({
 
       setSavedBlocks((prev) => [duplicated, ...prev])
     } catch (error) {
-      console.error('Failed to duplicate block:', error)
     }
   }
 
@@ -337,6 +345,66 @@ export function SavedBlocksManager({
     setBlockDescription('')
     setBlockCategory('')
     setBlockTags('')
+  }
+
+  // Category management functions
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return
+
+    const categoryExists = categories.includes(newCategoryName.trim())
+    if (categoryExists) {
+      alert('Category already exists')
+      return
+    }
+
+    setCategories((prev) => [...prev, newCategoryName.trim()].sort())
+    setShowCategoryDialog(false)
+    setNewCategoryName('')
+  }
+
+  const handleRenameCategory = async () => {
+    if (!newCategoryName.trim() || !selectedCategoryForAction) return
+
+    // Update all blocks with the old category name
+    const blocksToUpdate = savedBlocks.filter((block) => block.category === selectedCategoryForAction)
+
+    for (const block of blocksToUpdate) {
+      await savedBlocksServiceDB.updateBlock(block.id, {
+        ...block,
+        category: newCategoryName.trim()
+      })
+    }
+
+    // Reload blocks and categories
+    await loadSavedBlocks()
+
+    setShowCategoryDialog(false)
+    setNewCategoryName('')
+    setSelectedCategoryForAction('')
+  }
+
+  const handleDeleteCategory = async () => {
+    if (!selectedCategoryForAction) return
+
+    if (!confirm(`Delete category "${selectedCategoryForAction}"? Blocks will be moved to "Uncategorized".`)) {
+      return
+    }
+
+    // Move blocks to Uncategorized
+    const blocksToUpdate = savedBlocks.filter((block) => block.category === selectedCategoryForAction)
+
+    for (const block of blocksToUpdate) {
+      await savedBlocksServiceDB.updateBlock(block.id, {
+        ...block,
+        category: 'Uncategorized'
+      })
+    }
+
+    // Reload blocks and categories
+    await loadSavedBlocks()
+
+    setShowCategoryDialog(false)
+    setSelectedCategoryForAction('')
   }
 
   const toggleCategory = (category: string) => {
@@ -381,19 +449,42 @@ export function SavedBlocksManager({
             <Bookmark className="h-4 w-4" />
             Saved Blocks
           </div>
-          {currentBlock && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setBlockCategory(categories[0] || 'Uncategorized')
-                setShowSaveDialog(true)
-              }}
-            >
-              <Save className="mr-2 h-3 w-3" />
-              Save Current
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setCategoryAction('create')
+                      setNewCategoryName('')
+                      setShowCategoryDialog(true)
+                    }}
+                  >
+                    <Folder className="h-4 w-4" />
+                    <Plus className="ml-1 h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Manage Categories</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {currentBlock && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setBlockCategory(categories[0] || 'Uncategorized')
+                  setShowSaveDialog(true)
+                }}
+              >
+                <Save className="mr-2 h-3 w-3" />
+                Save Current
+              </Button>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
 
@@ -437,36 +528,74 @@ export function SavedBlocksManager({
             </div>
           ) : (
             Object.entries(groupedBlocks).map(([category, blocks]) => (
-              <Collapsible
-                key={category}
-                open={expandedCategories.has(category) || searchTerm !== ''}
-                onOpenChange={() => toggleCategory(category)}
-              >
-                <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md p-2 text-sm font-medium transition-colors hover:bg-accent">
+              <div key={category}>
+                <button
+                  onClick={() => toggleCategory(category)}
+                  className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm font-medium transition-colors hover:bg-accent"
+                >
                   {expandedCategories.has(category) || searchTerm !== '' ? (
                     <ChevronDown className="h-4 w-4" />
                   ) : (
                     <ChevronRight className="h-4 w-4" />
                   )}
                   <Folder className="h-4 w-4" />
-                  {category}
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    {blocks.length}
-                  </Badge>
-                </CollapsibleTrigger>
+                  <span className="flex-1">{category}</span>
+                  {blocks.length > 0 && (
+                    <Badge variant="secondary" className="mr-2 text-xs">
+                      {blocks.length}
+                    </Badge>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <MoreVertical className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCategoryAction('rename')
+                          setSelectedCategoryForAction(category)
+                          setNewCategoryName(category)
+                          setShowCategoryDialog(true)
+                        }}
+                      >
+                        <Edit2 className="mr-2 h-4 w-4" />
+                        Rename
+                      </DropdownMenuItem>
+                      {category !== 'Uncategorized' && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCategoryAction('delete')
+                            setSelectedCategoryForAction(category)
+                            setShowCategoryDialog(true)
+                          }}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </button>
 
-                <CollapsibleContent className="mt-1 space-y-2 pl-6">
-                  {blocks.map((block) => (
-                    <DraggableSavedBlock
-                      key={block.id}
-                      savedBlock={block}
-                      onEdit={openEditDialog}
-                      onDelete={handleDeleteBlock}
-                      onDuplicate={handleDuplicateBlock}
-                    />
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
+                {(expandedCategories.has(category) || searchTerm !== '') && (
+                  <div className="mt-1 space-y-2 pl-6">
+                    {blocks.map((block) => (
+                      <DraggableSavedBlock
+                        key={block.id}
+                        savedBlock={block}
+                        onEdit={openEditDialog}
+                        onDelete={handleDeleteBlock}
+                        onDuplicate={handleDuplicateBlock}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ))
           )}
         </div>
@@ -613,6 +742,69 @@ export function SavedBlocksManager({
             <Button onClick={handleEditBlock} disabled={!blockName.trim()}>
               Update Block
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Management Dialog */}
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {categoryAction === 'create' && 'Create New Category'}
+              {categoryAction === 'rename' && `Rename Category "${selectedCategoryForAction}"`}
+              {categoryAction === 'delete' && `Delete Category "${selectedCategoryForAction}"`}
+            </DialogTitle>
+            <DialogDescription>
+              {categoryAction === 'create' && 'Add a new category to organize your saved blocks'}
+              {categoryAction === 'rename' && 'Enter a new name for this category'}
+              {categoryAction === 'delete' && 'Blocks in this category will be moved to "Uncategorized"'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {categoryAction !== 'delete' && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="category-name">
+                  {categoryAction === 'create' ? 'Category Name' : 'New Name'} *
+                </Label>
+                <Input
+                  id="category-name"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Enter category name"
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCategoryDialog(false)
+                setNewCategoryName('')
+                setSelectedCategoryForAction('')
+              }}
+            >
+              Cancel
+            </Button>
+            {categoryAction === 'create' && (
+              <Button onClick={handleCreateCategory} disabled={!newCategoryName.trim()}>
+                Create Category
+              </Button>
+            )}
+            {categoryAction === 'rename' && (
+              <Button onClick={handleRenameCategory} disabled={!newCategoryName.trim()}>
+                Rename Category
+              </Button>
+            )}
+            {categoryAction === 'delete' && (
+              <Button variant="destructive" onClick={handleDeleteCategory}>
+                Delete Category
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

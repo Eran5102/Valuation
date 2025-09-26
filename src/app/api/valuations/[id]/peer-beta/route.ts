@@ -89,7 +89,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const peerBetas = peers
       .filter((p) => p.beta !== undefined && p.beta > 0)
       .map((p) => ({
-        beta: p.beta,
+        beta: p.beta as number,
         marketCap: p.marketCap,
       }))
 
@@ -110,7 +110,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       lastUpdated: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error fetching peer beta:', error)
     return NextResponse.json({ error: 'Failed to fetch peer beta data' }, { status: 500 })
   }
 }
@@ -146,7 +145,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const peerBetas = peers
       .filter((p) => p.beta !== undefined && p.beta > 0)
       .map((p) => ({
-        beta: p.beta,
+        beta: p.beta as number,
         marketCap: p.marketCap,
       }))
 
@@ -170,7 +169,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       lastUpdated: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error updating peer beta:', error)
     return NextResponse.json({ error: 'Failed to update peer beta data' }, { status: 500 })
   }
 }

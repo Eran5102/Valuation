@@ -83,7 +83,7 @@ interface WACCData {
     preTaxCostOfDebt: number
     debtTaxRate: number
     debtWeight: number
-    equityWeight: number
+    equityWeight?: number
   }
   peerCompanies: PeerCompany[]
   calculatedWACC: number | null
@@ -134,7 +134,6 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       preTaxCostOfDebt: data.preTaxCostOfDebt,
       debtTaxRate: data.debtTaxRate,
       debtWeight: data.debtWeight,
-      equityWeight: 1 - data.debtWeight,
     }
 
     const results = calculateWACC(inputs)
@@ -147,10 +146,10 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
         costOfDebt: results.afterTaxCostOfDebt,
         taxRate: data.targetTaxRate,
         debtWeight: data.debtWeight,
-        equityWeight: data.equityWeight,
+        equityWeight: 1 - data.debtWeight,
         calculatedWACC: results.wacc,
         unleveredBeta: results.unleveredBeta,
-        leveredBeta: results.leveredBeta,
+        leveredBeta: results.releveredBeta,
         riskFreeRate: data.riskFreeRate,
         equityRiskPremium: data.equityRiskPremium,
         sizePremium: data.sizePremium,
@@ -185,7 +184,6 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       toast.success('WACC calculation saved successfully')
       setHasChanges(false)
     } catch (error) {
-      console.error('Save error:', error)
       toast.error('Failed to save WACC calculation')
     } finally {
       setIsSaving(false)
@@ -248,7 +246,6 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       setOptimalStructure(result)
       toast.success('Optimal capital structure calculated')
     } catch (error) {
-      console.error('Optimization error:', error)
       toast.error('Failed to calculate optimal structure')
     } finally {
       setIsCalculating(false)
@@ -266,7 +263,6 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
       setPeerCompanies([...peerCompanies, ...newPeers])
       toast.success(`Imported ${imported.length} peer companies from ${source}`)
     } catch (error) {
-      console.error('Import error:', error)
       toast.error('Failed to import peer companies')
     }
   }
@@ -397,7 +393,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {calculatedResults ? calculatedResults.releveredBeta.toFixed(3) : '-'}
+              {calculatedResults ? calculatedResults.leveredBeta?.toFixed(3) || '-' : '-'}
             </div>
             <p className="text-xs text-muted-foreground">Target capital structure</p>
           </CardContent>
@@ -548,7 +544,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Median Unlevered Beta:</span>
                           <span className="font-medium">
-                            {calculatedResults.unleveredBeta.toFixed(3)}
+                            {calculatedResults.unleveredBeta?.toFixed(3) || '-'}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -558,7 +554,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Relevered Beta:</span>
                           <span className="font-medium">
-                            {calculatedResults.releveredBeta.toFixed(3)}
+                            {calculatedResults.leveredBeta?.toFixed(3) || '-'}
                           </span>
                         </div>
                       </div>
@@ -699,7 +695,7 @@ export function WACCCalculatorClient({ valuationId, initialData }: WACCCalculato
                     <div className="flex justify-between">
                       <span>+ Beta-Adjusted Market Premium</span>
                       <span>
-                        {(calculatedResults.components.betaAdjustedPremium * 100).toFixed(2)}%
+                        {calculatedResults.components?.betaAdjustedPremium ? (calculatedResults.components.betaAdjustedPremium * 100).toFixed(2) : '0.00'}%
                       </span>
                     </div>
                     <div className="flex justify-between">

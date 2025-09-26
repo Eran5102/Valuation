@@ -476,7 +476,7 @@ export function ProjectedFinancialsClient({ valuationId }: ProjectedFinancialsCl
       pvOfTerminalValue,
     }))
 
-    setHasChanges(true)
+    // Changes will be tracked by the DCF context when updateAssumptions is called
   }
 
   const handleSave = async () => {
@@ -871,7 +871,11 @@ export function ProjectedFinancialsClient({ valuationId }: ProjectedFinancialsCl
               <CardDescription>Historical and projected P&L statements</CardDescription>
             </CardHeader>
             <CardContent>
-              <EditableDataTable columns={incomeStatementColumns} data={localFinancials} />
+              <EditableDataTable
+                tableId="income-statement"
+                columns={incomeStatementColumns}
+                data={localFinancials}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -883,7 +887,11 @@ export function ProjectedFinancialsClient({ valuationId }: ProjectedFinancialsCl
               <CardDescription>Operating, investing, and free cash flows</CardDescription>
             </CardHeader>
             <CardContent>
-              <EditableDataTable columns={cashFlowColumns} data={localFinancials} />
+              <EditableDataTable
+                tableId="cash-flow"
+                columns={cashFlowColumns}
+                data={localFinancials}
+              />
 
               <Alert className="mt-4">
                 <Info className="h-4 w-4" />
@@ -1136,7 +1144,7 @@ export function ProjectedFinancialsClient({ valuationId }: ProjectedFinancialsCl
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip formatter={(value: number) => `$${value.toFixed(1)}M`} />
-                  <Bar dataKey="value" fill={(data) => (data.value < 0 ? '#ef4444' : '#10b981')} />
+                  <Bar dataKey="value" fill="#10b981" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

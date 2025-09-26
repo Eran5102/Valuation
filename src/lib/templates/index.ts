@@ -1,6 +1,6 @@
 export * from './types'
 export * from './core'
-export { default as standard409ATemplate } from './409a-template'
+export { standard409ATemplate } from './409a-template'
 export { default as TemplateEngine } from './core'
 
 // Sample data for testing and preview

@@ -32,6 +32,28 @@ export interface ConsolidatedAssumptions {
   last_financing_amount?: number
   last_financing_valuation?: number
   last_financing_type?: string
+
+  // Missing properties from ValuationAssumptionsConsolidated
+  subject_security?: string
+  designee_prefix?: string
+  designee_first_name?: string
+  designee_last_name?: string
+  designee_title?: string
+  engagement_letter_date?: string
+  company_description?: string
+  products_services?: string
+  industry_description?: string
+  stage_description?: string
+  management_team?: Array<{
+    name: string
+    title: string
+    bio?: string
+  }>
+  key_investors?: Array<{
+    name: string
+    type: string
+    investment_amount?: number
+  }>
 }
 
 export async function getAssumptions(valuationId: string) {
@@ -45,7 +67,6 @@ export async function getAssumptions(valuationId: string) {
     .single()
 
   if (error && error.code !== 'PGRST116') {
-    console.error('Error fetching assumptions:', error)
     return null
   }
 
@@ -63,7 +84,6 @@ export async function saveAssumptions(valuationId: string, assumptions: Consolid
   })
 
   if (error) {
-    console.error('Error saving assumptions:', error)
     return { success: false, error: error.message }
   }
 
@@ -81,7 +101,6 @@ export async function getValuationData(valuationId: string) {
     .single()
 
   if (error) {
-    console.error('Error fetching valuation:', error)
     return null
   }
 

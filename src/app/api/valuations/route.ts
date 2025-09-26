@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import ApiHandler from '@/lib/middleware/apiHandler'
+import {
+  CreateValuationSchema,
+  PaginationSchema,
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 // GET /api/valuations - Get all valuations
 export const GET = async (request: NextRequest) => {
-  const { searchParams } = new URL(request.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '50')
-  const offset = (page - 1) * limit
+  try {
+    const { searchParams } = new URL(request.url)
+
+    // Validate query parameters
+    const queryParams = validateRequest(PaginationSchema, {
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit') || '50', // Default to 50 for valuations
+      sort: searchParams.get('sort'),
+      order: searchParams.get('order'),
+    })
+
+    const offset = (queryParams.page - 1) * queryParams.limit
 
   const supabase = await createClient()
 
@@ -41,30 +54,47 @@ export const GET = async (request: NextRequest) => {
     dataQuery = dataQuery.eq('organization_id', organizationId)
   }
 
+  const sortField = queryParams.sort || 'created_at'
+  const ascending = queryParams.order === 'asc'
   const { data: valuations, error } = await dataQuery
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1)
+    .order(sortField, { ascending })
+    .range(offset, offset + queryParams.limit - 1)
 
   if (error) {
-    console.error('Error fetching valuations:', error)
     return NextResponse.json({ error: 'Failed to fetch valuations' }, { status: 500 })
   }
 
-  return NextResponse.json({
-    data: valuations || [],
-    pagination: {
-      page,
-      limit,
-      total: count || 0,
-      hasMore: (count || 0) > offset + limit,
-    },
-  })
+    return NextResponse.json({
+      data: valuations || [],
+      pagination: {
+        page: queryParams.page,
+        limit: queryParams.limit,
+        total: count || 0,
+        hasMore: (count || 0) > offset + queryParams.limit,
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', message: error.message },
+        { status: 400 }
+      )
+    }
+    return NextResponse.json({ error: 'Failed to fetch valuations' }, { status: 500 })
+  }
 }
 
 // POST /api/valuations - Create valuation project
 export const POST = async (request: NextRequest) => {
-  const body = await request.json()
-  const { client_id, ...valuationData } = body
+  try {
+    const rawData = await request.json()
+    const { client_id, ...restData } = rawData
+
+    // Validate the valuation data
+    const valuationData = validateRequest(CreateValuationSchema, {
+      ...restData,
+      company_id: restData.company_id || client_id,
+    })
 
   const supabase = await createClient()
 
@@ -85,21 +115,11 @@ export const POST = async (request: NextRequest) => {
     organizationId = membership?.organization_id
   }
 
-  // Pass through all fields from valuationData, excluding ones we know don't exist
-  const { name, ...restValuationData } = valuationData
-
-  const insertData: any = {
-    ...restValuationData,
-    company_id: valuationData.company_id || client_id,
-    title: valuationData.title || name || `Valuation ${new Date().toISOString().split('T')[0]}`,
-    organization_id: organizationId,
-    created_at: new Date().toISOString(),
-  }
-
-  // Ensure valuation_date is set if not provided
-  if (!insertData.valuation_date) {
-    insertData.valuation_date = new Date().toISOString().split('T')[0]
-  }
+    const insertData = {
+      ...valuationData,
+      organization_id: organizationId,
+      created_at: new Date().toISOString(),
+    }
 
   const { data: valuation, error } = await supabase
     .from('valuations')
@@ -108,15 +128,23 @@ export const POST = async (request: NextRequest) => {
     .single()
 
   if (error) {
-    console.error('Error creating valuation:', error)
     return NextResponse.json({ error: 'Failed to create valuation' }, { status: 500 })
   }
 
-  return NextResponse.json(
-    {
-      data: valuation,
-      message: 'Valuation project created successfully',
-    },
-    { status: 201 }
-  )
+    return NextResponse.json(
+      {
+        data: valuation,
+        message: 'Valuation project created successfully',
+      },
+      { status: 201 }
+    )
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: error.message },
+        { status: 400 }
+      )
+    }
+    return NextResponse.json({ error: 'Failed to create valuation' }, { status: 500 })
+  }
 }

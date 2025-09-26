@@ -61,7 +61,6 @@ export class TreasuryYieldCurveService {
         fetchedAt: new Date().toISOString(),
       }
     } catch (error) {
-      console.error('Error fetching Treasury yield curve:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch Treasury data',
@@ -97,7 +96,6 @@ export class TreasuryYieldCurveService {
         fetchedAt: new Date().toISOString(),
       }
     } catch (error) {
-      console.error('Error fetching Treasury yield curve for date:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch Treasury data',
@@ -205,7 +203,6 @@ export class TreasuryYieldCurveService {
         interpolated: false,
       }
     } catch (error) {
-      console.error('Error getting risk-free rate:', error)
       return {
         rate: null,
         maturity: '',

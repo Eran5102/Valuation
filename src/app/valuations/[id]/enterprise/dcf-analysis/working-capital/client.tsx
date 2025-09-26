@@ -134,7 +134,6 @@ export function WorkingCapitalClient({ valuationId }: WorkingCapitalClientProps)
         setHistoricalData(generateSampleHistorical())
       }
     } catch (error) {
-      console.error('Error loading working capital:', error)
       setHistoricalData(generateSampleHistorical())
     }
   }
@@ -201,7 +200,7 @@ export function WorkingCapitalClient({ valuationId }: WorkingCapitalClientProps)
       const cogs = revenue * (1 - financialData.grossMargin / 100)
       const operatingExpenses = revenue * (financialData.opexPercent / 100)
 
-      let ar, inventory, ap, nwc
+      let ar, inventory, ap, nwc = 0
 
       if (assumptions.projectionMethod === 'days') {
         ar = (revenue * assumptions.daysReceivables) / 365
@@ -489,7 +488,11 @@ export function WorkingCapitalClient({ valuationId }: WorkingCapitalClientProps)
               <CardDescription>Historical and projected working capital components</CardDescription>
             </CardHeader>
             <CardContent>
-              <EditableDataTable columns={columns} data={combinedData} />
+              <EditableDataTable
+                tableId="working-capital"
+                columns={columns}
+                data={combinedData}
+              />
             </CardContent>
           </Card>
         </TabsContent>

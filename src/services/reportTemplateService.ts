@@ -40,7 +40,6 @@ export class ReportTemplateService {
       if (error) throw error
       return this.mapDbTemplateToType(data)
     } catch (error) {
-      console.error('Error saving report template:', error)
       return null
     }
   }
@@ -80,7 +79,6 @@ export class ReportTemplateService {
       if (error) throw error
       return this.mapDbTemplateToType(data)
     } catch (error) {
-      console.error('Error updating report template:', error)
       return null
     }
   }
@@ -149,7 +147,6 @@ export class ReportTemplateService {
           .range(offset, offset + limit - 1)
 
         if (error) {
-          console.error('Supabase error details:', error)
           throw error
         }
 
@@ -160,8 +157,6 @@ export class ReportTemplateService {
         }
       }
     } catch (error) {
-      console.error('Error loading report templates:', error)
-      console.error('Full error object:', JSON.stringify(error, null, 2))
       return { data: [], count: 0, hasMore: false }
     }
   }
@@ -183,7 +178,6 @@ export class ReportTemplateService {
       if (result.error) throw result.error
       return result.data?.[0] ? this.mapDbTemplateToType(result.data[0]) : null
     } catch (error) {
-      console.error('Error loading report template:', error)
       return null
     }
   }
@@ -208,7 +202,6 @@ export class ReportTemplateService {
       if (error) throw error
       return true
     } catch (error) {
-      console.error('Error deleting report template:', error)
       return false
     }
   }
@@ -240,7 +233,6 @@ export class ReportTemplateService {
 
       return await this.saveTemplate(duplicateTemplate)
     } catch (error) {
-      console.error('Error duplicating report template:', error)
       return null
     }
   }
@@ -273,7 +265,6 @@ export class ReportTemplateService {
       if (error) throw error
       return this.mapDbMappingToType(data)
     } catch (error) {
-      console.error('Error saving variable mapping:', error)
       return null
     }
   }
@@ -306,7 +297,6 @@ export class ReportTemplateService {
         hasMore: result.count ? result.count > offset + limit : false,
       }
     } catch (error) {
-      console.error('Error loading variable mappings:', error)
       return { data: [], count: 0, hasMore: false }
     }
   }
@@ -321,7 +311,6 @@ export class ReportTemplateService {
       if (error) throw error
       return true
     } catch (error) {
-      console.error('Error deleting variable mapping:', error)
       return false
     }
   }
@@ -353,7 +342,6 @@ export class ReportTemplateService {
         },
       }
     } catch (error) {
-      console.error('Error generating variables from valuation:', error)
       return {}
     }
   }

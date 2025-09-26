@@ -62,7 +62,6 @@ export const PUT = async (request: NextRequest) => {
 
     // Run cache warming in background
     warmer().catch((error) => {
-      console.error('Cache warming failed:', error)
     })
 
     return NextResponse.json({

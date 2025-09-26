@@ -269,18 +269,21 @@ export interface ComprehensiveCapTable {
     exercise_price: number
     vesting_schedule?: string
   }>
-  validation_errors?: ValidationError[]
-  validation_warnings?: ValidationError[]
+  validation_errors?: ModelValidationError[]
+  validation_warnings?: ModelValidationError[]
 }
 
-export interface ValidationError {
+export interface ModelValidationError {
   field: string
   message: string
   severity: 'error' | 'warning'
 }
 
-export interface ValidationResult {
+export interface ModelValidationResult {
   is_valid: boolean
-  errors: ValidationError[]
-  warnings: ValidationError[]
+  errors: ModelValidationError[]
+  warnings: ModelValidationError[]
 }
+
+// Add missing type alias for backward compatibility
+export type CapTableConfig = any // Temporary fix for missing type

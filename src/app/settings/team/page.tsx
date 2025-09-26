@@ -101,7 +101,6 @@ export default function TeamManagementPage() {
         setInvitations(invitesData)
       }
     } catch (error) {
-      console.error('Failed to fetch team data:', error)
     } finally {
       setLoading(false)
     }
@@ -129,7 +128,6 @@ export default function TeamManagementPage() {
         alert(error.message || 'Failed to send invitation')
       }
     } catch (error) {
-      console.error('Failed to send invitation:', error)
       alert('Failed to send invitation')
     } finally {
       setSending(false)
@@ -148,7 +146,6 @@ export default function TeamManagementPage() {
         fetchTeamData()
       }
     } catch (error) {
-      console.error('Failed to update member role:', error)
     }
   }
 
@@ -164,7 +161,6 @@ export default function TeamManagementPage() {
         fetchTeamData()
       }
     } catch (error) {
-      console.error('Failed to remove member:', error)
     }
   }
 
@@ -178,7 +174,6 @@ export default function TeamManagementPage() {
         fetchTeamData()
       }
     } catch (error) {
-      console.error('Failed to cancel invitation:', error)
     }
   }
 

@@ -129,8 +129,10 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false)
 
-  const handleSelect = (range: { from: Date | undefined; to: Date | undefined } | undefined) => {
-    onChange?.(range)
+  const handleSelect = (range: any) => {
+    // Convert to expected format
+    const formattedRange = range ? { from: range.from, to: range.to || range.from } : undefined
+    onChange?.(formattedRange)
     if (range?.from && range?.to) {
       setOpen(false)
     }

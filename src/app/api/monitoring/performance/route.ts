@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Error fetching performance metrics:', error)
     return NextResponse.json(
       {
         error: 'Internal Server Error',
@@ -46,7 +45,6 @@ export async function POST() {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error clearing metrics:', error)
     return NextResponse.json(
       {
         error: 'Internal Server Error',

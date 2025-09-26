@@ -64,7 +64,6 @@ export default function Dashboard() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { currentOrganization, loading: orgLoading } = useOrganization()
-  console.log('Dashboard render - authLoading:', authLoading, 'user:', !!user)
   const [firstName, setFirstName] = useState<string>('there')
   const [stats, setStats] = useState<DashboardStats>({
     myActiveValuations: 0,
@@ -90,8 +89,20 @@ export default function Dashboard() {
     }
   }, [user, currentOrganization, authLoading])
 
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Dashboard loading timeout - forcing completion')
+        setLoading(false)
+      }
+    }, 10000) // 10 second timeout
+
+    return () => clearTimeout(timeout)
+  }, [loading])
+
   const fetchDashboardData = async () => {
-    console.log('Fetching dashboard data...')
+    setLoading(true) // Ensure loading is set at start
     try {
       // Handle both first_name and full_name formats
       let extractedFirstName = user?.user_metadata?.first_name
@@ -113,7 +124,6 @@ export default function Dashboard() {
           valuations = data.data || []
         }
       } catch (err) {
-        console.log('Failed to fetch valuations:', err)
       }
 
       try {
@@ -123,7 +133,6 @@ export default function Dashboard() {
           companies = data.data || []
         }
       } catch (err) {
-        console.log('Failed to fetch companies:', err)
       }
 
       try {
@@ -133,7 +142,6 @@ export default function Dashboard() {
           reports = data.data || []
         }
       } catch (err) {
-        console.log('Failed to fetch reports:', err)
       }
 
       // Calculate real stats based on actual data
@@ -219,7 +227,7 @@ export default function Dashboard() {
             assignedTo: v.assigned_appraiser === user?.id ? extractedFirstName : 'Team',
           }
         })
-        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+        .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
         .slice(0, 3)
 
       setStats({
@@ -233,7 +241,6 @@ export default function Dashboard() {
         upcomingDeadlines,
       })
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error)
       // Set empty stats on error
       setStats({
         myActiveValuations: 0,
@@ -326,10 +333,18 @@ export default function Dashboard() {
     return (
       <AppLayout>
         <div className="flex h-64 items-center justify-center">
-          <LoadingSpinner size="lg" />
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-sm text-muted-foreground">Loading dashboard...</p>
+          </div>
         </div>
       </AppLayout>
     )
+  }
+
+  // If user is null and we're not loading auth, redirect to login
+  if (!authLoading && !user) {
+    return null // Let AuthContext handle redirect
   }
 
   return (

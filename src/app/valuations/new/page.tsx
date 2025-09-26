@@ -56,7 +56,6 @@ export default function NewValuationPage() {
         setCompanies(data.data || [])
       }
     } catch (error) {
-      console.error('Failed to fetch companies:', error)
     }
   }
 
@@ -111,7 +110,6 @@ export default function NewValuationPage() {
       // Redirect to the new valuation page
       router.push(`/valuations/${result.data.id}`)
     } catch (error) {
-      console.error('Failed to save valuation:', error)
       alert(
         error instanceof Error ? error.message : 'Failed to create valuation. Please try again.'
       )

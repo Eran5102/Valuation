@@ -120,7 +120,6 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         }
       }
     } catch (error) {
-      console.error('Failed to fetch user permissions:', error)
       setPermissions([])
     } finally {
       setLoading(false)
@@ -162,7 +161,6 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         }
       }
     } catch (error) {
-      console.error('Failed to check entity access:', error)
     }
 
     return false

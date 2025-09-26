@@ -15,7 +15,6 @@ export async function POST() {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    console.log('Current user:', user.id, user.email)
 
     // Find the Bridgeland Advisors organization
     const { data: orgData, error: orgError } = await supabase
@@ -25,7 +24,6 @@ export async function POST() {
       .single()
 
     if (orgError || !orgData) {
-      console.error('Error finding organization:', orgError)
       return NextResponse.json(
         {
           error: 'Bridgeland Advisors organization not found',
@@ -35,7 +33,6 @@ export async function POST() {
       )
     }
 
-    console.log('Found organization:', orgData.name, 'Current owner:', orgData.owner_id)
 
     // Update the organization with your user ID as owner
     // First try with member_ids, if that fails, try without
@@ -55,7 +52,6 @@ export async function POST() {
 
     if (error1 && error1.message?.includes('member_ids')) {
       // If member_ids doesn't exist, try without it
-      console.log('member_ids column not found, trying without it')
       const { data: data2, error: error2 } = await supabase
         .from('organizations')
         .update({
@@ -73,7 +69,6 @@ export async function POST() {
     }
 
     if (updateError) {
-      console.error('Error updating organization:', updateError)
       return NextResponse.json(
         {
           error: 'Failed to update organization',
@@ -93,7 +88,6 @@ export async function POST() {
       },
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       {
         error: 'Internal server error',

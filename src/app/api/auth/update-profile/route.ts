@@ -35,7 +35,6 @@ export async function POST(request: Request) {
       user_metadata: data.user?.user_metadata,
     })
   } catch (error) {
-    console.error('Error updating profile:', error)
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
   }
 }
@@ -60,7 +59,6 @@ export async function GET() {
       created_at: user.created_at,
     })
   } catch (error) {
-    console.error('Error fetching user:', error)
     return NextResponse.json({ error: 'Failed to fetch user data' }, { status: 500 })
   }
 }

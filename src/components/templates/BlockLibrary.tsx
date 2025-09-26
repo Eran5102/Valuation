@@ -16,6 +16,16 @@ import {
   TrendingUp,
   Calendar,
   DollarSign,
+  Hash,
+  BookOpen,
+  FileSignature,
+  ScrollText,
+  BookMarked,
+  Library,
+  BookOpenCheck,
+  PenTool,
+  FileUp,
+  FileDown,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { BlockType } from '@/lib/templates/types'
@@ -252,6 +262,196 @@ const blockTypes: BlockTypeConfig[] = [
       fontWeight: 'bold',
     },
   },
+  {
+    type: 'footnote',
+    label: 'Footnote',
+    icon: Hash,
+    description: 'Add footnotes with dynamic content',
+    defaultContent: {
+      text: 'This statement is based on ',
+      footnoteContent: 'Volatility of {{volatility}}% based on {{data_source}} as of {{valuation_date}}',
+      type: 'footnote', // or 'endnote'
+    },
+    category: 'text',
+    defaultStyling: {
+      fontSize: 14,
+    },
+  },
+  {
+    type: 'tableOfContents',
+    label: 'Table of Contents',
+    icon: BookOpen,
+    description: 'Auto-generated table of contents',
+    defaultContent: {
+      title: 'Table of Contents',
+      depth: 3, // Include headers up to H3
+      showPageNumbers: true,
+      includeAppendices: true,
+    },
+    category: 'layout',
+    defaultStyling: {
+      margin: '40px 0',
+    },
+  },
+  {
+    type: 'coverPage',
+    label: 'Cover Page',
+    icon: FileSignature,
+    description: 'Professional cover page',
+    defaultContent: {
+      title: '409A Valuation Report',
+      subtitle: 'Fair Market Value Determination',
+      showCompanyLogo: true,
+      includeDate: true,
+      includeConfidentiality: true,
+    },
+    category: 'layout',
+    defaultStyling: {
+      textAlign: 'center',
+      pageBreakAfter: 'always',
+    },
+  },
+  {
+    type: 'executiveSummary',
+    label: 'Executive Summary',
+    icon: ScrollText,
+    description: 'Key findings and conclusions',
+    defaultContent: {
+      title: 'Executive Summary',
+      keyFindings: [],
+      methodology: '',
+      conclusion: '',
+    },
+    category: 'text',
+    defaultStyling: {
+      backgroundColor: '#f8f9fa',
+      padding: '20px',
+      borderLeft: '4px solid #007acc',
+    },
+  },
+  {
+    type: 'appendix',
+    label: 'Appendix',
+    icon: BookMarked,
+    description: 'Supporting documentation section',
+    defaultContent: {
+      title: 'Appendix A',
+      content: '',
+      subsections: [],
+    },
+    category: 'layout',
+    defaultStyling: {
+      pageBreakBefore: 'always',
+    },
+  },
+  {
+    type: 'bibliography',
+    label: 'Bibliography',
+    icon: Library,
+    description: 'References and citations',
+    defaultContent: {
+      title: 'References',
+      entries: [],
+      style: 'APA', // Citation style
+    },
+    category: 'text',
+    defaultStyling: {
+      fontSize: 12,
+    },
+  },
+  {
+    type: 'glossary',
+    label: 'Glossary',
+    icon: BookOpenCheck,
+    description: 'Term definitions',
+    defaultContent: {
+      title: 'Glossary of Terms',
+      terms: [
+        { term: 'FMV', definition: 'Fair Market Value' },
+        { term: 'DLOM', definition: 'Discount for Lack of Marketability' },
+      ],
+    },
+    category: 'text',
+    defaultStyling: {
+      margin: '20px 0',
+    },
+  },
+  {
+    type: 'signatureBlock',
+    label: 'Signature Block',
+    icon: PenTool,
+    description: 'Appraiser signature section',
+    defaultContent: {
+      signatories: [
+        {
+          name: '{{appraiser_name}}',
+          title: '{{appraiser_title}}',
+          credentials: '{{appraiser_credentials}}',
+          date: '{{report_date}}',
+        },
+      ],
+      includeDisclaimer: true,
+    },
+    category: 'layout',
+    defaultStyling: {
+      marginTop: '60px',
+      borderTop: '1px solid #ddd',
+      paddingTop: '20px',
+    },
+  },
+  {
+    type: 'header',
+    label: 'Report Header',
+    icon: FileUp,
+    description: 'Page header with logo and title',
+    defaultContent: {
+      logoUrl: '',
+      logoPosition: 'left', // 'left', 'center', 'right'
+      companyName: '{{company.name}}',
+      reportTitle: '409A Valuation Report',
+      showDate: true,
+      showPageNumbers: false, // Usually in footer
+      backgroundColor: 'transparent',
+      borderBottom: true,
+    },
+    category: 'layout',
+    defaultStyling: {
+      padding: '20px 0',
+      borderBottom: '2px solid #e5e5e5',
+      marginBottom: '30px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+  },
+  {
+    type: 'footer',
+    label: 'Report Footer',
+    icon: FileDown,
+    description: 'Page footer with page numbers and info',
+    defaultContent: {
+      leftContent: '{{company.name}} - {{report.name}}',
+      centerContent: 'Page {{page}} of {{totalPages}}',
+      rightContent: '{{report.date}}',
+      showConfidentiality: true,
+      confidentialityText: 'CONFIDENTIAL - PROPRIETARY INFORMATION',
+      confidentialityPosition: 'bottom', // 'top', 'bottom'
+      backgroundColor: 'transparent',
+      borderTop: true,
+    },
+    category: 'layout',
+    defaultStyling: {
+      padding: '15px 0',
+      borderTop: '1px solid #e5e5e5',
+      marginTop: '30px',
+      fontSize: '10px',
+      color: '#666',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      position: 'relative',
+    },
+  },
 ]
 
 interface DraggableBlockProps {
@@ -309,7 +509,7 @@ export function BlockLibrary() {
         </CardTitle>
         <p className="text-xs text-muted-foreground">Drag blocks to add them to your template</p>
       </CardHeader>
-      <CardContent className="h-[calc(100vh-280px)] space-y-4 overflow-y-auto pr-2">
+      <CardContent className="h-[calc(100vh-240px)] space-y-4 overflow-y-auto pr-2 pb-6">
         {/* Text Blocks */}
         <div>
           <h4 className="mb-2 text-sm font-medium text-muted-foreground">Text</h4>

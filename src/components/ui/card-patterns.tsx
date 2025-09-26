@@ -423,3 +423,6 @@ export function SectionCard({
     </Card>
   )
 }
+
+// Export types
+export type { SectionCardProps, StatCardProps, EmptyStateCardProps, TimelineCardProps }

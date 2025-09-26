@@ -44,7 +44,7 @@ import { formatCurrency, formatNumber } from '@/lib/utils'
 interface BreakpointsAnalysisProps {
   valuationId: string
   companyId?: string
-  capTableConfig: CapTableConfig
+  capTableConfig?: CapTableConfig
 }
 
 // Breakpoint type configurations with icons and colors
@@ -170,12 +170,10 @@ export default function BreakpointsAnalysis({
       if (result.success) {
         setAnalysisData(result.data)
         setAnalysisComplete(true)
-        console.log('Breakpoint analysis completed:', result.data)
       } else {
         throw new Error(result.error || 'Analysis failed')
       }
     } catch (err) {
-      console.error('Error running breakpoint analysis:', err)
       setError(err instanceof Error ? err.message : 'Failed to run analysis')
       setAnalysisComplete(false)
     } finally {
@@ -196,7 +194,6 @@ export default function BreakpointsAnalysis({
           }
         }
       } catch (err) {
-        console.log('No existing analysis found')
       }
     }
 
@@ -495,7 +492,7 @@ export default function BreakpointsAnalysis({
     {
       id: 'toValue',
       header: 'To ($)',
-      accessorFn: (range) => (range.isLastRange ? '∞' : formatCurrency(range.rangeEnd)),
+      accessorFn: (range) => (range.isLastRange ? '∞' : formatCurrency(range.rangeEnd || 0)),
       cell: ({ getValue }) => (
         <span className="font-mono text-foreground">{getValue() as string}</span>
       ),

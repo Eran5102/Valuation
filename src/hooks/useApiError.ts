@@ -29,7 +29,6 @@ export function useApiError(): UseApiErrorReturn {
   }, [])
 
   const handleApiError = useCallback((error: any) => {
-    console.error('API Error:', error)
 
     // Handle fetch errors
     if (error instanceof TypeError && error.message.includes('fetch')) {

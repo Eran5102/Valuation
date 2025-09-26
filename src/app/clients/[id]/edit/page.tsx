@@ -70,7 +70,6 @@ export default function EditClientPage() {
         setError('Failed to fetch client details')
       }
     } catch (error) {
-      console.error('Error fetching client:', error)
       setError('Failed to fetch client details')
     } finally {
       setLoading(false)
@@ -106,7 +105,6 @@ export default function EditClientPage() {
         setError(errorData.error || 'Failed to update client')
       }
     } catch (error) {
-      console.error('Error updating client:', error)
       setError('Failed to update client')
     } finally {
       setSaving(false)

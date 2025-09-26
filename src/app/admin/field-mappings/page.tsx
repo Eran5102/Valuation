@@ -45,10 +45,18 @@ import {
   Database,
   Settings,
   Zap,
+  Download,
+  Upload,
+  FileJson,
+  TreePine,
 } from 'lucide-react'
+import { fieldMappingService } from '@/lib/templates/fieldMappingService'
+import type { FieldMapping } from '@/lib/templates/templateDataMapper'
+import { SourcePathExplorer } from '@/components/templates/SourcePathExplorer'
+import { toast } from 'sonner'
 
-interface FieldMapping {
-  sourceModule: string
+interface AdminFieldMapping {
+  sourceModule: 'valuation' | 'manual' | 'company' | 'dlom' | 'assumptions' | 'capTable' | 'calculated'
   sourcePath: string
   transformer?: string
   validator?: string
@@ -56,19 +64,21 @@ interface FieldMapping {
   required?: boolean
 }
 
-interface FieldMappings {
-  [fieldId: string]: FieldMapping
+interface AdminFieldMappings {
+  [fieldId: string]: AdminFieldMapping
 }
 
 const FieldMappingsAdmin = () => {
-  const [mappings, setMappings] = useState<FieldMappings>({})
+  const [mappings, setMappings] = useState<AdminFieldMappings>({})
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedMapping, setSelectedMapping] = useState<{
     id: string
-    mapping: FieldMapping
+    mapping: AdminFieldMapping
   } | null>(null)
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [showSourceExplorer, setShowSourceExplorer] = useState(false)
+  const [stats, setStats] = useState<any>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -109,51 +119,133 @@ const FieldMappingsAdmin = () => {
 
   const fetchMappings = async () => {
     try {
-      const response = await fetch('/api/field-mappings')
-      const result = await response.json()
-      if (result.success) {
-        setMappings(result.data)
+      // Load from FieldMappingService and convert to admin format
+      const serviceMappings = fieldMappingService.getAllMappings()
+      setMappings(convertFromServiceMapping(serviceMappings))
+      setStats(fieldMappingService.getStats())
+
+      // Also try to fetch from API if available
+      try {
+        const response = await fetch('/api/field-mappings')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            // Merge API mappings with service mappings
+            setMappings({ ...serviceMappings, ...result.data })
+          }
+        }
+      } catch (apiError) {
+        // API not available, use service mappings only
       }
     } catch (error) {
-      console.error('Error fetching mappings:', error)
       showAlert('error', 'Failed to fetch field mappings')
     } finally {
       setLoading(false)
     }
   }
 
+  const convertToServiceMapping = (adminMapping: AdminFieldMapping): FieldMapping => {
+    return {
+      sourceModule: adminMapping.sourceModule,
+      sourcePath: adminMapping.sourcePath,
+      // Convert string transformer to function if provided
+      ...(adminMapping.transformer && {
+        transformer: new Function('value', 'context', `return ${adminMapping.transformer}`) as (value: any, context?: any) => any
+      }),
+      fallback: adminMapping.fallback,
+      required: adminMapping.required,
+    }
+  }
+
+  const convertFromServiceMapping = (serviceMappings: any): AdminFieldMappings => {
+    const adminMappings: AdminFieldMappings = {}
+    Object.entries(serviceMappings).forEach(([fieldId, mapping]: [string, any]) => {
+      adminMappings[fieldId] = {
+        sourceModule: mapping.sourceModule,
+        sourcePath: mapping.sourcePath,
+        transformer: typeof mapping.transformer === 'function' ? mapping.transformer.toString() : mapping.transformer,
+        fallback: mapping.fallback,
+        required: mapping.required,
+      }
+    })
+    return adminMappings
+  }
+
   const handleAddMapping = async () => {
     try {
-      const mappingData = {
-        sourceModule: formData.sourceModule,
+      const adminMappingData: AdminFieldMapping = {
+        sourceModule: formData.sourceModule as AdminFieldMapping['sourceModule'],
         sourcePath: formData.sourcePath,
         ...(formData.transformer && { transformer: formData.transformer }),
         ...(formData.fallback && { fallback: formData.fallback }),
         required: formData.required,
       }
 
-      const response = await fetch('/api/field-mappings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fieldId: formData.fieldId,
-          mapping: mappingData,
-        }),
-      })
+      // Convert to service format and add to service
+      const serviceMappingData = convertToServiceMapping(adminMappingData)
+      fieldMappingService.addMapping(formData.fieldId, serviceMappingData)
 
-      const result = await response.json()
-      if (result.success) {
-        showAlert('success', 'Field mapping added successfully')
-        setIsAddDialogOpen(false)
-        resetForm()
-        fetchMappings()
-      } else {
-        showAlert('error', result.error || 'Failed to add field mapping')
+      // Try to save to API as well
+      try {
+        await fetch('/api/field-mappings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fieldId: formData.fieldId,
+            mapping: adminMappingData,
+          }),
+        })
+      } catch (apiError) {
+        // API not available, but saved locally
       }
+
+      toast.success('Field mapping added successfully')
+      setIsAddDialogOpen(false)
+      resetForm()
+      fetchMappings()
     } catch (error) {
-      console.error('Error adding mapping:', error)
-      showAlert('error', 'Failed to add field mapping')
+      toast.error('Failed to add field mapping')
     }
+  }
+
+  const handleExport = () => {
+    try {
+      const exportData = fieldMappingService.exportMappings()
+      const blob = new Blob([exportData], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `field-mappings-${new Date().toISOString().split('T')[0]}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('Field mappings exported successfully')
+    } catch (error) {
+      toast.error('Failed to export field mappings')
+    }
+  }
+
+  const handleImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0]
+      if (file) {
+        try {
+          const text = await file.text()
+          const result = fieldMappingService.importMappings(text)
+          if (result.success) {
+            toast.success('Field mappings imported successfully')
+            fetchMappings()
+          } else {
+            toast.error('Import failed: ' + result.errors.join(', '))
+          }
+        } catch (error) {
+          toast.error('Failed to import field mappings')
+        }
+      }
+    }
+    input.click()
   }
 
   const resetForm = () => {
@@ -214,6 +306,14 @@ const FieldMappingsAdmin = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleImport}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import
+          </Button>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
           <Button variant="outline" asChild>
             <a href="/help/field-mapping" target="_blank">
               View Help
@@ -265,14 +365,25 @@ const FieldMappingsAdmin = () => {
                 </div>
                 <div>
                   <Label htmlFor="sourcePath">Source Path</Label>
-                  <Input
-                    id="sourcePath"
-                    value={formData.sourcePath}
-                    onChange={(e) => setFormData({ ...formData, sourcePath: e.target.value })}
-                    placeholder="e.g., financial_metrics.revenue_current"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="sourcePath"
+                      value={formData.sourcePath}
+                      onChange={(e) => setFormData({ ...formData, sourcePath: e.target.value })}
+                      placeholder="e.g., financial_metrics.revenue_current"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowSourceExplorer(true)}
+                    >
+                      <TreePine className="mr-2 h-4 w-4" />
+                      Browse
+                    </Button>
+                  </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Use dot notation to specify the path to the field
+                    Use dot notation to specify the path to the field, or click Browse to explore available paths
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -351,6 +462,28 @@ const FieldMappingsAdmin = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {stats && (
+            <div className="mb-6 rounded-lg bg-muted/50 p-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Fields</p>
+                  <p className="text-2xl font-bold">{stats.totalFields}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Mapped Fields</p>
+                  <p className="text-2xl font-bold">{stats.mappedFields}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Required Fields</p>
+                  <p className="text-2xl font-bold">{stats.requiredFields}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Missing Required</p>
+                  <p className="text-2xl font-bold">{stats.missingRequired}</p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardContent className="p-6">
@@ -414,7 +547,7 @@ const FieldMappingsAdmin = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-mono text-sm">{mapping.sourcePath}</TableCell>
-                      <TableCell>{mapping.transformer || '-'}</TableCell>
+                      <TableCell>{typeof mapping.transformer === 'function' ? (mapping.transformer as Function).name || 'custom' : mapping.transformer || '-'}</TableCell>
                       <TableCell>
                         {mapping.required ? (
                           <Badge variant="destructive">Required</Badge>
@@ -487,7 +620,9 @@ const FieldMappingsAdmin = () => {
                 <div>
                   <Label>Transformer</Label>
                   <code className="mt-1 block rounded bg-muted p-2 text-sm">
-                    {selectedMapping.mapping.transformer}
+                    {typeof selectedMapping.mapping.transformer === 'function'
+                      ? (selectedMapping.mapping.transformer as Function).name || 'custom'
+                      : selectedMapping.mapping.transformer}
                   </code>
                 </div>
               )}
@@ -518,6 +653,29 @@ const FieldMappingsAdmin = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Source Path Explorer Dialog */}
+      <Dialog open={showSourceExplorer} onOpenChange={setShowSourceExplorer}>
+        <DialogContent className="max-h-[80vh] max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Browse Available Data Paths</DialogTitle>
+            <DialogDescription>
+              Click on any path to use it in your field mapping
+            </DialogDescription>
+          </DialogHeader>
+          <div className="h-[500px] overflow-hidden">
+            <SourcePathExplorer
+              onSelectPath={(path) => {
+                setFormData({ ...formData, sourcePath: path })
+                setShowSourceExplorer(false)
+                toast.success(`Selected path: ${path}`)
+              }}
+              selectedModule={formData.sourceModule}
+              className="h-full"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

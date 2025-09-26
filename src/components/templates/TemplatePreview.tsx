@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -27,13 +26,11 @@ export function TemplatePreview({ template, data, className }: TemplatePreviewPr
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [previewData, setPreviewData] = useState(data || sampleValuationData)
-  const [showWatermark, setShowWatermark] = useState(true)
-  const [status, setStatus] = useState<'draft' | 'final'>('draft')
   const [scale, setScale] = useState('100')
 
   useEffect(() => {
     generatePreview()
-  }, [template, previewData, showWatermark, status])
+  }, [template, previewData])
 
   const generatePreview = async () => {
     setIsLoading(true)
@@ -46,15 +43,15 @@ export function TemplatePreview({ template, data, className }: TemplatePreviewPr
         console.warn('Validation warnings:', validation.errors)
       }
 
+      // Debug: log template settings
+
       const report = TemplateEngine.processTemplate(template, previewData, {
-        status,
-        watermark: showWatermark,
+        watermark: template.settings?.watermark?.enabled || false,
       })
 
       setGeneratedReport(report)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate preview')
-      console.error('Preview generation error:', err)
     } finally {
       setIsLoading(false)
     }
@@ -79,7 +76,7 @@ export function TemplatePreview({ template, data, className }: TemplatePreviewPr
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${template.name.replace(/\\s+/g, '_')}_${status}.html`
+    a.download = `${template.name.replace(/\\s+/g, '_')}.html`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -99,28 +96,6 @@ export function TemplatePreview({ template, data, className }: TemplatePreviewPr
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <Switch id="watermark" checked={showWatermark} onCheckedChange={setShowWatermark} />
-                <Label htmlFor="watermark" className="text-sm">
-                  Watermark
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="status" className="text-sm">
-                  Status:
-                </Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as any)}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="final">Final</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="flex items-center space-x-2">
                 <Label htmlFor="scale" className="text-sm">
                   Scale:

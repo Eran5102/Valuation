@@ -86,7 +86,6 @@ export async function POST(request: Request) {
       endDate: betaResult.endDate,
     })
   } catch (error) {
-    console.error('Error calculating beta:', error)
     return NextResponse.json({ error: 'Failed to calculate beta' }, { status: 500 })
   }
 }
@@ -98,7 +97,6 @@ async function fetchHistoricalPrices(symbol: string, apiKey: string) {
     const data = await response.json()
 
     if (data['Error Message'] || data['Note']) {
-      console.error('Alpha Vantage error:', data['Error Message'] || data['Note'])
       return null
     }
 
@@ -118,7 +116,6 @@ async function fetchHistoricalPrices(symbol: string, apiKey: string) {
 
     return prices
   } catch (error) {
-    console.error('Error fetching historical prices:', error)
     return null
   }
 }

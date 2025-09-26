@@ -112,7 +112,6 @@ export function ProjectHistoryClient({ valuationId }: ProjectHistoryClientProps)
         setAuditTrail(generateSampleAuditTrail())
       }
     } catch (error) {
-      console.error('Error loading project history:', error)
       setHistoryEvents(generateSampleHistory())
       setProjectVersions(generateSampleVersions())
       setAuditTrail(generateSampleAuditTrail())

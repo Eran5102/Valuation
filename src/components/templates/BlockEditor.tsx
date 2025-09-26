@@ -21,6 +21,7 @@ import type { TemplateBlock, TemplateVariable } from '@/lib/templates/types'
 
 import { VariablePicker } from './VariablePicker'
 import { LightweightTableEditor } from './LightweightTableEditor'
+import { RichTextEditor } from './RichTextEditor'
 
 interface BlockEditorProps {
   block: TemplateBlock
@@ -61,7 +62,8 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
   const insertVariable = (variable: TemplateVariable) => {
     if (block.type === 'paragraph' || block.type === 'header') {
       const currentContent = typeof block.content === 'string' ? block.content : ''
-      const placeholder = `{{${variable.id}}}`
+      const placeholder = ` {{${variable.id}}} `
+      // For rich text editor, we need to append HTML
       handleContentChange(currentContent + placeholder)
     }
   }
@@ -74,11 +76,9 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
           <div className="space-y-4">
             <div>
               <Label htmlFor="content">Content</Label>
-              <Textarea
-                id="content"
+              <RichTextEditor
                 value={typeof block.content === 'string' ? block.content : ''}
-                onChange={(e) => handleContentChange(e.target.value)}
-                rows={block.type === 'header' ? 2 : 4}
+                onChange={handleContentChange}
                 placeholder={`Enter ${block.type} content... Use variables like {{company.name}}`}
               />
               <p className="mt-1 text-xs text-muted-foreground">
@@ -87,7 +87,7 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
             </div>
 
             <div>
-              <Label className="mb-2 block text-sm font-medium">Quick Insert</Label>
+              <Label className="mb-2 block text-sm font-medium">Quick Insert Variables</Label>
               <VariablePicker variables={variables} onVariableSelect={insertVariable} compact />
             </div>
           </div>
@@ -99,28 +99,34 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
           <div className="space-y-4">
             <div>
               <Label>List Items</Label>
-              <div className="mt-2 space-y-2">
+              <div className="mt-2 space-y-3">
                 {listItems.map((item, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {index + 1}.
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const newItems = listItems.filter((_, i) => i !== index)
+                          handleContentChange(newItems)
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    <RichTextEditor
                       value={item}
-                      onChange={(e) => {
+                      onChange={(value) => {
                         const newItems = [...listItems]
-                        newItems[index] = e.target.value
+                        newItems[index] = value
                         handleContentChange(newItems)
                       }}
-                      placeholder={`Item ${index + 1}`}
+                      placeholder={`List item ${index + 1}...`}
+                      className="ml-6"
                     />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        const newItems = listItems.filter((_, i) => i !== index)
-                        handleContentChange(newItems)
-                      }}
-                    >
-                      Remove
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -132,6 +138,26 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
               >
                 Add Item
               </Button>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Each list item supports rich text formatting. Use the toolbar to format text.
+              </p>
+            </div>
+
+            <div>
+              <Label className="mb-2 block text-sm font-medium">Quick Insert Variables</Label>
+              <VariablePicker
+                variables={variables}
+                onVariableSelect={(variable) => {
+                  // Add to last item or create new if empty
+                  const lastIndex = listItems.length - 1
+                  if (lastIndex >= 0) {
+                    const newItems = [...listItems]
+                    newItems[lastIndex] = newItems[lastIndex] + ` {{${variable.id}}} `
+                    handleContentChange(newItems)
+                  }
+                }}
+                compact
+              />
             </div>
           </div>
         )
@@ -197,23 +223,26 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
               placeholder="16"
             />
           </div>
-          <div>
-            <Label htmlFor="fontWeight" className="text-xs">
-              Font Weight
-            </Label>
-            <Select
-              value={block.styling?.fontWeight || 'normal'}
-              onValueChange={(value) => handleStyleChange('fontWeight', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="bold">Bold</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Font Weight - Hide for text blocks that use RichTextEditor */}
+          {block.type !== 'paragraph' && block.type !== 'header' && block.type !== 'text' && (
+            <div>
+              <Label htmlFor="fontWeight" className="text-xs">
+                Font Weight
+              </Label>
+              <Select
+                value={block.styling?.fontWeight || 'normal'}
+                onValueChange={(value) => handleStyleChange('fontWeight', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 

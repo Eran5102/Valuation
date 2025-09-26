@@ -35,7 +35,6 @@ class SavedBlocksService {
       }
       this.initialized = true
     } catch (error) {
-      console.error('Failed to load saved blocks from localStorage:', error)
       this.initialized = true
     }
   }
@@ -51,7 +50,6 @@ class SavedBlocksService {
         })
       )
     } catch (error) {
-      console.error('Failed to persist saved blocks to localStorage:', error)
       throw new Error('Failed to save blocks')
     }
   }
@@ -215,7 +213,7 @@ class SavedBlocksService {
           styling: {
             margin: '20px 0',
             width: '100%',
-          },
+          } as any,
         },
       },
       {
@@ -234,7 +232,7 @@ class SavedBlocksService {
             paddingLeft: '20px',
             margin: '20px 0',
             fontSize: 12,
-          },
+          } as any,
         },
       },
     ]

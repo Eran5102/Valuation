@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { AssumptionCategory } from './ValuationAssumptions'
+import { AssumptionSection as AssumptionCategory } from './ValuationAssumptionsConsolidated'
 
 interface AssumptionsSummaryProps {
   categories: AssumptionCategory[]
@@ -13,12 +13,12 @@ export function AssumptionsSummary({ categories }: AssumptionsSummaryProps) {
   }
 
   const totalFilled = categories.reduce(
-    (sum, cat) => sum + cat.assumptions.filter((a) => a.value).length,
+    (sum, cat) => sum + cat.fields.filter((a: any) => a.value).length,
     0
   )
-  const totalAssumptions = categories.reduce((sum, cat) => sum + cat.assumptions.length, 0)
+  const totalAssumptions = categories.reduce((sum, cat) => sum + cat.fields.length, 0)
   const requiredMissing = categories.reduce(
-    (sum, cat) => sum + cat.assumptions.filter((a) => a.required && !a.value).length,
+    (sum, cat) => sum + cat.fields.filter((a: any) => a.required && !a.value).length,
     0
   )
   const completionPercentage =

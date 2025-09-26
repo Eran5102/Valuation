@@ -295,7 +295,6 @@ export default function ReportPage() {
         setTemplate(createReportTemplate(mockReportData))
       }
     } catch (error) {
-      console.error('Error loading report:', error)
     } finally {
       setLoading(false)
     }
@@ -330,7 +329,6 @@ export default function ReportPage() {
         )
       }
     } catch (error) {
-      console.error('Error saving template:', error)
       alert('Failed to save template changes. Please try again.')
     }
   }
@@ -396,7 +394,6 @@ export default function ReportPage() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('Error generating PDF:', error)
       alert('Error generating PDF. Please try again.')
     } finally {
       setSaving(false)

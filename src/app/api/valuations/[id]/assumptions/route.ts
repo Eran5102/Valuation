@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import {
+  IdParamSchema,
+  UpdateAssumptionsSchema,
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 // GET /api/valuations/[id]/assumptions - Get valuation assumptions
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: idParam } = await params
+
+    // Validate ID parameter
+    const { id } = validateRequest(IdParamSchema, { id: idParam })
+
     const supabase = await createClient()
 
     const { data: valuation, error } = await supabase
       .from('valuations')
       .select('assumptions, updated_at')
-      .eq('id', idParam)
+      .eq('id', id)
       .single()
 
     if (error || !valuation) {
@@ -38,7 +47,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       updated_at: valuation.updated_at,
     })
   } catch (error) {
-    console.error('Error fetching assumptions:', error)
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Invalid valuation ID', message: error.message },
+        { status: 400 }
+      )
+    }
     return NextResponse.json({ error: 'Failed to fetch assumptions' }, { status: 500 })
   }
 }
@@ -47,22 +61,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: idParam } = await params
-    const body = await request.json()
-    const { assumptions } = body
 
-    // Validate the assumptions data - should be an array of categories
-    if (!assumptions) {
-      return NextResponse.json({ error: 'Invalid assumptions data' }, { status: 400 })
-    }
+    // Validate ID parameter
+    const { id } = validateRequest(IdParamSchema, { id: idParam })
 
-    // Accept both array format (new) and object format (for backward compatibility)
-    let assumptionsToSave = assumptions
-
-    // If it's an object but not an array, we might be getting legacy format
-    if (!Array.isArray(assumptions) && typeof assumptions === 'object') {
-      // For now, we'll still save it but log a warning
-      console.warn('Received assumptions in legacy object format, should be array of categories')
-    }
+    // Parse and validate request body
+    const rawData = await request.json()
+    const { assumptions } = validateRequest(UpdateAssumptionsSchema, rawData)
 
     const supabase = await createClient()
 
@@ -70,22 +75,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { data: valuation, error } = await supabase
       .from('valuations')
       .update({
-        assumptions: assumptionsToSave,
+        assumptions: assumptions,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', idParam)
+      .eq('id', id)
       .select('assumptions, updated_at')
       .single()
 
     if (error || !valuation) {
-      console.error('Error updating assumptions:', error)
       return NextResponse.json({ error: 'Valuation not found or update failed' }, { status: 404 })
     }
 
-    console.log(
-      `Assumptions updated for valuation ${idParam}:`,
-      Array.isArray(assumptionsToSave) ? `${assumptionsToSave.length} categories` : 'legacy format'
-    )
 
     return NextResponse.json({
       success: true,
@@ -94,7 +94,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updated_at: valuation.updated_at,
     })
   } catch (error) {
-    console.error('Error updating assumptions:', error)
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: error.message },
+        { status: 400 }
+      )
+    }
     return NextResponse.json({ error: 'Failed to update assumptions' }, { status: 500 })
   }
 }

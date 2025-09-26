@@ -133,7 +133,6 @@ export function SimplifiedReportForm({
         onCustomContentChange(template409A)
       }
     } catch (error) {
-      console.error('Template loading error:', error)
       setTemplateError('Unable to load template. Please try again.')
     } finally {
       setIsLoadingTemplate(false)

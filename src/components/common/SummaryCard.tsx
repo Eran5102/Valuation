@@ -172,5 +172,14 @@ function formatValue(val: string | number): string {
   return val
 }
 
+// Additional variants from card-patterns.tsx
+export { StatCard as StatsCard } from '../ui/card-patterns'
+export { InfoCard } from '../ui/card-patterns'
+export { ClickableCard } from '../ui/card-patterns'
+export { EmptyStateCard } from '../ui/card-patterns'
+export { TimelineCard } from '../ui/card-patterns'
+export { CardGrid } from '../ui/card-patterns'
+export { SectionCard as SectionCardAdvanced } from '../ui/card-patterns'
+
 // Re-export types for convenience
 export type { SummaryCardProps }

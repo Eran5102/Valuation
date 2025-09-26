@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { redirect } from 'next/navigation'
 
 export default async function AuthCallback({
   searchParams,
@@ -26,9 +26,7 @@ export default async function AuthCallback({
     const { error } = await supabase.auth.exchangeCodeForSession(params.code)
 
     if (!error) {
-      return NextResponse.redirect(
-        new URL('/dashboard', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
-      )
+      redirect('/dashboard')
     }
   }
 

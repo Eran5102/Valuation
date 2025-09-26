@@ -171,7 +171,6 @@ class ResponseCache {
       // Enforce cache limits
       this.enforceLimits()
     } catch (error) {
-      console.error('Error caching response:', error)
     }
   }
 
@@ -294,7 +293,6 @@ class ResponseCache {
     }
 
     if (cleaned > 0) {
-      console.log(`Cache cleanup: removed ${cleaned} expired entries`)
     }
   }
 

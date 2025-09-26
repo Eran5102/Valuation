@@ -67,6 +67,35 @@ interface TemplateTheme {
 
 const defaultThemes: TemplateTheme[] = [
   {
+    id: 'value8',
+    name: 'Value8 Theme',
+    description: 'Official Value8 brand theme with signature colors',
+    colors: {
+      primary: '#124e66',
+      secondary: '#2e3944',
+      accent: '#74bd92',
+      background: '#f6f7f6',
+      text: '#2e3944',
+      muted: '#d3d9d4',
+    },
+    fonts: {
+      heading: 'Inter, -apple-system, sans-serif',
+      body: 'Inter, -apple-system, sans-serif',
+      monospace: 'Consolas, Monaco, monospace',
+    },
+    spacing: {
+      tight: '0.5rem',
+      normal: '1rem',
+      loose: '2rem',
+    },
+    borderRadius: '0.375rem',
+    shadows: {
+      sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+      md: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+      lg: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+    },
+  },
+  {
     id: 'professional',
     name: 'Professional',
     description: 'Clean, formal styling for business reports',
@@ -213,6 +242,11 @@ export function TemplateThemeManager({ template, onChange }: TemplateThemeManage
       const updatedTemplate = {
         ...template,
         sections: updatedSections,
+        settings: {
+          ...template.settings,
+          theme: theme.id,
+          themeColors: theme.colors, // Store the actual colors for use in report generation
+        },
         metadata: {
           ...template.metadata,
           theme: theme.id,

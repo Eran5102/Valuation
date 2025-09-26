@@ -113,7 +113,6 @@ export function ValuationSelector({ selectedValuation, onValuationSelect }: Prop
       setValuations(mockValuations.filter((v) => v.status === 'completed'))
       setClients(mockClients.filter((c) => c.valuations && c.valuations.length > 0))
     } catch (error) {
-      console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }

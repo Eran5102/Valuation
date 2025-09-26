@@ -65,7 +65,6 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
           setOptions(data.options || [])
         }
       } catch (error) {
-        console.error('Error loading cap table data:', error)
         setSaveError('Failed to load cap table data')
       } finally {
         setIsLoading(false)
@@ -97,7 +96,6 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
         setSaveError(error.message || 'Failed to save cap table')
       }
     } catch (error) {
-      console.error('Error saving cap table:', error)
       setSaveError('Network error: Failed to save cap table')
     } finally {
       setIsSaving(false)

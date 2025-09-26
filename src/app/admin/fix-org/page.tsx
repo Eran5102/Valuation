@@ -28,10 +28,8 @@ export default function FixOrganizationPage() {
       })
 
       const data = await response.json()
-      console.log('Response data:', data)
 
       if (!response.ok) {
-        console.error('Error details:', data.details)
         throw new Error(data.error || 'Failed to fix organization')
       }
 

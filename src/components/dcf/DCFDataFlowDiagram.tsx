@@ -23,7 +23,6 @@ import { useDCFModel } from '@/contexts/DCFModelContext'
 export function DCFDataFlowDiagram() {
   const {
     assumptions,
-    historicalData,
     workingCapital,
     capexDepreciation,
     debtSchedule,
@@ -31,6 +30,9 @@ export function DCFDataFlowDiagram() {
     financialStatements,
     dcfValuation,
   } = useDCFModel()
+
+  // Determine if historical data exists
+  const historicalData = financialStatements?.some(statement => statement.isHistorical)
 
   // Define the data flow components
   const dataFlowComponents = [

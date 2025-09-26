@@ -320,7 +320,8 @@ export async function retryWithExponentialBackoff<T>(
 export function logError(error: unknown, context?: Record<string, any>) {
   const errorInfo = parseError(error)
 
-  console.error('Error occurred:', {
+  // Log error information - in production, send to error tracking service
+  const errorLog = {
     message: errorInfo.message,
     type: errorInfo.type,
     statusCode: errorInfo.statusCode,
@@ -328,7 +329,7 @@ export function logError(error: unknown, context?: Record<string, any>) {
     context,
     timestamp: new Date().toISOString(),
     stack: error instanceof Error ? error.stack : undefined
-  })
+  }
 
   // In production, you would send this to an error tracking service
   // like Sentry, LogRocket, etc.

@@ -34,11 +34,10 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
     try {
       setIsLoading(true)
       setError(null)
-      const loadedTemplates = await ReportTemplateService.loadTemplates(type)
-      setTemplates(loadedTemplates)
+      const response = await ReportTemplateService.loadTemplates(type)
+      setTemplates(response.data)
     } catch (err) {
       setError('Failed to load templates')
-      console.error(err)
     } finally {
       setIsLoading(false)
     }
@@ -55,7 +54,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
       return null
     } catch (err) {
       setError('Failed to load template')
-      console.error(err)
       return null
     }
   }, [])
@@ -73,7 +71,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
         return null
       } catch (err) {
         setError('Failed to save template')
-        console.error(err)
         return null
       }
     },
@@ -95,7 +92,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
         return null
       } catch (err) {
         setError('Failed to update template')
-        console.error(err)
         return null
       }
     },
@@ -116,7 +112,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
         return success
       } catch (err) {
         setError('Failed to delete template')
-        console.error(err)
         return false
       }
     },
@@ -138,7 +133,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
         return null
       } catch (err) {
         setError('Failed to duplicate template')
-        console.error(err)
         return null
       }
     },
@@ -147,10 +141,9 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
 
   const loadVariableMappings = useCallback(async (templateId: string) => {
     try {
-      const mappings = await ReportTemplateService.loadVariableMappings(templateId)
-      setVariableMappings(mappings)
+      const response = await ReportTemplateService.loadVariableMappings(templateId)
+      setVariableMappings(response.data)
     } catch (err) {
-      console.error('Failed to load variable mappings:', err)
     }
   }, [])
 
@@ -166,7 +159,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
         return null
       } catch (err) {
         setError('Failed to save variable mapping')
-        console.error(err)
         return null
       }
     },
@@ -184,7 +176,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
         return success
       } catch (err) {
         setError('Failed to delete variable mapping')
-        console.error(err)
         return false
       }
     },
@@ -195,7 +186,6 @@ export function useReportTemplates({ type, autoLoad = true }: UseReportTemplates
     try {
       return await ReportTemplateService.generateVariablesFromValuation(valuationId)
     } catch (err) {
-      console.error('Failed to generate variables:', err)
       return {}
     }
   }, [])

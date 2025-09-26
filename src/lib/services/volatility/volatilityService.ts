@@ -191,20 +191,20 @@ export class VolatilityService implements IVolatilityService {
       for (const [date, values] of Object.entries(timeSeries)) {
         if (new Date(date) < cutoffDate) break
 
+        const dailyData = values as Record<string, string>
         results.push({
           date,
-          open: parseFloat(values['1. open']),
-          high: parseFloat(values['2. high']),
-          low: parseFloat(values['3. low']),
-          close: parseFloat(values['4. close']),
-          adjustedClose: parseFloat(values['5. adjusted close']),
-          volume: parseFloat(values['6. volume']),
+          open: parseFloat(dailyData['1. open']),
+          high: parseFloat(dailyData['2. high']),
+          low: parseFloat(dailyData['3. low']),
+          close: parseFloat(dailyData['4. close']),
+          adjustedClose: parseFloat(dailyData['5. adjusted close']),
+          volume: parseFloat(dailyData['6. volume']),
         } as AlphaVantageTimeSeriesData)
       }
 
       return results.reverse() // Return in chronological order
     } catch (error) {
-      console.error(`Failed to fetch data for ${ticker}:`, error)
       throw error
     }
   }
@@ -262,7 +262,6 @@ export class VolatilityService implements IVolatilityService {
       this.damodaranData.set(market, data)
       return data
     } catch (error) {
-      console.error(`Failed to load Damodaran data for ${market}:`, error)
       // Return empty array if data not found
       return []
     }

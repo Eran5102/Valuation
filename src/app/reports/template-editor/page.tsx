@@ -322,6 +322,13 @@ const createSampleTemplate = (templateId?: string, templateName?: string): Repor
         text: 'DRAFT',
         opacity: 0.1,
       },
+      // theme: 'value8', // Theme settings moved to branding config
+      // themeColors: { // Theme colors moved to branding config
+      //   background: '#f6f7f6',
+      //   text: '#2e3944',
+      //   primary: '#124e66',
+      //   accent: '#74bd92',
+      // },
     },
   }
 }
@@ -356,7 +363,6 @@ function TemplateEditorContent() {
           }
           setTemplateInfo(templateData)
         } catch (error) {
-          console.error('Error loading template info:', error)
         }
       }
 
@@ -375,7 +381,6 @@ function TemplateEditorContent() {
             })
           }
         } catch (error) {
-          console.error('Error loading valuation info:', error)
         }
       }
 
@@ -396,7 +401,6 @@ function TemplateEditorContent() {
   const handleSave = async (updatedTemplate: ReportTemplate) => {
     try {
       // In a real implementation, this would save to an API
-      console.log('Saving template:', updatedTemplate)
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -404,7 +408,6 @@ function TemplateEditorContent() {
       // Show success message or redirect
       alert('Template saved successfully!')
     } catch (error) {
-      console.error('Failed to save template:', error)
       alert('Failed to save template. Please try again.')
     }
   }
@@ -421,9 +424,7 @@ function TemplateEditorContent() {
   }
 
   const handlePreview = (previewTemplate: ReportTemplate) => {
-    // In a real implementation, this would open a preview modal or new window
-    console.log('Preview template:', previewTemplate)
-    alert('Template preview functionality will be implemented next.')
+    // Preview is handled in the Preview tab now
   }
 
   if (isLoading || !template) {

@@ -90,7 +90,6 @@ export function PeerCompaniesAnalysis({ valuationId, onBetaSelect }: PeerCompani
         }
       }
     } catch (error) {
-      console.error('Error fetching peer data:', error)
     } finally {
       setLoading(false)
     }
@@ -113,7 +112,6 @@ export function PeerCompaniesAnalysis({ valuationId, onBetaSelect }: PeerCompani
         setCustomTickers('')
       }
     } catch (error) {
-      console.error('Error updating peers:', error)
     } finally {
       setLoading(false)
     }

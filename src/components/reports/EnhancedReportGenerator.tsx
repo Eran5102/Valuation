@@ -45,7 +45,7 @@ const OptimizedDataTable = dynamic(
     ssr: false,
   }
 )
-import { PageHeader } from '@/components/ui/page-header'
+import { PageHeader } from '@/components/common/PageHeader'
 import { ColumnDef } from '@tanstack/react-table'
 import type { ReportTemplate } from '@/lib/templates/types'
 import { getStatusColor, formatDate } from '@/lib/utils'
@@ -208,7 +208,6 @@ export function EnhancedReportGenerator({
             setStep('selectTemplate')
           }
         } catch (error) {
-          console.error('Error loading valuation data:', error)
         } finally {
           setIsLoadingValuationData(false)
         }
@@ -378,7 +377,6 @@ export function EnhancedReportGenerator({
     }
 
     // Save draft (in real app this would save to database)
-    console.log('Creating report draft with auto-injected data:', newDraft)
 
     // Save the draft (using a simple approach for now)
     try {
@@ -400,7 +398,6 @@ export function EnhancedReportGenerator({
       // Continue to customization step instead of redirecting immediately
       setStep('customize')
     } catch (error) {
-      console.error('Error creating draft:', error)
       alert('Error creating report. Please try again.')
     }
   }
@@ -611,7 +608,6 @@ export function EnhancedReportGenerator({
         throw new Error(result.error || 'PDF generation failed')
       }
     } catch (error) {
-      console.error('Error generating PDF:', error)
       alert(`Error generating PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsGenerating(false)

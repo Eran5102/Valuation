@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ApiHandler from '@/lib/middleware/apiHandler'
 import { jobManager } from '@/lib/jobs/jobManager'
+import {
+  CreateJobSchema,
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 // GET /api/jobs - Get job queue status and statistics
 export const GET = async (request: NextRequest) => {
+  try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const type = searchParams.get('type')
@@ -45,16 +49,26 @@ export const GET = async (request: NextRequest) => {
       health,
       timestamp: new Date().toISOString(),
     })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch jobs' }, { status: 500 })
+  }
 }
 
 // POST /api/jobs - Create new background job
 export const POST = async (request: NextRequest) => {
-    const body = await request.json()
-    const { type, data, priority = 0, delay = 0 } = body
+  try {
+    const rawData = await request.json()
+    const validatedData = validateRequest(CreateJobSchema, rawData)
+    const { type, data, priority } = validatedData
 
-    if (!type || !data) {
-      return NextResponse.json({ error: 'Missing required fields: type, data' }, { status: 400 })
+    // Convert string priority to number
+    const priorityMap: Record<string, number> = {
+      'low': 0,
+      'normal': 1,
+      'high': 2,
+      'critical': 3
     }
+    const numericPriority = typeof priority === 'string' ? priorityMap[priority] || 1 : priority || 1
 
     let jobId: string
 
@@ -66,7 +80,7 @@ export const POST = async (request: NextRequest) => {
           data.companyId,
           data.assumptions,
           data.shareClasses,
-          priority
+          numericPriority
         )
         break
 
@@ -79,7 +93,7 @@ export const POST = async (request: NextRequest) => {
             includeCharts: data.includeCharts,
             watermark: data.watermark,
           },
-          priority
+          numericPriority
         )
         break
 
@@ -89,7 +103,7 @@ export const POST = async (request: NextRequest) => {
           data.format,
           data.filters,
           data.dateRange,
-          priority
+          numericPriority
         )
         break
 
@@ -99,7 +113,7 @@ export const POST = async (request: NextRequest) => {
           data.template,
           data.data,
           data.attachments,
-          priority
+          numericPriority
         )
         break
 
@@ -122,4 +136,13 @@ export const POST = async (request: NextRequest) => {
         : null,
       message: 'Job queued successfully',
     })
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: error.message },
+        { status: 400 }
+      )
+    }
+    return NextResponse.json({ error: 'Failed to create job' }, { status: 500 })
+  }
 }

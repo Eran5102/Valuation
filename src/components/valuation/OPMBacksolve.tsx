@@ -120,11 +120,6 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
 
       if (!response.ok) {
         const errorData = await response.text()
-        console.error('OPM calculation error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorData,
-        })
         throw new Error(
           `Failed to calculate OPM backsolve: ${response.status} ${response.statusText}`
         )

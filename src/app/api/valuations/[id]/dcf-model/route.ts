@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import {
+  IdParamSchema,
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id: idParam } = await params
+
+    // Validate ID parameter
+    const { id } = validateRequest(IdParamSchema, { id: idParam })
+
     const supabase = await createClient()
 
     // Get valuation data
@@ -52,7 +60,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // Get DCF model data
     const { data: dcfModel } = await supabase
-      .from('dcf_models')
+      .from('dcf_scenarios')
       .select('*')
       .eq('valuation_id', id)
       .single()
@@ -96,20 +104,29 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       createdAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error fetching DCF model:', error)
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Invalid valuation ID', message: error.message },
+        { status: 400 }
+      )
+    }
     return NextResponse.json({ error: 'Failed to fetch DCF model' }, { status: 500 })
   }
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id: idParam } = await params
+
+    // Validate ID parameter
+    const { id } = validateRequest(IdParamSchema, { id: idParam })
+
     const body = await request.json()
     const supabase = await createClient()
 
     // Check if DCF model exists
     const { data: existingModel } = await supabase
-      .from('dcf_models')
+      .from('dcf_scenarios')
       .select('id')
       .eq('valuation_id', id)
       .single()
@@ -123,7 +140,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (existingModel) {
       // Update existing model
       const { data, error } = await supabase
-        .from('dcf_models')
+        .from('dcf_scenarios')
         .update(modelData)
         .eq('valuation_id', id)
         .select()
@@ -134,7 +151,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     } else {
       // Create new model
       const { data, error } = await supabase
-        .from('dcf_models')
+        .from('dcf_scenarios')
         .insert({
           ...modelData,
           created_at: new Date().toISOString(),
@@ -146,7 +163,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json(data)
     }
   } catch (error) {
-    console.error('Error saving DCF model:', error)
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: error.message },
+        { status: 400 }
+      )
+    }
     return NextResponse.json({ error: 'Failed to save DCF model' }, { status: 500 })
   }
 }

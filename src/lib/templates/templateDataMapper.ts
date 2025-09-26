@@ -384,7 +384,6 @@ export class TemplateDataMapper {
 
         mappedData[fieldId] = value
       } catch (error) {
-        console.error(`Error mapping field '${fieldId}':`, error)
         if (mapping.fallback !== undefined) {
           mappedData[fieldId] = mapping.fallback
         } else if (mapping.required) {

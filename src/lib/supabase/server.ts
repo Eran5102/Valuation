@@ -37,3 +37,31 @@ export async function createClient() {
 
 // Alias for backward compatibility with existing imports
 export { createClient as createServerClient }
+
+// Service role client that bypasses RLS for admin operations
+export async function createServiceClient() {
+  // Important: Service role client should NOT use cookies
+  // Using cookies can cause auth context to override service role privileges
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!serviceKey) {
+    console.warn('SUPABASE_SERVICE_ROLE_KEY not found, falling back to anon key')
+    // Fall back to regular client if service key not available
+    return createClient()
+  }
+
+  // Create a client with service role key and NO cookie handling
+  // This ensures RLS is properly bypassed
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceKey,
+    {
+      cookies: {
+        // Minimal cookie handling - we don't want auth cookies interfering
+        get() { return undefined },
+        set() {},
+        remove() {},
+      }
+    }
+  )
+}

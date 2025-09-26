@@ -69,7 +69,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ data: templateData })
   } catch (error) {
-    console.error('Error generating template data:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

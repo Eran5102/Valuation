@@ -81,7 +81,6 @@ export function AlphaVantageImport({ valuationId, onImport }: AlphaVantageImport
         toast.error('No companies found')
       }
     } catch (error) {
-      console.error('Error searching custom tickers:', error)
       toast.error('Failed to fetch companies')
     } finally {
       setLoading(false)
@@ -149,18 +148,42 @@ export function AlphaVantageImport({ valuationId, onImport }: AlphaVantageImport
     []
   )
 
-  const handleImport = () => {
+  const handleImport = async () => {
     const selected = searchResults.filter((c) => selectedRows.has(c.ticker))
     if (selected.length === 0) {
       toast.error('Please select at least one company to import')
       return
     }
-    onImport(selected)
-    toast.success(`Imported ${selected.length} companies`)
-    // Clear results after import
-    setSearchResults([])
-    setSelectedRows(new Set())
-    setTickers('')
+
+    try {
+      // Save companies to database
+      const response = await fetch('/api/peer-companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save',
+          valuationId,
+          companies: selected,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save companies')
+      }
+
+      const { savedCompanies } = await response.json()
+
+      // Call the onImport callback with saved companies
+      onImport(selected)
+      toast.success(`Successfully imported and saved ${savedCompanies?.length || selected.length} companies`)
+
+      // Clear results after import
+      setSearchResults([])
+      setSelectedRows(new Set())
+      setTickers('')
+    } catch (error) {
+      toast.error('Failed to save companies to database')
+    }
   }
 
   const formatCurrency = (value: number | null | undefined) => {

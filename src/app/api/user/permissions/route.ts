@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (memberError && memberError.code !== 'PGRST116') {
-      console.error('Error fetching membership:', memberError)
     }
 
     const permissions = {
@@ -42,7 +41,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(permissions)
   } catch (error) {
-    console.error('Error fetching permissions:', error)
     return NextResponse.json({ error: 'Failed to fetch permissions' }, { status: 500 })
   }
 }

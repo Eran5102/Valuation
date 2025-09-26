@@ -44,12 +44,23 @@ import {
   DollarSign,
   Calendar,
   Upload,
+  Bookmark,
+  FileUp,
+  FileDown,
+  Folder,
+  BookOpen,
+  Book,
+  PenTool,
+  FileText,
 } from 'lucide-react'
 import type { TemplateBlock } from '@/lib/templates/types'
+import { LightweightTableEditor } from './LightweightTableEditor'
+import { RichTextEditor } from './RichTextEditor'
 
 const blockIcons = {
   text: Type,
-  header: Heading1,
+  header: FileUp,
+  footer: FileDown,
   paragraph: Type,
   list: List,
   table: Table,
@@ -63,6 +74,14 @@ const blockIcons = {
   managementTable: Users,
   valuationSummary: DollarSign,
   dateBlock: Calendar,
+  footnote: Bookmark,
+  tableOfContents: List,
+  coverPage: FileText,
+  executiveSummary: FileText,
+  appendix: Folder,
+  bibliography: BookOpen,
+  glossary: Book,
+  signatureBlock: PenTool,
 }
 
 interface SortableBlockProps {
@@ -71,9 +90,10 @@ interface SortableBlockProps {
   onClick: () => void
   onUpdate: (updates: Partial<TemplateBlock>) => void
   onDelete: () => void
+  onSaveToLibrary?: (block: TemplateBlock) => void
 }
 
-export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: SortableBlockProps) {
+export function SortableBlock({ block, index, onClick, onUpdate, onDelete, onSaveToLibrary }: SortableBlockProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingContent, setEditingContent] = useState(block.content)
@@ -149,7 +169,7 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
   }
 
   const renderMiniStyleToolbar = () => (
-    <div className="flex items-center gap-2 rounded border border-border bg-muted/50 p-2">
+    <div className="flex flex-wrap items-center gap-2 rounded border border-border bg-muted/50 p-2">
       {/* Font Size */}
       <Input
         type="number"
@@ -157,21 +177,28 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
         onChange={(e) => handleStyleChange('fontSize', parseInt(e.target.value) || undefined)}
         placeholder="Size"
         className="h-7 w-16 text-xs"
+        title="Font size"
       />
 
-      {/* Font Weight */}
-      <Button
-        size="sm"
-        variant={block.styling?.fontWeight === 'bold' ? 'default' : 'outline'}
-        onClick={() =>
-          handleStyleChange('fontWeight', block.styling?.fontWeight === 'bold' ? 'normal' : 'bold')
-        }
-        className="h-7 w-7 p-0"
-      >
-        <Bold className="h-3 w-3" />
-      </Button>
+      {/* Font Weight - Only show for non-text blocks since text blocks use RichTextEditor */}
+      {block.type !== 'paragraph' && block.type !== 'header' && block.type !== 'text' && (
+        <>
+          <Button
+            size="sm"
+            variant={block.styling?.fontWeight === 'bold' ? 'default' : 'outline'}
+            onClick={() =>
+              handleStyleChange('fontWeight', block.styling?.fontWeight === 'bold' ? 'normal' : 'bold')
+            }
+            className="h-7 w-7 p-0"
+            title="Bold (applies to entire block)"
+          >
+            <Bold className="h-3 w-3" />
+          </Button>
+          <Separator orientation="vertical" className="h-4" />
+        </>
+      )}
 
-      <Separator orientation="vertical" className="h-4" />
+      {/* Alignment controls remain for all blocks */}
 
       {/* Text Alignment */}
       <Button
@@ -223,17 +250,31 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
 
       <Separator orientation="vertical" className="h-4" />
 
-      {/* Advanced Options */}
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => onClick()}
-        className="h-7 px-2 text-xs"
-        title="More styling options"
-      >
-        <Palette className="mr-1 h-3 w-3" />
-        More
-      </Button>
+      {/* Margins */}
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground">Margin:</span>
+        <Input
+          type="text"
+          value={(block.styling as any)?.margin || ''}
+          onChange={(e) => handleStyleChange('margin', e.target.value)}
+          placeholder="10px 0"
+          className="h-7 w-20 text-xs"
+          title="Margin (e.g., 10px or 10px 20px)"
+        />
+      </div>
+
+      {/* Padding */}
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground">Padding:</span>
+        <Input
+          type="text"
+          value={(block.styling as any)?.padding || ''}
+          onChange={(e) => handleStyleChange('padding', e.target.value)}
+          placeholder="5px"
+          className="h-7 w-20 text-xs"
+          title="Padding (e.g., 5px or 5px 10px)"
+        />
+      </div>
     </div>
   )
 
@@ -241,24 +282,116 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
     if (isEditing) {
       switch (block.type) {
         case 'header':
+          const headerData = typeof editingContent === 'object' ? editingContent : {
+            logoUrl: '',
+            companyName: '{{company.name}}',
+            reportTitle: '409A Valuation Report',
+            showDate: true,
+          }
           return (
             <div className="space-y-2">
-              <Input
-                value={typeof editingContent === 'string' ? editingContent : ''}
-                onChange={(e) => setEditingContent(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter header text..."
-                className="text-lg font-bold"
-                autoFocus
-                style={{
-                  fontSize: block.styling?.fontSize || 18,
-                  fontWeight: block.styling?.fontWeight || 'bold',
-                  textAlign: block.styling?.textAlign || 'left',
-                  color: block.styling?.color || '#000000',
-                  backgroundColor: block.styling?.backgroundColor || 'transparent',
-                }}
-              />
-              {renderMiniStyleToolbar()}
+              <div>
+                <label className="text-xs font-medium">Logo URL or Upload</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={headerData.logoUrl || ''}
+                    onChange={(e) => setEditingContent({ ...headerData, logoUrl: e.target.value })}
+                    placeholder="https://example.com/logo.png or upload"
+                  />
+                  <Button size="sm" variant="outline" title="Upload Logo">
+                    <Upload className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium">Company Name</label>
+                <Input
+                  value={headerData.companyName || ''}
+                  onChange={(e) => setEditingContent({ ...headerData, companyName: e.target.value })}
+                  placeholder="{{company.name}}"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Report Title</label>
+                <Input
+                  value={headerData.reportTitle || ''}
+                  onChange={(e) => setEditingContent({ ...headerData, reportTitle: e.target.value })}
+                  placeholder="409A Valuation Report"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={headerData.showDate || false}
+                  onChange={(e) => setEditingContent({ ...headerData, showDate: e.target.checked })}
+                />
+                <label className="text-xs">Show Date</label>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveEdit}>
+                  <Check className="mr-1 h-3 w-3" />
+                  Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={cancelEdit}>
+                  <X className="mr-1 h-3 w-3" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )
+
+        case 'footer':
+          const footerData = typeof editingContent === 'object' ? editingContent : {
+            leftContent: '{{company.name}} - {{report.name}}',
+            centerContent: 'Page {{page}} of {{totalPages}}',
+            rightContent: '{{report.date}}',
+            showConfidentiality: true,
+            confidentialityText: 'CONFIDENTIAL - PROPRIETARY INFORMATION',
+          }
+          return (
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs font-medium">Left Content</label>
+                <Input
+                  value={footerData.leftContent || ''}
+                  onChange={(e) => setEditingContent({ ...footerData, leftContent: e.target.value })}
+                  placeholder="{{company.name}} - {{report.name}}"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Center Content (Page Numbers)</label>
+                <Input
+                  value={footerData.centerContent || ''}
+                  onChange={(e) => setEditingContent({ ...footerData, centerContent: e.target.value })}
+                  placeholder="Page {{page}} of {{totalPages}}"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Right Content</label>
+                <Input
+                  value={footerData.rightContent || ''}
+                  onChange={(e) => setEditingContent({ ...footerData, rightContent: e.target.value })}
+                  placeholder="{{report.date}}"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={footerData.showConfidentiality || false}
+                  onChange={(e) => setEditingContent({ ...footerData, showConfidentiality: e.target.checked })}
+                />
+                <label className="text-xs">Show Confidentiality Notice</label>
+              </div>
+              {footerData.showConfidentiality && (
+                <div>
+                  <label className="text-xs font-medium">Confidentiality Text</label>
+                  <Input
+                    value={footerData.confidentialityText || ''}
+                    onChange={(e) => setEditingContent({ ...footerData, confidentialityText: e.target.value })}
+                    placeholder="CONFIDENTIAL - PROPRIETARY INFORMATION"
+                  />
+                </div>
+              )}
               <div className="flex gap-2">
                 <Button size="sm" onClick={saveEdit}>
                   <Check className="mr-1 h-3 w-3" />
@@ -275,22 +408,11 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
         case 'paragraph':
           return (
             <div className="space-y-2">
-              <Textarea
+              <RichTextEditor
                 value={typeof editingContent === 'string' ? editingContent : ''}
-                onChange={(e) => setEditingContent(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onChange={(value) => setEditingContent(value)}
                 placeholder="Enter paragraph content..."
-                rows={3}
-                autoFocus
-                style={{
-                  fontSize: block.styling?.fontSize || 14,
-                  fontWeight: block.styling?.fontWeight || 'normal',
-                  textAlign: block.styling?.textAlign || 'left',
-                  color: block.styling?.color || '#000000',
-                  backgroundColor: block.styling?.backgroundColor || 'transparent',
-                }}
               />
-              {renderMiniStyleToolbar()}
               <div className="flex gap-2">
                 <Button size="sm" onClick={saveEdit}>
                   <Check className="mr-1 h-3 w-3" />
@@ -410,6 +532,27 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
             </div>
           )
 
+        case 'table':
+          return (
+            <div className="space-y-2">
+              <LightweightTableEditor
+                value={editingContent}
+                onChange={(value) => setEditingContent(value)}
+                variables={[]}  // You can pass variables here if needed
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveEdit}>
+                  <Check className="mr-1 h-3 w-3" />
+                  Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={cancelEdit}>
+                  <X className="mr-1 h-3 w-3" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )
+
         default:
           return (
             <div className="space-y-2">
@@ -443,21 +586,32 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
     // Display mode
     switch (block.type) {
       case 'header':
+        const headerContent = typeof block.content === 'object' ? block.content : {
+          logoUrl: '',
+          companyName: 'Company Name',
+          reportTitle: 'Report Title',
+          showDate: true,
+        }
         return (
           <div
-            className="line-clamp-1 cursor-text rounded px-2 py-1 text-lg font-bold text-foreground transition-colors hover:bg-muted/30"
+            className="cursor-pointer rounded border border-dashed border-border px-3 py-2 transition-colors hover:bg-muted/30"
             onClick={startEditing}
-            style={{
-              fontSize: block.styling?.fontSize || 18,
-              fontWeight: block.styling?.fontWeight || 'bold',
-              textAlign: block.styling?.textAlign || 'left',
-              color: block.styling?.color || 'inherit',
-              backgroundColor: block.styling?.backgroundColor || 'transparent',
-              margin: (block.styling as any)?.margin || 'inherit',
-              padding: (block.styling as any)?.padding || 'inherit',
-            }}
+            style={block.styling}
           >
-            {typeof block.content === 'string' ? block.content : 'Header Block'}
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                {headerContent.logoUrl && (
+                  <img src={headerContent.logoUrl} alt="Logo" className="h-8 w-auto" />
+                )}
+                <div>
+                  <div className="font-semibold">{headerContent.companyName || 'Company'}</div>
+                  <div className="text-xs text-muted-foreground">{headerContent.reportTitle || 'Report'}</div>
+                </div>
+              </div>
+              {headerContent.showDate && (
+                <div className="text-xs text-muted-foreground">Date: {'{{report.date}}'}</div>
+              )}
+            </div>
           </div>
         )
 
@@ -628,11 +782,50 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
         )
 
       case 'table':
+        const tableContent = typeof block.content === 'object' && 'headers' in block.content
+          ? block.content
+          : { headers: ['Column 1', 'Column 2'], rows: [['Data 1', 'Data 2']] }
         return (
-          <div className="text-sm text-muted-foreground">
-            <div className="flex items-center">
+          <div
+            className="cursor-pointer rounded px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/30"
+            onClick={startEditing}
+          >
+            <div className="flex items-center mb-2">
               <Table className="mr-2 h-4 w-4" />
-              Table with data (use Block Editor for advanced editing)
+              Table ({tableContent.headers.length} columns × {tableContent.rows.length} rows)
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs">
+                <thead>
+                  <tr className="border-b">
+                    {tableContent.headers.slice(0, 3).map((header: string, i: number) => (
+                      <th key={i} className="text-left px-1 py-0.5 font-medium">{header}</th>
+                    ))}
+                    {tableContent.headers.length > 3 && (
+                      <th className="text-left px-1 py-0.5 text-muted-foreground">...</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableContent.rows.slice(0, 2).map((row: string[], i: number) => (
+                    <tr key={i} className="border-b">
+                      {row.slice(0, 3).map((cell: string, j: number) => (
+                        <td key={j} className="px-1 py-0.5">{cell}</td>
+                      ))}
+                      {row.length > 3 && (
+                        <td className="px-1 py-0.5 text-muted-foreground">...</td>
+                      )}
+                    </tr>
+                  ))}
+                  {tableContent.rows.length > 2 && (
+                    <tr>
+                      <td colSpan={Math.min(tableContent.headers.length, 4)} className="px-1 py-0.5 text-center text-muted-foreground">
+                        ... {tableContent.rows.length - 2} more rows
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )
@@ -643,6 +836,35 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
             <div className="flex items-center">
               <BarChart3 className="mr-2 h-4 w-4" />
               Chart visualization (use Block Editor for configuration)
+            </div>
+          </div>
+        )
+
+      case 'footer':
+        const footerContent = typeof block.content === 'object' ? block.content : {
+          leftContent: 'Company Name',
+          centerContent: 'Page 1 of 1',
+          rightContent: 'Date',
+          showConfidentiality: true,
+          confidentialityText: 'CONFIDENTIAL',
+        }
+        return (
+          <div
+            className="cursor-pointer rounded border border-dashed border-border px-3 py-2 transition-colors hover:bg-muted/30"
+            onClick={startEditing}
+            style={block.styling}
+          >
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div>{footerContent.leftContent || 'Left'}</div>
+                <div>{footerContent.centerContent || 'Center'}</div>
+                <div>{footerContent.rightContent || 'Right'}</div>
+              </div>
+              {footerContent.showConfidentiality && (
+                <div className="border-t pt-1 text-center text-xs font-semibold text-destructive">
+                  {footerContent.confidentialityText || 'CONFIDENTIAL'}
+                </div>
+              )}
             </div>
           </div>
         )
@@ -761,6 +983,18 @@ export function SortableBlock({ block, index, onClick, onUpdate, onDelete }: Sor
             >
               <Edit className="h-4 w-4" />
             </Button>
+
+            {onSaveToLibrary && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onSaveToLibrary(block)}
+                className="h-8 w-8 p-0 hover:text-primary"
+                title="Save to library"
+              >
+                <Bookmark className="h-4 w-4" />
+              </Button>
+            )}
 
             <Button
               size="sm"

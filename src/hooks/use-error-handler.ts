@@ -378,7 +378,6 @@ export function useErrorToast() {
     //   duration: options?.duration || 5000
     // })
 
-    console.error(options?.title || 'Error', message)
   }, [])
 
   return { showError }

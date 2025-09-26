@@ -125,7 +125,6 @@ export class PDFGenerator {
         document.body.removeChild(tempContainer)
       }
     } catch (error) {
-      console.error('PDF generation failed:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'PDF generation failed',
@@ -151,7 +150,6 @@ export class PDFGenerator {
       // Use generateFromElement
       return await PDFGenerator.generateFromElement(tempDiv, options)
     } catch (error) {
-      console.error('PDF generation from HTML failed:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'PDF generation from HTML failed',

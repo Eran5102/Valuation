@@ -147,7 +147,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       const savedOrg = userOrganizations.find((org) => org.id === savedOrgId)
       setCurrentOrganization(savedOrg || userOrganizations[0])
     } catch (error) {
-      console.error('Error loading organizations:', error)
     } finally {
       setLoading(false)
     }
@@ -173,7 +172,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
       return newOrg
     } catch (error) {
-      console.error('Error creating organization:', error)
       return null
     }
   }

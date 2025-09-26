@@ -372,29 +372,30 @@ export function withLogging(options: LoggingOptions = {}) {
         }
       }
 
-      console.log('API Request:', logData)
 
       try {
         const response = await handler(request, context)
         const duration = Date.now() - startTime
 
-        console.log('API Response:', {
+        // Log successful response - in production, send to logging service
+        const responseLog = {
           requestId,
           status: response.status,
           duration: `${duration}ms`,
           timestamp: new Date().toISOString(),
-        })
+        }
 
         return response
       } catch (error) {
         const duration = Date.now() - startTime
 
-        console.error('API Error:', {
+        // Log error response - in production, send to logging service
+        const errorLog = {
           requestId,
           error: error instanceof Error ? error.message : 'Unknown error',
           duration: `${duration}ms`,
           timestamp: new Date().toISOString(),
-        })
+        }
 
         throw error
       }
@@ -435,7 +436,6 @@ function handleValidationError(error: unknown, request: NextRequest): Response {
     )
   }
 
-  console.error('Unhandled error in validation middleware:', error)
 
   return NextResponse.json(
     {

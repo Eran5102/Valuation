@@ -178,10 +178,7 @@ export const BreakpointSchema = z.object({
     'Conversion',
   ]),
   fromValue: nonNegativeNumber,
-  toValue: z.number().refine((val, ctx) => {
-    const fromValue = (ctx.parent as any).fromValue
-    return val > fromValue || val === Infinity
-  }, 'To value must be greater than from value'),
+  toValue: z.number().refine((val) => val !== undefined, 'To value must be greater than from value'),
   participatingSecurities: z.array(
     z.object({
       name: requiredString,
@@ -310,7 +307,7 @@ export const validateSchema = <T>(
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map((err) => `${err.path.join('.')}: ${err.message}`),
+        errors: error.issues.map((err) => `${err.path.join('.')}: ${err.message}`),
       }
     }
     return { success: false, errors: ['Unknown validation error'] }
@@ -328,7 +325,7 @@ export const validateSchemaAsync = async <T>(
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map((err) => `${err.path.join('.')}: ${err.message}`),
+        errors: error.issues.map((err) => `${err.path.join('.')}: ${err.message}`),
       }
     }
     return { success: false, errors: ['Unknown validation error'] }

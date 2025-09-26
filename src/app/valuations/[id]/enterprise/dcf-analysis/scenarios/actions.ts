@@ -41,20 +41,12 @@ export async function getScenarios(valuationId: string) {
       .order('created_at', { ascending: true })
 
     if (error) {
-      console.error('Error fetching DCF scenarios:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        valuationId,
-      })
       // Return empty array instead of throwing to prevent page crash
       return []
     }
 
     return scenarios || []
   } catch (err) {
-    console.error('Unexpected error in getScenarios:', err)
     return []
   }
 }
@@ -207,7 +199,7 @@ export async function compareScenarios(valuationId: string, scenarioIds: string[
     }
 
     // Calculate free cash flows
-    const fcf = projections.revenue.map((_, i) => {
+    const fcf = projections.revenue.map((_: number, i: number) => {
       const ebit = projections.ebit[i] || 0
       const tax = projections.taxes[i] || 0
       const nopat = ebit - tax
@@ -222,7 +214,7 @@ export async function compareScenarios(valuationId: string, scenarioIds: string[
     const discountRate = assumptions.discountRate || 0.12
     const terminalGrowthRate = assumptions.terminalGrowthRate || 0.02
 
-    const pvCashFlows = fcf.reduce((sum, cf, i) => {
+    const pvCashFlows = fcf.reduce((sum: number, cf: number, i: number) => {
       const discountFactor = 1 / Math.pow(1 + discountRate, i + 1)
       return sum + cf * discountFactor
     }, 0)

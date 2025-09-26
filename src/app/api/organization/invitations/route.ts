@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
+import {
+  InviteMemberSchema,
+  validateRequest,
+} from '@/lib/validation/api-schemas'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // Get user's organization and check permissions
     const { data: membership } = await supabase
       .from('organization_members')
@@ -39,29 +43,25 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(invitations || [])
   } catch (error) {
-    console.error('Error fetching invitations:', error)
     return NextResponse.json([], { status: 200 })
   }
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
-    const { email, role } = await request.json()
+    const supabase = await createClient()
 
-    // Validate input
-    if (!email || !role) {
-      return NextResponse.json({ error: 'Email and role are required' }, { status: 400 })
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Parse and validate request body
+    const rawData = await request.json()
+    const { email, role, message } = validateRequest(InviteMemberSchema, rawData)
 
     // Get user's organization and check permissions
     const { data: membership } = await supabase
@@ -141,7 +141,12 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error sending invitation:', error)
+    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: error.message },
+        { status: 400 }
+      )
+    }
     return NextResponse.json({ error: 'Failed to send invitation' }, { status: 500 })
   }
 }

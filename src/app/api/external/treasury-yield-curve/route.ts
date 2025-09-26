@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
       fetchedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error fetching Treasury yield curve:', error)
 
     // Return mock data as last resort if Treasury API fails
     const mockData: TreasuryYieldData[] = [
@@ -122,7 +121,6 @@ export async function POST(request: NextRequest) {
       fetchedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error fetching historical Treasury data:', error)
 
     // Return mock data for the requested date as last resort
     const { date } = await request.json()
@@ -236,7 +234,6 @@ function parseYieldXML(xmlText: string): TreasuryYieldData[] {
     // Return all entries sorted by date (most recent first)
     return entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   } catch (error) {
-    console.error('Error parsing Treasury XML:', error)
     return []
   }
 }

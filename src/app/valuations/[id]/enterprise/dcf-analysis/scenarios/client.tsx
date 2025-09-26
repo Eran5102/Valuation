@@ -27,6 +27,12 @@ import {
 import { OptimizedDataTable } from '@/components/ui/optimized-data-table'
 import { PercentageInput } from '@/components/ui/percentage-input'
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs'
+import {
   Plus,
   Copy,
   Trash2,
@@ -184,10 +190,32 @@ export function ScenarioManagerClient({
           workingCapitalPercent: 0.02,
           terminalGrowthRate: 0.025,
           discountRate: 0.12,
+
+          // Operational Metrics
+          daysReceivables: 45,
+          daysPayables: 30,
+          daysInventory: 60,
+          inventoryTurnover: 6,
+
+          // Balance Sheet Metrics
+          debtToEquityRatio: 0.3,
+          currentRatio: 1.5,
+          cashConversionCycle: 75,
+
+          // Margin Details
+          grossMargin: 0.6,
+          sgaExpensePercent: 0.35,
+          depreciationPercent: 0.03,
+          interestCoverageRatio: 8,
+
+          // Growth Drivers
+          averageSellingPrice: 100,
+          unitGrowthRate: 0.08,
+          marketShareGrowth: 0.02,
+          priceInflation: 0.02,
         },
       })
     } catch (error) {
-      console.error('Error creating scenario:', error)
       toast.error('Failed to create scenario')
     } finally {
       setIsCreating(false)
@@ -206,7 +234,6 @@ export function ScenarioManagerClient({
       )
       toast.success('Scenario activated')
     } catch (error) {
-      console.error('Error activating scenario:', error)
       toast.error('Failed to activate scenario')
     }
   }
@@ -222,7 +249,6 @@ export function ScenarioManagerClient({
       setScenarios([...scenarios, duplicated])
       toast.success('Scenario duplicated successfully')
     } catch (error) {
-      console.error('Error duplicating scenario:', error)
       toast.error('Failed to duplicate scenario')
     }
   }
@@ -236,7 +262,6 @@ export function ScenarioManagerClient({
       setScenarios(scenarios.filter((s) => s.id !== scenarioId))
       toast.success('Scenario deleted')
     } catch (error) {
-      console.error('Error deleting scenario:', error)
       toast.error('Failed to delete scenario')
     }
   }
@@ -253,7 +278,6 @@ export function ScenarioManagerClient({
       const comparison = await compareScenarios(valuationId, selectedScenarios)
       setComparisonData(comparison)
     } catch (error) {
-      console.error('Error comparing scenarios:', error)
       toast.error('Failed to compare scenarios')
     } finally {
       setIsComparing(false)
@@ -273,6 +297,21 @@ export function ScenarioManagerClient({
           workingCapitalPercent: 0.02,
           terminalGrowthRate: 0.025,
           discountRate: 0.12,
+          daysReceivables: 45,
+          daysPayables: 30,
+          daysInventory: 60,
+          inventoryTurnover: 6,
+          debtToEquityRatio: 0.3,
+          currentRatio: 1.5,
+          cashConversionCycle: 75,
+          grossMargin: 0.6,
+          sgaExpensePercent: 0.35,
+          depreciationPercent: 0.03,
+          interestCoverageRatio: 8,
+          averageSellingPrice: 100,
+          unitGrowthRate: 0.08,
+          marketShareGrowth: 0.02,
+          priceInflation: 0.02,
         },
       },
       Optimistic: {
@@ -285,6 +324,21 @@ export function ScenarioManagerClient({
           workingCapitalPercent: 0.015,
           terminalGrowthRate: 0.035,
           discountRate: 0.1,
+          daysReceivables: 40,
+          daysPayables: 35,
+          daysInventory: 50,
+          inventoryTurnover: 8,
+          debtToEquityRatio: 0.25,
+          currentRatio: 1.8,
+          cashConversionCycle: 55,
+          grossMargin: 0.65,
+          sgaExpensePercent: 0.3,
+          depreciationPercent: 0.025,
+          interestCoverageRatio: 10,
+          averageSellingPrice: 110,
+          unitGrowthRate: 0.12,
+          marketShareGrowth: 0.05,
+          priceInflation: 0.03,
         },
       },
       Pessimistic: {
@@ -297,6 +351,21 @@ export function ScenarioManagerClient({
           workingCapitalPercent: 0.03,
           terminalGrowthRate: 0.015,
           discountRate: 0.14,
+          daysReceivables: 55,
+          daysPayables: 25,
+          daysInventory: 75,
+          inventoryTurnover: 4,
+          debtToEquityRatio: 0.4,
+          currentRatio: 1.2,
+          cashConversionCycle: 105,
+          grossMargin: 0.55,
+          sgaExpensePercent: 0.4,
+          depreciationPercent: 0.04,
+          interestCoverageRatio: 6,
+          averageSellingPrice: 95,
+          unitGrowthRate: 0.03,
+          marketShareGrowth: -0.01,
+          priceInflation: 0.01,
         },
       },
     }
@@ -311,7 +380,6 @@ export function ScenarioManagerClient({
       setScenarios([...scenarios, created])
       toast.success(`${type} scenario created`)
     } catch (error) {
-      console.error('Error creating quick scenario:', error)
       toast.error(`Failed to create ${type} scenario`)
     }
   }

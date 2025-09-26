@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, lazy, Suspense } from 'react'
+import { toast } from 'sonner'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -35,17 +36,19 @@ import {
   Edit2,
   Trash2,
   GripVertical,
+  Library,
 } from 'lucide-react'
 import type { ReportTemplate, TemplateBlock, TemplateSection } from '@/lib/templates/types'
+import savedBlocksService from '@/lib/templates/savedBlocksService'
 
 import { BlockLibrary } from './BlockLibrary'
 import { TemplateCanvas } from './TemplateCanvas'
-import { BlockEditor } from './BlockEditor'
 import { VariablePicker } from './VariablePicker'
+import { SaveBlockModal } from './SaveBlockModal'
 
 // Lazy load heavy components for better performance
-const EnhancedFieldPicker = lazy(() =>
-  import('./EnhancedFieldPicker').then((mod) => ({ default: mod.EnhancedFieldPicker }))
+const DraggableFieldPicker = lazy(() =>
+  import('./DraggableFieldPicker').then((mod) => ({ default: mod.DraggableFieldPicker }))
 )
 const SavedBlocksManager = lazy(() =>
   import('./SavedBlocksManager').then((mod) => ({ default: mod.SavedBlocksManager }))
@@ -67,12 +70,13 @@ interface TemplateEditorProps {
 export function TemplateEditor({ template, onSave, onPreview, className }: TemplateEditorProps) {
   const [currentTemplate, setCurrentTemplate] = useState<ReportTemplate>(template)
   const [selectedSection, setSelectedSection] = useState<string>(template.sections[0]?.id || '')
-  const [selectedBlock, setSelectedBlock] = useState<TemplateBlock | null>(null)
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'settings'>('editor')
+  const [activeTab, setActiveTab] = useState<'settings' | 'editor' | 'preview'>('settings')
   const [draggedBlock, setDraggedBlock] = useState<TemplateBlock | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [saveBlockModalOpen, setSaveBlockModalOpen] = useState(false)
+  const [blockToSave, setBlockToSave] = useState<TemplateBlock | null>(null)
 
   // Check for auto-saved template on mount
   React.useEffect(() => {
@@ -87,18 +91,14 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
 
         // If auto-save is less than 24 hours old and different from current
         if (timeDiff < 24 * 60 * 60 * 1000 && savedTemplate.id === template.id) {
-          if (
-            confirm(
-              `Found an auto-saved version from ${savedTime.toLocaleString()}. Would you like to restore it?`
-            )
-          ) {
-            setCurrentTemplate(savedTemplate)
-            setLastSaved(savedTime)
-          }
+          // Show toast instead of confirm dialog
+          toast.info(`Auto-saved version found from ${savedTime.toLocaleString()}`)
+          // For now, auto-restore the saved version
+          setCurrentTemplate(savedTemplate)
+          setLastSaved(savedTime)
         }
       }
     } catch (error) {
-      console.error('Failed to restore auto-saved template:', error)
     }
 
     // Cleanup on unmount
@@ -168,8 +168,8 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
       onSave(clonedTemplate)
       setShowCloneDialog(false)
       setDialogInputValue('')
-      // Show success message in a less intrusive way
-      console.log(`Template "${dialogInputValue}" has been created successfully!`)
+      // Show success message with toast
+      toast.success(`Template "${dialogInputValue}" has been created successfully!`)
     }
   }, [currentTemplate, onSave, dialogInputValue])
 
@@ -198,9 +198,9 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
             const imported = JSON.parse(e.target?.result as string)
             setCurrentTemplate(imported)
             setIsDirty(true)
-            console.log('Template imported successfully!')
+            toast.success('Template imported successfully!')
           } catch (error) {
-            console.error('Error importing template. Please check the file format.')
+            toast.error('Error importing template. Please check the file format.')
           }
         }
         reader.readAsText(file)
@@ -225,8 +225,9 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
           const now = new Date()
           localStorage.setItem('template_autosave_time', now.toISOString())
           setLastSaved(now)
+          // Show auto-save notification
+          toast.success('Template auto-saved', { duration: 2000 })
         } catch (error) {
-          console.error('Failed to auto-save template:', error)
         }
       }, 5000)
       setAutoSaveTimer(timer)
@@ -416,8 +417,14 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
     const activeData = active.data.current
     const overData = over.data.current
 
+    // Get the section ID and index from either drop zones or section drops
+    const targetSectionId = overData?.sectionId
+    const targetIndex = overData?.index !== undefined ? overData.index : undefined
+
+    if (!targetSectionId) return
+
     // Handle dropping a new block from the library
-    if (activeData?.blockType && overData?.sectionId) {
+    if (activeData?.blockType) {
       const newBlock: TemplateBlock = {
         id: `block_${Date.now()}`,
         type: activeData.blockType,
@@ -425,7 +432,25 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
         styling: activeData.defaultStyling || {},
       }
 
-      handleBlockAdd(overData.sectionId, newBlock, overData.index)
+      handleBlockAdd(targetSectionId, newBlock, targetIndex)
+      toast.success(`Added ${activeData.blockType} block`)
+    }
+
+    // Handle dropping a field from the data fields panel
+    if (activeData?.type === 'field' && activeData?.variable) {
+      const variable = activeData.variable
+      const newBlock: TemplateBlock = {
+        id: `block_${Date.now()}_${variable.id}`,
+        type: 'paragraph', // Default to paragraph for field blocks
+        content: `{{${variable.id}}}`, // Insert the field reference
+        styling: {
+          fontSize: 14,
+          margin: '10px 0',
+        },
+      }
+
+      handleBlockAdd(targetSectionId, newBlock, targetIndex)
+      toast.success(`Added field: ${variable.name}`)
     }
 
     // Handle reordering existing blocks
@@ -452,28 +477,22 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
 
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
               size="sm"
-              onClick={() => onPreview?.(currentTemplate)}
-              disabled={!onPreview}
+              onClick={handleSave}
+              disabled={!isDirty}
+              className="bg-primary text-primary-foreground"
             >
-              <Eye className="mr-2 h-4 w-4" />
-              Preview
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Save className="mr-2 h-4 w-4" />
-                  Save
-                  <Plus className="ml-1 h-3 w-3" />
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleSave} disabled={!isDirty}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSaveAs}>
                   <Copy className="mr-2 h-4 w-4" />
                   Save As New...
@@ -493,16 +512,6 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!isDirty}
-              className="bg-primary text-primary-foreground"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save
-            </Button>
           </div>
         </div>
       </div>
@@ -514,12 +523,18 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
           onValueChange={(value) => setActiveTab(value as any)}
           className="flex h-full flex-col"
         >
-          <TabsList className="rounded-none border-b border-border">
-            <TabsTrigger value="editor">Editor</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-            <TabsTrigger value="settings">
-              <Settings className="mr-2 h-4 w-4" />
+          <TabsList className="h-12 w-auto justify-start rounded-none border-b border-border bg-transparent p-0">
+            <TabsTrigger value="settings" className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium text-muted-foreground transition-all data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none">
+              <Settings className="h-4 w-4" />
               Settings
+            </TabsTrigger>
+            <TabsTrigger value="editor" className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium text-muted-foreground transition-all data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none">
+              <Edit2 className="h-4 w-4" />
+              Editor
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium text-muted-foreground transition-all data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none">
+              <Eye className="h-4 w-4" />
+              Preview
             </TabsTrigger>
           </TabsList>
 
@@ -528,11 +543,17 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <div className="flex h-full overflow-hidden">
                 {/* Left Sidebar - Block Library and Saved Blocks */}
-                <div className="bg-card/50 flex h-full w-64 flex-col overflow-hidden border-r border-border">
+                <div className="bg-card flex h-full w-64 flex-col overflow-hidden border-r border-border">
                   <Tabs defaultValue="library" className="flex h-full flex-col">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="library">Library</TabsTrigger>
-                      <TabsTrigger value="saved">Saved</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+                      <TabsTrigger value="library" className="flex items-center gap-2">
+                        <Library className="h-3 w-3" />
+                        Library
+                      </TabsTrigger>
+                      <TabsTrigger value="saved" className="flex items-center gap-2">
+                        <FolderPlus className="h-3 w-3" />
+                        Saved
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="library" className="flex-1 overflow-hidden p-3">
                       <BlockLibrary />
@@ -551,7 +572,7 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
                         }
                       >
                         <SavedBlocksManager
-                          currentBlock={selectedBlock}
+                          currentBlock={null}
                           onBlockSelect={(block) => {
                             if (currentSection) {
                               handleBlockAdd(currentSection.id, block)
@@ -562,32 +583,10 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
                     </TabsContent>
                   </Tabs>
 
-                  <div className="flex-shrink-0 border-t border-border">
-                    <Suspense
-                      fallback={
-                        <div className="flex h-64 items-center justify-center">
-                          <div className="text-center">
-                            <div className="border-3 mx-auto h-6 w-6 animate-spin rounded-full border-primary border-t-transparent" />
-                            <p className="mt-2 text-xs text-muted-foreground">Loading fields...</p>
-                          </div>
-                        </div>
-                      }
-                    >
-                      <EnhancedFieldPicker
-                        variables={currentTemplate.variables}
-                        onFieldSelect={(variable) => {
-                          // Copy field reference to clipboard
-                          navigator.clipboard.writeText(`{{${variable.id}}}`)
-                          console.log('Field copied:', variable)
-                        }}
-                        className="h-64"
-                      />
-                    </Suspense>
-                  </div>
                 </div>
 
                 {/* Main Canvas */}
-                <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex flex-1 flex-col overflow-hidden bg-muted/20">
                   {/* Section Tabs */}
                   <div className="border-b border-border bg-background">
                     <div className="flex items-center overflow-x-auto">
@@ -671,37 +670,41 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
                     {currentSection && (
                       <TemplateCanvas
                         section={currentSection}
-                        onBlockSelect={setSelectedBlock}
+                        onBlockSelect={() => {}}
                         onBlockUpdate={(blockId, updates) =>
                           handleBlockUpdate(selectedSection, blockId, updates)
                         }
                         onBlockDelete={(blockId) => handleBlockDelete(selectedSection, blockId)}
                         onSectionUpdate={(updates) => handleSectionUpdate(selectedSection, updates)}
+                        onSaveBlockToLibrary={(block) => {
+                          setBlockToSave(block)
+                          setSaveBlockModalOpen(true)
+                        }}
                       />
                     )}
                   </div>
                 </div>
 
-                {/* Right Sidebar - Block Editor */}
-                <div className="bg-card/50 h-full w-72 overflow-y-auto border-l border-border">
+                {/* Right Sidebar - Data Fields */}
+                <div className="bg-card h-full w-72 overflow-y-auto border-l border-border">
                   <div className="p-3">
-                    {selectedBlock ? (
-                      <BlockEditor
-                        block={selectedBlock}
-                        variables={currentTemplate.variables}
-                        onChange={(updates) => {
-                          if (selectedBlock) {
-                            handleBlockUpdate(selectedSection, selectedBlock.id, updates)
-                            setSelectedBlock({ ...selectedBlock, ...updates })
-                          }
+                    <Suspense
+                      fallback={
+                        <div className="flex h-64 items-center justify-center">
+                          <div className="text-center">
+                            <div className="border-3 mx-auto h-6 w-6 animate-spin rounded-full border-primary border-t-transparent" />
+                            <p className="mt-2 text-xs text-muted-foreground">Loading fields...</p>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <DraggableFieldPicker
+                        useFieldMappings={true}
+                        onFieldSelect={(variable) => {
                         }}
+                        className="h-full"
                       />
-                    ) : (
-                      <div className="py-6 text-center text-muted-foreground">
-                        <Settings className="mx-auto mb-2 h-6 w-6 opacity-50" />
-                        <p className="text-sm">Select a block to edit its properties</p>
-                      </div>
-                    )}
+                    </Suspense>
                   </div>
                 </div>
               </div>
@@ -863,6 +866,31 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Save Block Modal */}
+      {blockToSave && (
+        <SaveBlockModal
+          open={saveBlockModalOpen}
+          onOpenChange={setSaveBlockModalOpen}
+          block={blockToSave}
+          onSave={async (name, description, tags) => {
+            try {
+              await savedBlocksService.saveBlock({
+                name,
+                category: tags?.[0] || 'Custom',
+                description,
+                tags: tags || [],
+                block: blockToSave,
+              })
+              toast.success('Block saved to library!')
+              setSaveBlockModalOpen(false)
+              setBlockToSave(null)
+            } catch (error) {
+              toast.error('Failed to save block. Please try again.')
+            }
+          }}
+        />
+      )}
     </div>
   )
 }

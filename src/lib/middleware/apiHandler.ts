@@ -121,12 +121,6 @@ class ApiHandler {
           })
         }
 
-        console.error('API Handler Error:', {
-          method: request.method,
-          path: new URL(request.url).pathname,
-          error: error instanceof Error ? error.message : error,
-          duration: `${duration}ms`,
-        })
 
         return this.createErrorResponse(error, startTime)
       }

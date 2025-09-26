@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import * as React from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Settings,
   Building2,
@@ -79,6 +80,10 @@ interface AssumptionField {
   required?: boolean
   placeholder?: string
 }
+
+// Export type alias for backward compatibility
+export type Assumption = AssumptionField
+export type { AssumptionSection }
 
 interface AssumptionSection {
   id: string
@@ -214,7 +219,6 @@ export default function ValuationAssumptionsConsolidated({
               setManagementTeam(team)
               formattedAssumptions['company_profile.management_team'] = team
             } catch (e) {
-              console.error('Error parsing management team:', e)
             }
           }
 
@@ -227,14 +231,12 @@ export default function ValuationAssumptionsConsolidated({
               setKeyInvestors(investors)
               formattedAssumptions['company_profile.key_investors'] = investors
             } catch (e) {
-              console.error('Error parsing key investors:', e)
             }
           }
 
           setAssumptions(formattedAssumptions)
         }
       } catch (error) {
-        console.error('Error loading assumptions:', error)
         toast.error('Failed to load assumptions')
       } finally {
         setIsLoading(false)
@@ -570,7 +572,7 @@ export default function ValuationAssumptionsConsolidated({
   }
 
   // Handle field value changes
-  const handleFieldChange = (sectionId: string, fieldId: string, value: any) => {
+  const handleFieldChange = (sectionId: string, fieldId: string, value: string | number | any[]) => {
     setAssumptions((prev) => ({
       ...prev,
       [`${sectionId}.${fieldId}`]: value,
@@ -696,7 +698,6 @@ export default function ValuationAssumptionsConsolidated({
         throw new Error(result.error || 'Failed to save assumptions')
       }
     } catch (error) {
-      console.error('Error saving assumptions:', error)
       toast.error('Failed to save assumptions')
     } finally {
       setIsSaving(false)
@@ -723,7 +724,10 @@ export default function ValuationAssumptionsConsolidated({
           filteredFields = filteredFields.filter((field) => field.required)
         } else if (filterStatus === 'incomplete') {
           filteredFields = filteredFields.filter(
-            (field) => !assumptions[`${section.id}.${field.id}`] && field.required
+            (field) => {
+              const value = assumptions[`${section.id}.${field.id}`]
+              return (value === undefined || value === null || value === '') && field.required
+            }
           )
         }
 
@@ -743,10 +747,10 @@ export default function ValuationAssumptionsConsolidated({
       section.fields.forEach((field) => {
         totalFields++
         const value = assumptions[`${section.id}.${field.id}`]
-        if (value) completedFields++
+        if (value !== undefined && value !== null && value !== '') completedFields++
         if (field.required) {
           requiredFields++
-          if (value) requiredCompleted++
+          if (value !== undefined && value !== null && value !== '') requiredCompleted++
         }
       })
     })
@@ -833,7 +837,7 @@ export default function ValuationAssumptionsConsolidated({
                 className="pl-9"
               />
             </div>
-            <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+            <Select value={filterStatus} onValueChange={(value: 'all' | 'required' | 'incomplete') => setFilterStatus(value)}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="mr-2 h-4 w-4" />
                 <SelectValue />
@@ -875,8 +879,10 @@ export default function ValuationAssumptionsConsolidated({
                       {section.id !== 'methodology' && (
                         <Badge variant="outline">
                           {
-                            section.fields.filter((f) => assumptions[`${section.id}.${f.id}`])
-                              .length
+                            section.fields.filter((f) => {
+                              const value = assumptions[`${section.id}.${f.id}`]
+                              return value !== undefined && value !== null && value !== ''
+                            }).length
                           }
                           /{section.fields.length}
                         </Badge>
@@ -1284,9 +1290,10 @@ export default function ValuationAssumptionsConsolidated({
               <div className="space-y-1">
                 {sections.map((section) => {
                   const Icon = section.icon
-                  const sectionStats = section.fields.filter(
-                    (f) => assumptions[`${section.id}.${f.id}`]
-                  ).length
+                  const sectionStats = section.fields.filter((f) => {
+                    const value = assumptions[`${section.id}.${f.id}`]
+                    return value !== undefined && value !== null && value !== ''
+                  }).length
 
                   return (
                     <button

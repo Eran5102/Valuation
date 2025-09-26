@@ -18,7 +18,6 @@ class JobManager {
     // Register all job processors
     this.registerProcessors()
 
-    console.log('JobManager initialized with background processing')
   }
 
   static getInstance(): JobManager {
@@ -161,7 +160,6 @@ class JobManager {
       jobIds.push(jobId)
     }
 
-    console.log(`Queued ${operations.length} bulk operations`)
     return jobIds
   }
 
@@ -289,7 +287,6 @@ class JobManager {
       jobIds.push(jobId)
     }
 
-    console.log(`Started workflow ${workflowId} with ${workflow.length} steps`)
     return { workflowId, jobIds }
   }
 

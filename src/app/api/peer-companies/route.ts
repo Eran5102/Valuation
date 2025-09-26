@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { getOrganizationId } from '@/lib/auth/get-organization'
 import {
   fetchCompanyFundamentals,
   searchPeerCompanies,
@@ -13,7 +15,7 @@ const ALPHA_VANTAGE_API_KEY = process.env.NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY || '
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { action, ticker, peerTickers, maxPeers = 10, marketCapTolerance = 0.5 } = body
+    const { action, ticker, peerTickers, maxPeers = 10, marketCapTolerance = 0.5, valuationId, companies } = body
 
     switch (action) {
       case 'search': {
@@ -85,14 +87,96 @@ export async function POST(request: Request) {
         return NextResponse.json({ companies })
       }
 
+      case 'save': {
+        // Save imported companies to database
+        if (!companies || companies.length === 0) {
+          return NextResponse.json({ error: 'Companies data required' }, { status: 400 })
+        }
+
+        const supabase = await createClient()
+        const organizationId = await getOrganizationId()
+
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        if (userError || !user) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Transform and save companies to database
+        const peerCompaniesData = companies.map((company: any) => ({
+          organization_id: organizationId,
+          valuation_id: valuationId || null,
+          ticker: company.ticker,
+          name: company.name,
+          industry: company.industry || null,
+          sector: company.sector || null,
+          market_cap: company.marketCap || null,
+          enterprise_value: company.enterpriseValue || null,
+          revenue: company.revenue || null,
+          ebitda: company.ebitda || null,
+          revenue_growth: company.revenueGrowth || null,
+          gross_margin: company.grossMargin || null,
+          ebitda_margin: company.ebitdaMargin || null,
+          ev_to_revenue: company.evToRevenue || null,
+          ev_to_ebitda: company.evToEbitda || null,
+          pe_ratio: company.peRatio || null,
+          price_to_book: company.priceToBook || null,
+          debt_to_equity: company.debtToEquity || null,
+          beta: company.beta || null,
+          source: 'alpha_vantage',
+          source_updated_at: new Date().toISOString(),
+          metadata: company.metadata || {},
+          created_by: user.id,
+          is_active: true,
+        }))
+
+        const { data: savedCompanies, error: saveError } = await supabase
+          .from('peer_companies')
+          .upsert(peerCompaniesData, {
+            onConflict: 'ticker,organization_id',
+            ignoreDuplicates: false
+          })
+          .select()
+
+        if (saveError) {
+          return NextResponse.json({ error: 'Failed to save companies' }, { status: 500 })
+        }
+
+        return NextResponse.json({ savedCompanies })
+      }
+
+      case 'list': {
+        // Fetch saved peer companies from database
+        const supabase = await createClient()
+        const organizationId = await getOrganizationId()
+
+        const query = supabase
+          .from('peer_companies')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+
+        if (valuationId) {
+          query.eq('valuation_id', valuationId)
+        }
+
+        const { data: companies, error } = await query
+
+        if (error) {
+          return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
+        }
+
+        return NextResponse.json({ companies })
+      }
+
       default:
         return NextResponse.json(
-          { error: 'Invalid action. Use: search, fetch, compare, or batch' },
+          { error: 'Invalid action. Use: search, fetch, compare, batch, save, or list' },
           { status: 400 }
         )
     }
   } catch (error) {
-    console.error('Error in peer companies API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -100,7 +184,39 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const ticker = searchParams.get('ticker')
+  const valuationId = searchParams.get('valuationId')
+  const action = searchParams.get('action') || 'fetch'
 
+  // If action is 'list', fetch from database
+  if (action === 'list') {
+    try {
+      const supabase = await createClient()
+      const organizationId = await getOrganizationId()
+
+      const query = supabase
+        .from('peer_companies')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+
+      if (valuationId) {
+        query.eq('valuation_id', valuationId)
+      }
+
+      const { data: companies, error } = await query
+
+      if (error) {
+        return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
+      }
+
+      return NextResponse.json({ companies })
+    } catch (error) {
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+  }
+
+  // Original functionality for fetching from API
   if (!ticker) {
     return NextResponse.json({ error: 'Ticker parameter is required' }, { status: 400 })
   }
@@ -114,7 +230,35 @@ export async function GET(request: Request) {
 
     return NextResponse.json(fundamentals)
   } catch (error) {
-    console.error('Error fetching company fundamentals:', error)
     return NextResponse.json({ error: 'Failed to fetch company fundamentals' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Company ID required' }, { status: 400 })
+    }
+
+    const supabase = await createClient()
+    const organizationId = await getOrganizationId()
+
+    // Soft delete by setting is_active to false
+    const { error } = await supabase
+      .from('peer_companies')
+      .update({ is_active: false })
+      .eq('id', id)
+      .eq('organization_id', organizationId)
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to delete company' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

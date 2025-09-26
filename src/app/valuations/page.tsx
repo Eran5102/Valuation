@@ -32,7 +32,7 @@ const OptimizedDataTable = dynamic(
 import AppLayout from '@/components/layout/AppLayout'
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils'
 import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-grid'
-import { PageHeader } from '@/components/ui/page-header'
+import { PageHeader } from '@/components/common/PageHeader'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
 import { AssignmentSelector } from '@/components/assignment/AssignmentSelector'
 import { useAuth } from '@/contexts/AuthContext'
@@ -110,7 +110,6 @@ export default function ValuationsPage() {
         setValuations([])
       }
     } catch (error) {
-      console.error('Error fetching valuations:', error)
       // Set empty array on error
       setValuations([])
     } finally {
@@ -126,7 +125,6 @@ export default function ValuationsPage() {
         })
         fetchValuations() // Refresh the list
       } catch (error) {
-        console.error('Failed to delete valuation:', error)
       }
     }
   }
@@ -305,7 +303,6 @@ export default function ValuationsPage() {
                     )
                   }
                 } catch (error) {
-                  console.error('Failed to update assignment:', error)
                 }
               }}
               entityType="valuation"
@@ -364,38 +361,42 @@ export default function ValuationsPage() {
         <PageHeader
           title="Valuations"
           description="Manage 409A valuations and financial assessments"
-          actionButton={{
-            href: '/valuations/new',
-            icon: Plus,
-            text: 'New Valuation',
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={viewMode === 'all' ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => setViewMode('all')}
-            >
-              All Valuations
-            </Badge>
-            <Badge
-              variant={viewMode === 'my' ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => setViewMode('my')}
-            >
-              <User className="mr-1 h-3 w-3" />
-              My Valuations
-            </Badge>
-            <Badge
-              variant={viewMode === 'team' ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => setViewMode('team')}
-            >
-              <UsersIcon className="mr-1 h-3 w-3" />
-              Team Valuations
-            </Badge>
-          </div>
-        </PageHeader>
+          actions={
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={viewMode === 'all' ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setViewMode('all')}
+                >
+                  All Valuations
+                </Badge>
+                <Badge
+                  variant={viewMode === 'my' ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setViewMode('my')}
+                >
+                  <User className="mr-1 h-3 w-3" />
+                  My Valuations
+                </Badge>
+                <Badge
+                  variant={viewMode === 'team' ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setViewMode('team')}
+                >
+                  <UsersIcon className="mr-1 h-3 w-3" />
+                  Team Valuations
+                </Badge>
+              </div>
+              <Link href="/valuations/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Valuation
+                </Button>
+              </Link>
+            </div>
+          }
+        />
 
         {/* Summary Cards */}
         <SummaryCardsGrid cards={summaryCards} />

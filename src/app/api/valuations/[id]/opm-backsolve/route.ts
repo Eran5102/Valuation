@@ -165,7 +165,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       analysis_timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error performing OPM backsolve:', error)
     return NextResponse.json(
       {
         success: false,
@@ -230,7 +229,6 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       },
     })
   } catch (error) {
-    console.error('Error fetching OPM parameters:', error)
     return NextResponse.json(
       {
         success: false,

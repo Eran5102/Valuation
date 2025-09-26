@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 interface TeamMember {
   id: string
@@ -38,15 +39,16 @@ export function AssignmentSelector({
   entityType,
   className,
 }: AssignmentSelectorProps) {
-  const { user, organization } = useAuth()
+  const { user } = useAuth()
+  const { currentOrganization } = useOrganization()
   const [availableMembers, setAvailableMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (organization) {
+    if (currentOrganization) {
       fetchTeamMembers()
     }
-  }, [organization])
+  }, [currentOrganization])
 
   const fetchTeamMembers = async () => {
     setLoading(true)
@@ -61,8 +63,9 @@ export function AssignmentSelector({
           {
             id: user?.id || '1',
             name:
-              user?.user_metadata?.first_name + ' ' + user?.user_metadata?.last_name ||
-              'Current User',
+              (user?.user_metadata?.first_name && user?.user_metadata?.last_name)
+                ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+                : user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Current User',
             email: user?.email || 'user@example.com',
             role: 'owner',
           },
@@ -86,8 +89,9 @@ export function AssignmentSelector({
         {
           id: user?.id || '1',
           name:
-            user?.user_metadata?.first_name + ' ' + user?.user_metadata?.last_name ||
-            'Current User',
+            (user?.user_metadata?.first_name && user?.user_metadata?.last_name)
+              ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+              : user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Current User',
           email: user?.email || 'user@example.com',
           role: 'owner',
         },
@@ -113,13 +117,13 @@ export function AssignmentSelector({
 
   const handleAddTeamMember = (userId: string) => {
     if (!teamMembers.includes(userId)) {
-      onAssignmentChange(assignedTo, [...teamMembers, userId])
+      onAssignmentChange(assignedTo || null, [...teamMembers, userId])
     }
   }
 
   const handleRemoveTeamMember = (userId: string) => {
     onAssignmentChange(
-      assignedTo,
+      assignedTo || null,
       teamMembers.filter((id) => id !== userId)
     )
   }

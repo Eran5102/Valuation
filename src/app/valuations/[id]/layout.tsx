@@ -42,7 +42,6 @@ export default function ValuationLayout({ children }: { children: React.ReactNod
           })
         }
       } catch (error) {
-        console.error('Error fetching valuation:', error)
         // Set default data if fetch fails
         setValuationData({
           id: valuationId,

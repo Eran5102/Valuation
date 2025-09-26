@@ -221,7 +221,7 @@ export default function ValuationWorkspaceLayout({
   const { methodologies } = useMethodologyStore()
   const { theme, setTheme } = useTheme()
   const { user, signOut } = useAuth()
-  const { organization } = useOrganization()
+  const { currentOrganization } = useOrganization()
 
   useEffect(() => {
     setMounted(true)
@@ -230,7 +230,7 @@ export default function ValuationWorkspaceLayout({
   // Build dynamic navigation based on selected methodologies
   const navigation = useMemo(() => {
     const baseNav =
-      valuationNavigation[valuationData.type?.toLowerCase() || '409a'] ||
+      (valuationNavigation as any)[valuationData.type?.toLowerCase() || '409a'] ||
       valuationNavigation['409a']
 
     // For non-409a valuations, return the base navigation
@@ -248,9 +248,9 @@ export default function ValuationWorkspaceLayout({
 
     // Always include these core items
     dynamicNav.push(
-      baseNav.find((item) => item.name === 'Overview'),
-      baseNav.find((item) => item.name === 'Assumptions'),
-      baseNav.find((item) => item.name === 'Cap Table')
+      baseNav.find((item: any) => item.name === 'Overview'),
+      baseNav.find((item: any) => item.name === 'Assumptions'),
+      baseNav.find((item: any) => item.name === 'Cap Table')
     )
 
     // Group methodologies by category
@@ -348,7 +348,7 @@ export default function ValuationWorkspaceLayout({
     const allocationMethodologies = enabledMethodologies.filter((m) => m.category === 'allocation')
 
     if (allocationMethodologies.length > 0) {
-      const allocationSubmenu = []
+      const allocationSubmenu: any[] = []
 
       // Add each selected allocation methodology
       allocationMethodologies.forEach((method) => {
@@ -395,12 +395,12 @@ export default function ValuationWorkspaceLayout({
     }
 
     // Add Discounts section
-    dynamicNav.push(baseNav.find((item) => item.name === 'Discounts'))
+    dynamicNav.push(baseNav.find((item: any) => item.name === 'Discounts'))
 
     // Always include Report and Settings
     dynamicNav.push(
-      baseNav.find((item) => item.name === 'Report'),
-      baseNav.find((item) => item.name === 'Settings')
+      baseNav.find((item: any) => item.name === 'Report'),
+      baseNav.find((item: any) => item.name === 'Settings')
     )
 
     // Filter out any undefined items
@@ -445,14 +445,14 @@ export default function ValuationWorkspaceLayout({
 
   // Convert navigation to SidebarNavItem format
   const sidebarItems: SidebarNavItem[] = useMemo(() => {
-    const items = navigation.map((item) => ({
+    const items = navigation.map((item: any) => ({
       id: item.name,
       name: item.name,
       href: `/valuations/${valuationId}/${item.href}`,
       icon: item.icon,
       isActive: currentSection === item.href || currentSection.startsWith(`${item.href}/`),
       tooltip: item.description,
-      submenu: item.submenu?.map((subItem: any) => ({
+      submenu: item.submenu?.map((subItem: { name: string; href: string; icon: any }) => ({
         id: subItem.name,
         name: subItem.name,
         href: `/valuations/${valuationId}/${subItem.href}`,
@@ -503,8 +503,8 @@ export default function ValuationWorkspaceLayout({
             {!isCollapsed && (
               <div className="mt-3 space-y-3">
                 <div>
-                  <h2 className="text-lg font-semibold">{valuationData.company_name}</h2>
-                  <p className="text-sm text-muted-foreground">
+                  <h2 className="text-lg font-semibold text-white">{valuationData.company_name}</h2>
+                  <p className="text-sm text-gray-400">
                     {(valuationData.type || '409a').replace('_', ' ').toUpperCase()} Valuation
                   </p>
                 </div>
@@ -514,14 +514,14 @@ export default function ValuationWorkspaceLayout({
                     {getStatusIcon(valuationData.status)}
                     {valuationData.status.replace('_', ' ')}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(valuationData.valuation_date).toLocaleDateString()}
+                  <span className="text-sm text-gray-400">
+                    {valuationData.valuation_date ? new Date(valuationData.valuation_date).toLocaleDateString() : 'No date'}
                   </span>
                 </div>
 
                 {valuationData.fair_market_value && (
-                  <div className="bg-primary/5 rounded-lg p-2">
-                    <p className="text-xs text-muted-foreground">Fair Market Value</p>
+                  <div className="bg-primary/10 rounded-lg p-2 border border-primary/20">
+                    <p className="text-xs text-gray-400">Fair Market Value</p>
                     <p className="text-lg font-semibold text-primary">
                       ${valuationData.fair_market_value.toLocaleString()}
                     </p>
@@ -627,7 +627,7 @@ export default function ValuationWorkspaceLayout({
                     className="text-gray-200 hover:bg-gray-700 hover:text-white"
                   >
                     <Building2 className="mr-2 h-4 w-4" />
-                    <span className="font-medium">{organization?.name || 'My Organization'}</span>
+                    <span className="font-medium">{currentOrganization?.name || 'My Organization'}</span>
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

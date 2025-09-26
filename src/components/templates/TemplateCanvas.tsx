@@ -12,6 +12,7 @@ import { Settings, Trash2 } from 'lucide-react'
 import type { TemplateSection, TemplateBlock } from '@/lib/templates/types'
 
 import { SortableBlock } from './SortableBlock'
+import { DropZone } from './DropZone'
 
 interface TemplateCanvasProps {
   section: TemplateSection
@@ -19,6 +20,7 @@ interface TemplateCanvasProps {
   onBlockUpdate: (blockId: string, updates: Partial<TemplateBlock>) => void
   onBlockDelete: (blockId: string) => void
   onSectionUpdate: (updates: Partial<TemplateSection>) => void
+  onSaveBlockToLibrary?: (block: TemplateBlock) => void
 }
 
 export function TemplateCanvas({
@@ -27,18 +29,19 @@ export function TemplateCanvas({
   onBlockUpdate,
   onBlockDelete,
   onSectionUpdate,
+  onSaveBlockToLibrary,
 }: TemplateCanvasProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `section-${section.id}`,
     data: {
       sectionId: section.id,
-      accepts: ['block'],
+      accepts: ['block', 'field'], // Accept both blocks and fields
     },
   })
 
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <Card className="flex h-full flex-col">
+    <div className="h-full overflow-y-auto bg-background p-4">
+      <Card className="flex flex-col shadow-sm">
         {/* Section Header */}
         <CardHeader className="flex-shrink-0 border-b border-border">
           <div className="flex items-center justify-between">
@@ -78,23 +81,25 @@ export function TemplateCanvas({
         </CardHeader>
 
         {/* Section Content */}
-        <CardContent className="flex-1 p-6">
+        <CardContent className="p-6">
           <div
             ref={setNodeRef}
-            className={`min-h-[400px] rounded-lg border-2 border-dashed transition-colors ${
-              isOver ? 'bg-primary/5 border-primary' : 'hover:border-border/60 border-border'
+            className={`min-h-[200px] rounded-lg border-2 border-dashed transition-all duration-200 ${
+              isOver
+                ? 'bg-primary/10 border-primary shadow-inner scale-[1.01]'
+                : 'hover:border-primary/30 hover:bg-primary/5 border-border'
             }`}
           >
             {section.blocks.length === 0 ? (
               // Empty State
-              <div className="flex h-full items-center justify-center text-center">
+              <div className="flex min-h-[200px] items-center justify-center text-center">
                 <div className="text-muted-foreground">
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                     <Settings className="h-8 w-8" />
                   </div>
                   <h3 className="mb-2 text-lg font-medium">No blocks yet</h3>
                   <p className="max-w-sm text-sm">
-                    Drag blocks from the library on the left to start building your template
+                    Drag blocks from the library or data fields from the right to start building your template
                     section.
                   </p>
                 </div>
@@ -105,16 +110,34 @@ export function TemplateCanvas({
                 items={section.blocks.map((b) => b.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-4 p-4">
+                <div className="p-4">
+                  {/* Drop zone at the beginning */}
+                  <DropZone
+                    id={`drop-zone-${section.id}-0`}
+                    sectionId={section.id}
+                    index={0}
+                    className="h-2 -mt-2 mb-2"
+                  />
+
                   {section.blocks.map((block, index) => (
-                    <SortableBlock
-                      key={block.id}
-                      block={block}
-                      index={index}
-                      onClick={() => onBlockSelect(block)}
-                      onUpdate={(updates) => onBlockUpdate(block.id, updates)}
-                      onDelete={() => onBlockDelete(block.id)}
-                    />
+                    <React.Fragment key={block.id}>
+                      <SortableBlock
+                        block={block}
+                        index={index}
+                        onClick={() => onBlockSelect(block)}
+                        onUpdate={(updates) => onBlockUpdate(block.id, updates)}
+                        onDelete={() => onBlockDelete(block.id)}
+                        onSaveToLibrary={onSaveBlockToLibrary}
+                      />
+
+                      {/* Drop zone between blocks */}
+                      <DropZone
+                        id={`drop-zone-${section.id}-${index + 1}`}
+                        sectionId={section.id}
+                        index={index + 1}
+                        className="h-4 -my-1"
+                      />
+                    </React.Fragment>
                   ))}
                 </div>
               </SortableContext>

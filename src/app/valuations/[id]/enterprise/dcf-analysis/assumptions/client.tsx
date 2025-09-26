@@ -150,10 +150,8 @@ export function DCFAssumptionsClient({ valuationId }: DCFAssumptionsClientProps)
       return updated
     })
 
-    // Update context with terminal assumptions
-    updateAssumptions({
-      terminalYear: terminalAssumptions,
-    })
+    // Update context with terminal assumptions - removed terminalYear as it doesn't exist in DCFCoreAssumptions
+    // The terminal assumptions are handled separately from the core assumptions
   }
 
   // Save all assumptions

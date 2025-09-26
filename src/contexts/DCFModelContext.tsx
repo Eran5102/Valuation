@@ -114,7 +114,6 @@ export function DCFModelProvider({ children, valuationId }: DCFModelProviderProp
           timestamp: new Date().toISOString(),
         })
       } catch (error) {
-        console.error('Error loading DCF model:', error)
         setErrors(['Failed to load DCF model'])
         toast.error('Failed to load DCF model')
       } finally {
@@ -144,7 +143,6 @@ export function DCFModelProvider({ children, valuationId }: DCFModelProviderProp
       setHasChanges(false)
       toast.success('DCF model saved')
     } catch (error) {
-      console.error('Error saving DCF model:', error)
       setErrors(['Failed to save DCF model'])
       toast.error('Failed to save DCF model')
     } finally {
@@ -390,7 +388,6 @@ export function DCFModelProvider({ children, valuationId }: DCFModelProviderProp
 
       toast.success('DCF model recalculated')
     } catch (error) {
-      console.error('Error recalculating DCF model:', error)
       setErrors(['Failed to recalculate DCF model'])
       toast.error('Failed to recalculate DCF model')
     }

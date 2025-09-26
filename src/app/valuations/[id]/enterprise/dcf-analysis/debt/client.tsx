@@ -145,7 +145,6 @@ export function DebtScheduleClient({ valuationId }: DebtScheduleClientProps) {
         setProjections(data.projections || [])
       }
     } catch (error) {
-      console.error('Error loading debt schedule:', error)
     }
   }
 
@@ -523,7 +522,11 @@ export function DebtScheduleClient({ valuationId }: DebtScheduleClientProps) {
             </CardHeader>
             <CardContent>
               {debtItems.length > 0 ? (
-                <EditableDataTable columns={debtColumns} data={debtItems} />
+                <EditableDataTable
+                  tableId="debt-items"
+                  columns={debtColumns}
+                  data={debtItems}
+                />
               ) : (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -588,7 +591,11 @@ export function DebtScheduleClient({ valuationId }: DebtScheduleClientProps) {
             </CardHeader>
             <CardContent>
               {projections.length > 0 ? (
-                <EditableDataTable columns={projectionColumns} data={projections} />
+                <EditableDataTable
+                  tableId="debt-projections"
+                  columns={projectionColumns}
+                  data={projections}
+                />
               ) : (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
