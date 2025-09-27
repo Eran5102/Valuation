@@ -38,7 +38,7 @@ export const GET = async (request: NextRequest) => {
 
     // Check if user is a super admin
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .select('is_super_admin')
       .eq('id', user.id)
       .single()
