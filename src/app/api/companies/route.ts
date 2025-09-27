@@ -25,56 +25,83 @@ export const GET = async (request: NextRequest) => {
     const dateTo = searchParams.get('date_to')
     const offset = (queryParams.page - 1) * queryParams.limit
 
-  const supabase = await createClient()
+    const supabase = await createClient()
 
-  // Get current user and their organization
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // Get current user and their organization
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  let organizationId = null
-  if (user) {
-    const { data: membership } = await supabase
-      .from('organization_members')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if user is a super admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', user.id)
       .single()
 
-    organizationId = membership?.organization_id
-  }
+    const isSuperAdmin = profile?.is_super_admin === true
 
-  // Build query - filter by organization if user has one
-  let query = supabase.from('companies').select('*', { count: 'exact' })
+    let organizationId = null
+    if (!isSuperAdmin) {
+      // Regular users - get their organization
+      const { data: membership } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single()
 
-  // Only show companies from user's organization
-  if (organizationId) {
-    query = query.eq('organization_id', organizationId)
-  }
+      organizationId = membership?.organization_id
 
-  // Apply filters
-  if (companyId) {
-    query = query.eq('id', companyId)
-  }
+      // If not super admin and no organization, return empty
+      if (!organizationId) {
+        return NextResponse.json({
+          data: [],
+          pagination: {
+            page: queryParams.page,
+            limit: queryParams.limit,
+            total: 0,
+            pages: 0,
+          },
+        })
+      }
+    }
 
-  if (dateFrom) {
-    query = query.gte('created_at', dateFrom)
-  }
+    // Build query
+    let query = supabase.from('companies').select('*', { count: 'exact' })
 
-  if (dateTo) {
-    query = query.lte('created_at', dateTo)
-  }
+    // Super admins see all companies, others see only their organization's
+    if (!isSuperAdmin && organizationId) {
+      query = query.eq('organization_id', organizationId)
+    }
 
-  // Apply sorting and pagination
-  const sortField = queryParams.sort || 'created_at'
-  const ascending = queryParams.order === 'asc'
-  query = query.order(sortField, { ascending }).range(offset, offset + queryParams.limit - 1)
+    // Apply filters
+    if (companyId) {
+      query = query.eq('id', companyId)
+    }
 
-  const { data: companies, error, count } = await query
+    if (dateFrom) {
+      query = query.gte('created_at', dateFrom)
+    }
 
-  if (error) {
-    return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
-  }
+    if (dateTo) {
+      query = query.lte('created_at', dateTo)
+    }
+
+    // Apply sorting and pagination
+    const sortField = queryParams.sort || 'created_at'
+    const ascending = queryParams.order === 'asc'
+    query = query.order(sortField, { ascending }).range(offset, offset + queryParams.limit - 1)
+
+    const { data: companies, error, count } = await query
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
+    }
 
     return NextResponse.json({
       data: companies || [],
@@ -163,17 +190,29 @@ export const POST = async (request: NextRequest) => {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // Get user's organization
+    // Get user's organization - REQUIRED for company creation
     let organizationId = null
     if (user) {
       const { data: membership } = await supabase
         .from('organization_members')
-        .select('organization_id')
+        .select('organization_id, role')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .single()
 
       organizationId = membership?.organization_id
+    }
+
+    // Check if user has an organization - required for creating companies
+    if (!organizationId) {
+      return NextResponse.json(
+        {
+          error: 'Organization Required',
+          message:
+            'You must be part of an organization to create companies. Please contact your administrator.',
+        },
+        { status: 403 }
+      )
     }
 
     // Use service client to bypass RLS for company creation
