@@ -12,13 +12,13 @@ export const GET = async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url)
 
-    // Validate query parameters
-    const queryParams = validateRequest(PaginationSchema, {
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      sort: searchParams.get('sort'),
-      order: searchParams.get('order'),
-    })
+    // Parse query parameters with defaults
+    const queryParams = {
+      page: parseInt(searchParams.get('page') || '1'),
+      limit: parseInt(searchParams.get('limit') || '20'),
+      sort: searchParams.get('sort') || 'created_at',
+      order: searchParams.get('order') || 'desc',
+    }
 
     const companyId = searchParams.get('company_id')
     const dateFrom = searchParams.get('date_from')
@@ -113,12 +113,7 @@ export const GET = async (request: NextRequest) => {
       },
     })
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Validation failed:')) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', message: error.message },
-        { status: 400 }
-      )
-    }
+    console.error('Error fetching companies:', error)
     return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
   }
 }

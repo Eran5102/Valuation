@@ -66,11 +66,19 @@ export default function ClientsPage() {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch('/api/companies')
+      // Add cache busting to ensure fresh data
+      const response = await fetch(`/api/companies?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      })
       if (response.ok) {
         const result = await response.json()
+        console.log('API Response:', result) // Debug log
         // The API returns { data: [], pagination: {} }, so we need to access result.data
         const companies = result.data || []
+        console.log('Companies found:', companies.length) // Debug log
 
         // Transform the data to use actual database values
         const transformedClients: Client[] = companies.map((company: any) => ({
@@ -225,7 +233,7 @@ export default function ClientsPage() {
           return (
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
                   <Building2 className="h-4 w-4 text-primary" />
                 </div>
               </div>
@@ -310,8 +318,7 @@ export default function ClientsPage() {
                       prev.map((c) => (c.id === client.id ? { ...c, assignedTo, teamMembers } : c))
                     )
                   }
-                } catch (error) {
-                }
+                } catch (error) {}
               }}
               entityType="client"
             />
