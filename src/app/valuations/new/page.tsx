@@ -55,8 +55,7 @@ export default function NewValuationPage() {
         const data = await response.json()
         setCompanies(data.data || [])
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   useEffect(() => {
@@ -77,16 +76,27 @@ export default function NewValuationPage() {
     setLoading(true)
 
     try {
-      // Prepare valuation data for API - only basic fields
+      // Map valuation type to purpose enum
+      let purpose = '409a'
+      if (formData.valuationType === '409A') {
+        purpose = '409a'
+      } else if (formData.valuationType === 'Company Valuation') {
+        purpose = 'strategic_planning'
+      } else {
+        purpose = 'other'
+      }
+
+      // Prepare valuation data for API matching the schema
       const valuationData: any = {
         company_id: formData.companyId,
-        valuation_type: formData.valuationType,
-        purpose: formData.purpose,
+        valuation_name: `${formData.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
+        valuation_date: new Date().toISOString(), // Full ISO datetime
+        purpose: purpose,
         status: 'draft',
-        title: `${formData.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
         notes: formData.notes,
-        valuation_date: new Date().toISOString().split('T')[0], // Default to today, will be set in assumptions tab
-        // Store notes in assumptions for backward compatibility
+        // Store additional fields for backward compatibility
+        valuation_type: formData.valuationType,
+        title: `${formData.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
         assumptions: {
           notes: formData.notes,
         },
