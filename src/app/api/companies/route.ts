@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import ApiHandler from '@/lib/middleware/apiHandler'
 import {
   CreateCompanySchema,
@@ -176,8 +176,12 @@ export const POST = async (request: NextRequest) => {
       organizationId = membership?.organization_id
     }
 
+    // Use service client to bypass RLS for company creation
+    console.log('Creating company with organization_id:', organizationId)
+    const serviceClient = await createServiceClient()
+
     // Create the company with all available fields and organization
-    const { data: company, error: createError } = await supabase
+    const { data: company, error: createError } = await serviceClient
       .from('companies')
       .insert({
         ...companyData,
@@ -188,6 +192,7 @@ export const POST = async (request: NextRequest) => {
       .single()
 
     if (createError) {
+      console.error('Failed to create company:', createError)
       return NextResponse.json(
         {
           error: 'Database Insert Error',
