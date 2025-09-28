@@ -37,25 +37,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-      }
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchUserOrganizations(session.user.id).catch((err) => {
-        })
-      }
-      setLoading(false)
-    }).catch((err) => {
-      setLoading(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session }, error }) => {
+        if (!mounted) return
+
+        if (error) {
+          console.error('Error getting session:', error)
+        }
+        setSession(session)
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          fetchUserOrganizations(session.user.id).catch((err) => {
+            console.error('Error fetching organizations:', err)
+          })
+        }
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error('Error in getSession:', err)
+        if (mounted) {
+          setLoading(false)
+        }
+      })
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return
+
       setSession(session)
       setUser(session?.user ?? null)
 
@@ -63,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           await fetchUserOrganizations(session.user.id)
         } catch (err) {
+          console.error('Error in auth state change:', err)
         }
       } else {
         setOrganization(null)
@@ -70,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Handle navigation based on auth state
+      // Skip navigation on TOKEN_REFRESHED to prevent issues during hot reload
       if (_event === 'SIGNED_IN') {
         router.push('/dashboard')
       } else if (_event === 'SIGNED_OUT') {
@@ -77,7 +93,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const fetchUserOrganizations = async (userId: string) => {
@@ -140,8 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganization(defaultOrg)
         setOrganizations([defaultOrg])
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const signOut = async () => {

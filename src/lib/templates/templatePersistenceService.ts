@@ -48,7 +48,14 @@ export class TemplatePersistenceService {
       const response = await fetch(`/api/templates?id=${templateId}`)
 
       if (!response.ok) {
-        console.error('Failed to load template:', await response.text())
+        console.error('Failed to load template:', response.status)
+        return null
+      }
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Invalid response type:', contentType)
         return null
       }
 
@@ -68,12 +75,20 @@ export class TemplatePersistenceService {
       const response = await fetch('/api/templates')
 
       if (!response.ok) {
-        console.error('Failed to load templates:', await response.text())
+        console.error('Failed to load templates:', response.status)
+        return []
+      }
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Invalid response type:', contentType)
         return []
       }
 
       const templates = await response.json()
-      return templates
+      // Ensure we return an array
+      return Array.isArray(templates) ? templates : []
     } catch (error) {
       console.error('Failed to load templates:', error)
       return []

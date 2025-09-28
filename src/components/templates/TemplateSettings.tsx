@@ -319,22 +319,29 @@ export function TemplateSettings({ template, onChange }: TemplateSettingsProps) 
         <CardContent>
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{template.sections.length}</div>
+              <div className="text-2xl font-bold text-primary">
+                {(template.sections || []).length}
+              </div>
               <div className="text-sm text-muted-foreground">Sections</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {template.sections.reduce((acc, section) => acc + section.blocks.length, 0)}
+                {(template.sections || []).reduce(
+                  (acc, section) => acc + (section.blocks?.length || 0),
+                  0
+                )}
               </div>
               <div className="text-sm text-muted-foreground">Blocks</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{template.variables.length}</div>
+              <div className="text-2xl font-bold text-primary">
+                {(template.variables || []).length}
+              </div>
               <div className="text-sm text-muted-foreground">Variables</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {template.variables.filter((v) => v.required).length}
+                {(template.variables || []).filter((v) => v.required).length}
               </div>
               <div className="text-sm text-muted-foreground">Required</div>
             </div>

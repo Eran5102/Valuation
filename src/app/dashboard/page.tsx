@@ -78,30 +78,42 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Reset loading state on mount/update
+    let cancelled = false
+
     // Don't wait for orgLoading if authLoading is done
     if (!authLoading) {
       if (user) {
-        fetchDashboardData()
+        fetchDashboardData(cancelled)
       } else {
         // If no user, still set loading to false
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
+    }
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      cancelled = true
     }
   }, [user, currentOrganization, authLoading])
 
-  // Add timeout to prevent infinite loading
+  // Add shorter timeout to prevent infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (loading) {
+      if (loading && !authLoading) {
         console.warn('Dashboard loading timeout - forcing completion')
         setLoading(false)
       }
-    }, 10000) // 10 second timeout
+    }, 5000) // 5 second timeout
 
     return () => clearTimeout(timeout)
-  }, [loading])
+  }, [loading, authLoading])
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (cancelled?: boolean) => {
+    if (cancelled) return
+
     setLoading(true) // Ensure loading is set at start
     try {
       // Handle both first_name and full_name formats
@@ -118,30 +130,33 @@ export default function Dashboard() {
       let reports = []
 
       try {
-        const valuationsRes = await fetch('/api/valuations')
+        const valuationsRes = await fetch(`/api/valuations?t=${Date.now()}`)
         if (valuationsRes.ok) {
           const data = await valuationsRes.json()
           valuations = data.data || []
         }
       } catch (err) {
+        console.error('Error fetching valuations:', err)
       }
 
       try {
-        const companiesRes = await fetch('/api/companies')
+        const companiesRes = await fetch(`/api/companies?t=${Date.now()}`)
         if (companiesRes.ok) {
           const data = await companiesRes.json()
           companies = data.data || []
         }
       } catch (err) {
+        console.error('Error fetching companies:', err)
       }
 
       try {
-        const reportsRes = await fetch('/api/reports')
+        const reportsRes = await fetch(`/api/reports?t=${Date.now()}`)
         if (reportsRes.ok) {
           const data = await reportsRes.json()
           reports = data.data || []
         }
       } catch (err) {
+        console.error('Error fetching reports:', err)
       }
 
       // Calculate real stats based on actual data
@@ -241,6 +256,7 @@ export default function Dashboard() {
         upcomingDeadlines,
       })
     } catch (error) {
+      console.error('Dashboard data fetch error:', error)
       // Set empty stats on error
       setStats({
         myActiveValuations: 0,
@@ -329,7 +345,7 @@ export default function Dashboard() {
 
   // Only show loading spinner if we're still fetching data
   // Don't wait forever for orgLoading
-  if (authLoading || (loading && user)) {
+  if (authLoading || (loading && !authLoading && user)) {
     return (
       <AppLayout>
         <div className="flex h-64 items-center justify-center">
@@ -369,8 +385,8 @@ export default function Dashboard() {
         </div>
 
         {/* PROMINENT Quick Actions - Moved to top */}
-        <div className="rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 shadow-lg">
-          <div className="border-b border-primary/20 px-6 py-4">
+        <div className="border-primary/20 from-primary/5 to-primary/10 rounded-xl border-2 bg-gradient-to-r shadow-lg">
+          <div className="border-primary/20 border-b px-6 py-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-foreground">Get Started</h3>
@@ -399,7 +415,7 @@ export default function Dashboard() {
                 href="/valuations/new"
                 badge="Most used"
                 badgeVariant="default"
-                className="border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5"
+                className="border-primary/30 from-primary/10 to-primary/5 bg-gradient-to-br"
               />
 
               {/* Generate Report */}
@@ -512,7 +528,7 @@ export default function Dashboard() {
                 </div>
                 <Link
                   href="/activity"
-                  className="text-sm font-medium text-accent transition-colors hover:text-accent/80"
+                  className="hover:text-accent/80 text-sm font-medium text-accent transition-colors"
                 >
                   View all
                 </Link>
@@ -564,7 +580,7 @@ export default function Dashboard() {
                 </div>
                 <Link
                   href="/deadlines"
-                  className="text-sm font-medium text-accent transition-colors hover:text-accent/80"
+                  className="hover:text-accent/80 text-sm font-medium text-accent transition-colors"
                 >
                   View all
                 </Link>

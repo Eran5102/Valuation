@@ -78,9 +78,11 @@ export default function TemplateLibraryClient() {
     try {
       setIsLoading(true)
       const loadedTemplates = await TemplatePersistenceService.loadTemplates()
-      setTemplates(loadedTemplates)
+      // Ensure we always set an array
+      setTemplates(Array.isArray(loadedTemplates) ? loadedTemplates : [])
     } catch (error) {
       console.error('Failed to load templates:', error)
+      setTemplates([]) // Set empty array on error
     } finally {
       setIsLoading(false)
     }
@@ -93,10 +95,11 @@ export default function TemplateLibraryClient() {
     }
   }, [searchParams, fetchTemplates])
 
-  const filteredTemplates = templates.filter((template) => {
+  const filteredTemplates = (templates || []).filter((template) => {
+    if (!template) return false
     const matchesSearch =
-      template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (template.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (template.description?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory
     return matchesSearch && matchesCategory
   })
@@ -323,98 +326,101 @@ export default function TemplateLibraryClient() {
 
         {/* Templates Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTemplates.map((template) => (
-            <Card key={template.id} className="group relative">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <FileText className="h-8 w-8 text-primary" />
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="opacity-0 group-hover:opacity-100"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleTemplateAction('use', template)}>
-                        <Calculator className="mr-2 h-4 w-4" />
-                        Use Template
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleTemplateAction('edit', template)}>
-                        <Edit2 className="mr-2 h-4 w-4" />
-                        Edit Template
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleTemplateAction('preview', template)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Preview
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleTemplateAction('duplicate', template)}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleTemplateAction('delete', template)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <CardTitle className="mt-4">{template.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4 text-sm text-muted-foreground">{template.description}</p>
-                <div className="mb-4 flex flex-wrap gap-1">
-                  {template.metadata?.tags?.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      <Tag className="mr-1 h-2 w-2" />
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center">
-                    <User className="mr-1 h-3 w-3" />
-                    {template.metadata?.author}
+          {filteredTemplates &&
+            filteredTemplates.map((template) => (
+              <Card key={template.id} className="group relative">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <FileText className="h-8 w-8 text-primary" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleTemplateAction('use', template)}>
+                          <Calculator className="mr-2 h-4 w-4" />
+                          Use Template
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleTemplateAction('edit', template)}>
+                          <Edit2 className="mr-2 h-4 w-4" />
+                          Edit Template
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleTemplateAction('preview', template)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Preview
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleTemplateAction('duplicate', template)}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleTemplateAction('delete', template)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <div className="flex items-center">
-                    <Calendar className="mr-1 h-3 w-3" />
-                    {template.metadata?.updatedAt &&
-                      new Date(template.metadata.updatedAt).toLocaleDateString()}
+                  <CardTitle className="mt-4">{template.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="mb-4 text-sm text-muted-foreground">{template.description}</p>
+                  <div className="mb-4 flex flex-wrap gap-1">
+                    {template.metadata?.tags?.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        <Tag className="mr-1 h-2 w-2" />
+                        {tag}
+                      </Badge>
+                    ))}
                   </div>
-                </div>
-                <div className="mt-4 flex space-x-2">
-                  <Button
-                    className="flex-1"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleTemplateAction('use', template)}
-                  >
-                    <Building2 className="mr-2 h-3 w-3" />
-                    Use
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleTemplateAction('edit', template)}
-                  >
-                    <Edit2 className="mr-2 h-3 w-3" />
-                    Edit
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center">
+                      <User className="mr-1 h-3 w-3" />
+                      {template.metadata?.author}
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="mr-1 h-3 w-3" />
+                      {template.metadata?.updatedAt &&
+                        new Date(template.metadata.updatedAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="mt-4 flex space-x-2">
+                    <Button
+                      className="flex-1"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTemplateAction('use', template)}
+                    >
+                      <Building2 className="mr-2 h-3 w-3" />
+                      Use
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTemplateAction('edit', template)}
+                    >
+                      <Edit2 className="mr-2 h-3 w-3" />
+                      Edit
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
         </div>
 
-        {filteredTemplates.length === 0 && (
+        {filteredTemplates && filteredTemplates.length === 0 && (
           <div className="py-12 text-center">
             <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">No templates found</h3>

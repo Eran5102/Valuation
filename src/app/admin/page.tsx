@@ -70,21 +70,30 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!permissionsLoading && !isSuperAdmin) {
-      router.push('/dashboard')
-    } else if (!permissionsLoading && isSuperAdmin) {
-      fetchSystemStats()
+    // Always refetch when permissions are loaded
+    if (!permissionsLoading) {
+      if (!isSuperAdmin) {
+        router.push('/dashboard')
+      } else {
+        // Force refetch on hot reload by always fetching when isSuperAdmin is confirmed
+        fetchSystemStats()
+      }
     }
   }, [isSuperAdmin, permissionsLoading, router])
 
   const fetchSystemStats = async () => {
+    setLoading(true)
     try {
-      const response = await fetch('/api/admin/stats')
+      // Add cache buster to prevent stale data
+      const response = await fetch(`/api/admin/stats?t=${Date.now()}`)
       if (response.ok) {
         const data = await response.json()
         setStats(data)
+      } else {
+        console.error('Failed to fetch admin stats:', response.status)
       }
     } catch (error) {
+      console.error('Error fetching admin stats:', error)
     } finally {
       setLoading(false)
     }

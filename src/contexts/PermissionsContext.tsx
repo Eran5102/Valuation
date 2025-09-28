@@ -91,7 +91,10 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (user && organization) {
+    // Reset state when dependencies change
+    setLoading(true)
+
+    if (user) {
       fetchUserPermissions()
     } else {
       setRole(null)
@@ -103,8 +106,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 
   const fetchUserPermissions = async () => {
     try {
-      // Fetch user permissions from the API
-      const response = await fetch('/api/user/permissions')
+      // Add cache buster to prevent stale data during hot reload
+      const response = await fetch(`/api/user/permissions?t=${Date.now()}`)
       if (response.ok) {
         const data = await response.json()
         setRole(data.role as UserRole)
@@ -118,9 +121,17 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         } else {
           setPermissions([])
         }
+      } else {
+        // Handle non-OK response
+        setRole(null)
+        setPermissions([])
+        setIsSuperAdmin(false)
       }
     } catch (error) {
+      console.error('Error fetching permissions:', error)
+      setRole(null)
       setPermissions([])
+      setIsSuperAdmin(false)
     } finally {
       setLoading(false)
     }
@@ -160,8 +171,7 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
           )
         }
       }
-    } catch (error) {
-    }
+    } catch (error) {}
 
     return false
   }
