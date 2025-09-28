@@ -599,9 +599,9 @@ export function SortableBlock({
             handleKeyDown,
             tempListItems,
             setTempListItems,
-            updateTempListItem,
-            addTempListItem,
-            removeTempListItem,
+            updateTempListItem: updateListItem,
+            addTempListItem: addListItem,
+            removeTempListItem: removeListItem,
           })
       }
     }
