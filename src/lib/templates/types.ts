@@ -29,6 +29,16 @@ export type BlockType =
   | 'glossary'
   | 'signatureBlock'
   | 'footer'
+  | 'capitalStructureTable'
+  | 'rightsPreferencesTable'
+  | 'opmBreakpointsTable'
+  | 'dlomTable'
+  | 'comparableCompaniesTable'
+  | 'transactionCompsTable'
+  | 'financialProjectionsTable'
+  | 'weightedAverageTable'
+  | 'sensitivityAnalysisTable'
+  | 'optionPoolTable'
 export type VariableType = 'text' | 'number' | 'date' | 'currency' | 'percentage' | 'boolean'
 
 export interface TemplateVariable {

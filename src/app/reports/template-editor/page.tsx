@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, FileText, Calculator, Building2 } from 'lucide-reac
 import AppLayout from '@/components/layout/AppLayout'
 import type { ReportTemplate, TemplateVariable } from '@/lib/templates/types'
 import draftService from '@/services/draftService'
+import { TemplatePersistenceService } from '@/lib/templates/templatePersistenceService'
 
 // Create a sample template based on the 409A template structure
 const createSampleTemplate = (templateId?: string, templateName?: string): ReportTemplate => {
@@ -362,8 +363,7 @@ function TemplateEditorContent() {
             author: 'Bridgeland Advisors',
           }
           setTemplateInfo(templateData)
-        } catch (error) {
-        }
+        } catch (error) {}
       }
 
       // Load valuation info if valuationId exists
@@ -380,8 +380,7 @@ function TemplateEditorContent() {
               clientName: client?.name || 'Unknown Client',
             })
           }
-        } catch (error) {
-        }
+        } catch (error) {}
       }
 
       // Simulate loading template data
@@ -400,15 +399,20 @@ function TemplateEditorContent() {
 
   const handleSave = async (updatedTemplate: ReportTemplate) => {
     try {
-      // In a real implementation, this would save to an API
+      // Save to Supabase database using TemplatePersistenceService
+      const result = await TemplatePersistenceService.saveTemplate(updatedTemplate)
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Show success message or redirect
-      alert('Template saved successfully!')
+      if (result.success && result.id) {
+        console.log('Template saved successfully')
+        // Update template with new ID if it was a new template
+        if (!updatedTemplate.id || updatedTemplate.id.startsWith('template_')) {
+          setTemplate({ ...updatedTemplate, id: result.id })
+        }
+      } else {
+        console.error('Failed to save template:', result.error)
+      }
     } catch (error) {
-      alert('Failed to save template. Please try again.')
+      console.error('Failed to save template:', error)
     }
   }
 
@@ -444,7 +448,7 @@ function TemplateEditorContent() {
     <AppLayout>
       <div className="h-full bg-background">
         {/* Enhanced Header with Context */}
-        <div className="border-b border-border bg-card/50">
+        <div className="bg-card/50 border-b border-border">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -465,7 +469,7 @@ function TemplateEditorContent() {
                   {/* Template Info */}
                   {(templateInfo || templateId) && (
                     <div className="flex items-center space-x-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                      <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
                         <FileText className="h-5 w-5 text-primary" />
                       </div>
                       <div>

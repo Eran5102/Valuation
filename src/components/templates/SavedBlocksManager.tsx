@@ -48,6 +48,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils'
 import type { TemplateBlock } from '@/lib/templates/types'
 import savedBlocksServiceDB, { type SavedBlock } from '@/lib/templates/savedBlocksServiceDB'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import { RichTextEditor } from './RichTextEditor'
 
 interface SavedBlocksManagerProps {
   onBlockSelect?: (block: TemplateBlock) => void
@@ -216,11 +218,18 @@ export function SavedBlocksManager({
   const [selectedCategoryForAction, setSelectedCategoryForAction] = useState('')
   const [newCategoryName, setNewCategoryName] = useState('')
 
+  // Delete confirmation states
+  const [deleteBlockConfirmOpen, setDeleteBlockConfirmOpen] = useState(false)
+  const [blockToDelete, setBlockToDelete] = useState<SavedBlock | null>(null)
+  const [deleteCategoryConfirmOpen, setDeleteCategoryConfirmOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
+
   // Form states
   const [blockName, setBlockName] = useState('')
   const [blockDescription, setBlockDescription] = useState('')
   const [blockCategory, setBlockCategory] = useState('')
   const [blockTags, setBlockTags] = useState('')
+  const [blockContent, setBlockContent] = useState('')
 
   useEffect(() => {
     loadSavedBlocks()
@@ -274,14 +283,18 @@ export function SavedBlocksManager({
       setBlockDescription('')
       setBlockCategory('')
       setBlockTags('')
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const handleEditBlock = async () => {
     if (!editingBlock || !blockName.trim()) return
 
     try {
+      const updatedBlock = {
+        ...editingBlock.block,
+        content: blockContent,
+      }
+
       const updated = await savedBlocksServiceDB.updateBlock(editingBlock.id, {
         name: blockName.trim(),
         description: blockDescription.trim(),
@@ -290,6 +303,7 @@ export function SavedBlocksManager({
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
+        block: updatedBlock,
       })
 
       if (updated) {
@@ -300,19 +314,26 @@ export function SavedBlocksManager({
       setShowEditDialog(false)
       setEditingBlock(null)
       resetForm()
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
-  const handleDeleteBlock = async (block: SavedBlock) => {
-    if (!confirm(`Are you sure you want to delete "${block.name}"?`)) return
+  const handleDeleteBlock = (block: SavedBlock) => {
+    setBlockToDelete(block)
+    setDeleteBlockConfirmOpen(true)
+  }
+
+  const confirmDeleteBlock = async () => {
+    if (!blockToDelete) return
 
     try {
-      const deleted = await savedBlocksServiceDB.deleteBlock(block.id)
+      const deleted = await savedBlocksServiceDB.deleteBlock(blockToDelete.id)
       if (deleted) {
-        setSavedBlocks((prev) => prev.filter((b) => b.id !== block.id))
+        setSavedBlocks((prev) => prev.filter((b) => b.id !== blockToDelete.id))
       }
     } catch (error) {
+    } finally {
+      setDeleteBlockConfirmOpen(false)
+      setBlockToDelete(null)
     }
   }
 
@@ -327,8 +348,7 @@ export function SavedBlocksManager({
       })
 
       setSavedBlocks((prev) => [duplicated, ...prev])
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const openEditDialog = (block: SavedBlock) => {
@@ -337,6 +357,10 @@ export function SavedBlocksManager({
     setBlockDescription(block.description || '')
     setBlockCategory(block.category)
     setBlockTags(block.tags.join(', '))
+    // Keep content as-is for proper editing
+    setBlockContent(
+      typeof block.block.content === 'string' ? block.block.content : block.block.content
+    )
     setShowEditDialog(true)
   }
 
@@ -345,6 +369,7 @@ export function SavedBlocksManager({
     setBlockDescription('')
     setBlockCategory('')
     setBlockTags('')
+    setBlockContent('')
   }
 
   // Category management functions
@@ -353,7 +378,7 @@ export function SavedBlocksManager({
 
     const categoryExists = categories.includes(newCategoryName.trim())
     if (categoryExists) {
-      alert('Category already exists')
+      console.log('Category already exists')
       return
     }
 
@@ -366,12 +391,14 @@ export function SavedBlocksManager({
     if (!newCategoryName.trim() || !selectedCategoryForAction) return
 
     // Update all blocks with the old category name
-    const blocksToUpdate = savedBlocks.filter((block) => block.category === selectedCategoryForAction)
+    const blocksToUpdate = savedBlocks.filter(
+      (block) => block.category === selectedCategoryForAction
+    )
 
     for (const block of blocksToUpdate) {
       await savedBlocksServiceDB.updateBlock(block.id, {
         ...block,
-        category: newCategoryName.trim()
+        category: newCategoryName.trim(),
       })
     }
 
@@ -383,20 +410,22 @@ export function SavedBlocksManager({
     setSelectedCategoryForAction('')
   }
 
-  const handleDeleteCategory = async () => {
+  const handleDeleteCategory = () => {
     if (!selectedCategoryForAction) return
+    setCategoryToDelete(selectedCategoryForAction)
+    setDeleteCategoryConfirmOpen(true)
+  }
 
-    if (!confirm(`Delete category "${selectedCategoryForAction}"? Blocks will be moved to "Uncategorized".`)) {
-      return
-    }
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return
 
     // Move blocks to Uncategorized
-    const blocksToUpdate = savedBlocks.filter((block) => block.category === selectedCategoryForAction)
+    const blocksToUpdate = savedBlocks.filter((block) => block.category === categoryToDelete)
 
     for (const block of blocksToUpdate) {
       await savedBlocksServiceDB.updateBlock(block.id, {
         ...block,
-        category: 'Uncategorized'
+        category: 'Uncategorized',
       })
     }
 
@@ -405,6 +434,8 @@ export function SavedBlocksManager({
 
     setShowCategoryDialog(false)
     setSelectedCategoryForAction('')
+    setDeleteCategoryConfirmOpen(false)
+    setCategoryToDelete(null)
   }
 
   const toggleCategory = (category: string) => {
@@ -529,25 +560,27 @@ export function SavedBlocksManager({
           ) : (
             Object.entries(groupedBlocks).map(([category, blocks]) => (
               <div key={category}>
-                <button
-                  onClick={() => toggleCategory(category)}
-                  className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm font-medium transition-colors hover:bg-accent"
-                >
-                  {expandedCategories.has(category) || searchTerm !== '' ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                  <Folder className="h-4 w-4" />
-                  <span className="flex-1">{category}</span>
-                  {blocks.length > 0 && (
-                    <Badge variant="secondary" className="mr-2 text-xs">
-                      {blocks.length}
-                    </Badge>
-                  )}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => toggleCategory(category)}
+                    className="flex flex-1 items-center gap-2 rounded-md p-2 text-left text-sm font-medium transition-colors hover:bg-accent"
+                  >
+                    {expandedCategories.has(category) || searchTerm !== '' ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    <Folder className="h-4 w-4" />
+                    <span className="flex-1">{category}</span>
+                    {blocks.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {blocks.length}
+                      </Badge>
+                    )}
+                  </button>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                         <MoreVertical className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -580,7 +613,7 @@ export function SavedBlocksManager({
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </button>
+                </div>
 
                 {(expandedCategories.has(category) || searchTerm !== '') && (
                   <div className="mt-1 space-y-2 pl-6">
@@ -733,6 +766,22 @@ export function SavedBlocksManager({
                 placeholder="tag1, tag2, tag3"
               />
             </div>
+
+            <div>
+              <Label htmlFor="edit-content">Content</Label>
+              <div className="mt-1 rounded-md border">
+                {editingBlock && (
+                  <RichTextEditor
+                    value={blockContent}
+                    onChange={setBlockContent}
+                    placeholder="Edit block content... Use variables like {{company.name}}"
+                  />
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                You can use template variables like {`{{company.name}}`} in the content
+              </p>
+            </div>
           </div>
 
           <DialogFooter>
@@ -758,7 +807,8 @@ export function SavedBlocksManager({
             <DialogDescription>
               {categoryAction === 'create' && 'Add a new category to organize your saved blocks'}
               {categoryAction === 'rename' && 'Enter a new name for this category'}
-              {categoryAction === 'delete' && 'Blocks in this category will be moved to "Uncategorized"'}
+              {categoryAction === 'delete' &&
+                'Blocks in this category will be moved to "Uncategorized"'}
             </DialogDescription>
           </DialogHeader>
 
@@ -808,6 +858,32 @@ export function SavedBlocksManager({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Block Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteBlockConfirmOpen}
+        onOpenChange={setDeleteBlockConfirmOpen}
+        title="Delete Block"
+        description={`Are you sure you want to delete "${blockToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={confirmDeleteBlock}
+        icon="delete"
+      />
+
+      {/* Delete Category Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteCategoryConfirmOpen}
+        onOpenChange={setDeleteCategoryConfirmOpen}
+        title="Delete Category"
+        description={`Delete category "${categoryToDelete}"? Blocks will be moved to "Uncategorized".`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={confirmDeleteCategory}
+        icon="delete"
+      />
     </Card>
   )
 }

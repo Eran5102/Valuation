@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { TemplateVariable } from '@/lib/templates/types'
 import { fieldMappingService } from '@/lib/templates/fieldMappingService'
-import { toast } from 'sonner'
 
 interface SimpleFieldPickerProps {
   useFieldMappings?: boolean
@@ -79,14 +78,14 @@ export function SimpleFieldPicker({
       if (filteredVars.length > 0) {
         filtered[category] = filteredVars
         // Auto-expand categories with search results
-        setExpandedCategories(prev => new Set([...prev, category]))
+        setExpandedCategories((prev) => new Set([...prev, category]))
       }
     })
     return filtered
   }, [categorizedVariables, searchTerm])
 
   const toggleCategory = (category: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(category)) {
         newSet.delete(category)
@@ -103,7 +102,6 @@ export function SimpleFieldPicker({
     setCopiedField(variable.id)
     setTimeout(() => setCopiedField(null), 2000)
     onFieldSelect?.(variable)
-    toast.success(`Copied {{${variable.id}}} to clipboard`)
   }
 
   const refreshFields = () => {
@@ -111,9 +109,8 @@ export function SimpleFieldPicker({
     try {
       const mappedFields = fieldMappingService.getMappedFieldsAsVariables()
       setMappedVariables(mappedFields)
-      toast.success('Fields refreshed')
     } catch (error) {
-      toast.error('Failed to refresh fields')
+      console.error('Failed to refresh fields:', error)
     } finally {
       setIsLoading(false)
     }
@@ -145,7 +142,7 @@ export function SimpleFieldPicker({
             onClick={refreshFields}
             disabled={isLoading}
           >
-            <RefreshCw className={cn("h-3 w-3", isLoading && "animate-spin")} />
+            <RefreshCw className={cn('h-3 w-3', isLoading && 'animate-spin')} />
           </Button>
           <Badge variant="secondary" className="ml-auto text-xs">
             {mappedVariables.length}
@@ -188,7 +185,7 @@ export function SimpleFieldPicker({
                 {vars.map((variable) => (
                   <div
                     key={variable.id}
-                    className="group flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-accent/50"
+                    className="hover:bg-accent/50 group flex items-center gap-2 rounded-md p-2 transition-colors"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">

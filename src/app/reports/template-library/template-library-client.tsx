@@ -7,6 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { FormDialog } from '@/components/ui/modal-patterns'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -44,7 +52,7 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import type { ReportTemplate, TemplateCategory } from '@/lib/templates/types'
-import { toast } from 'sonner'
+import { TemplatePersistenceService } from '@/lib/templates/templatePersistenceService'
 
 // Templates will be fetched from the API
 
@@ -56,6 +64,8 @@ export default function TemplateLibraryClient() {
   const [templates, setTemplates] = useState<ReportTemplate[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [templateToDelete, setTemplateToDelete] = useState<ReportTemplate | null>(null)
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     description: '',
@@ -63,18 +73,14 @@ export default function TemplateLibraryClient() {
     tags: '',
   })
 
-  // Fetch templates from API
+  // Fetch templates from database
   const fetchTemplates = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/report-templates')
-      if (!response.ok) {
-        throw new Error('Failed to fetch templates')
-      }
-      const data = await response.json()
-      setTemplates(data)
+      const loadedTemplates = await TemplatePersistenceService.loadTemplates()
+      setTemplates(loadedTemplates)
     } catch (error) {
-      toast.error('Failed to load templates')
+      console.error('Failed to load templates:', error)
     } finally {
       setIsLoading(false)
     }
@@ -121,11 +127,11 @@ export default function TemplateLibraryClient() {
 
       const createdTemplate = await response.json()
       setTemplates([...templates, createdTemplate])
-      toast.success('Template created successfully')
+      console.log('Template created successfully')
       setIsCreateOpen(false)
       setNewTemplate({ name: '', description: '', category: 'financial', tags: '' })
     } catch (error) {
-      toast.error('Failed to create template')
+      console.error('Failed to create template')
     }
   }
 
@@ -150,7 +156,8 @@ export default function TemplateLibraryClient() {
         handleDuplicateTemplate(template)
         break
       case 'delete':
-        handleDeleteTemplate(template)
+        setTemplateToDelete(template)
+        setDeleteDialogOpen(true)
         break
     }
   }
@@ -169,30 +176,29 @@ export default function TemplateLibraryClient() {
 
       const duplicatedTemplate = await response.json()
       setTemplates([...templates, duplicatedTemplate])
-      toast.success('Template duplicated successfully')
+      console.log('Template duplicated successfully')
     } catch (error) {
-      toast.error('Failed to duplicate template')
+      console.error('Failed to duplicate template')
     }
   }
 
-  const handleDeleteTemplate = async (template: ReportTemplate) => {
-    if (!confirm(`Are you sure you want to delete "${template.name}"?`)) {
-      return
-    }
+  const handleDeleteTemplate = async () => {
+    if (!templateToDelete) return
 
     try {
-      const response = await fetch(`/api/report-templates?id=${template.id}`, {
-        method: 'DELETE',
-      })
+      const result = await TemplatePersistenceService.deleteTemplate(templateToDelete.id)
 
-      if (!response.ok) {
-        throw new Error('Failed to delete template')
+      if (result.success) {
+        setTemplates(templates.filter((t) => t.id !== templateToDelete.id))
+        console.log('Template deleted successfully')
+      } else {
+        console.error('Failed to delete template:', result.error)
       }
-
-      setTemplates(templates.filter((t) => t.id !== template.id))
-      toast.success('Template deleted successfully')
     } catch (error) {
-      toast.error('Failed to delete template')
+      console.error('Failed to delete template:', error)
+    } finally {
+      setDeleteDialogOpen(false)
+      setTemplateToDelete(null)
     }
   }
 
@@ -201,7 +207,7 @@ export default function TemplateLibraryClient() {
       <AppLayout>
         <div className="container mx-auto flex h-[calc(100vh-200px)] items-center justify-center">
           <div className="text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             <p className="text-muted-foreground">Loading templates...</p>
           </div>
         </div>
@@ -420,6 +426,34 @@ export default function TemplateLibraryClient() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Template</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{templateToDelete?.name}"? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setTemplateToDelete(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteTemplate}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

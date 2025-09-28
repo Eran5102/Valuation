@@ -1,6 +1,7 @@
 export * from './types'
 export * from './core'
 export { standard409ATemplate } from './409a-template'
+export { value8Template409A } from './value8-409a-template'
 export { default as TemplateEngine } from './core'
 
 // Sample data for testing and preview
@@ -74,6 +75,8 @@ export function getTemplateById(id: string) {
   switch (id) {
     case '409a-standard-v1':
       return standard409ATemplate
+    case 'value8-409a-comprehensive':
+      return value8Template409A
     default:
       return null
   }
@@ -81,5 +84,5 @@ export function getTemplateById(id: string) {
 
 // Helper function to get all available templates
 export function getAllTemplates() {
-  return [standard409ATemplate]
+  return [standard409ATemplate, value8Template409A]
 }

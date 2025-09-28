@@ -1,0 +1,197 @@
+/* Template Preview Styles - Visual page break indicators */
+
+/* List styles for proper bullet and number display */
+.template-preview-content ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
+}
+
+.template-preview-content ul ul {
+  list-style-type: circle !important;
+}
+
+.template-preview-content ul ul ul {
+  list-style-type: square !important;
+}
+
+.template-preview-content ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
+}
+
+.template-preview-content ol ol {
+  list-style-type: lower-alpha !important;
+}
+
+.template-preview-content ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+.template-preview-content li {
+  display: list-item !important;
+  margin: 0.25em 0 !important;
+}
+
+/* Ensure rich text editor content preserves formatting */
+.template-preview-content p,
+.template-preview-content div {
+  margin: 0.5em 0;
+}
+
+.template-preview-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.template-preview-content pre {
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+.template-preview-content code {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+/* Page break block visualization */
+.template-preview-content .page-break {
+  position: relative;
+  height: 60px !important;
+  margin: 40px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+}
+
+.template-preview-content .page-break::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #cbd5e1 15%, #cbd5e1 85%, transparent 100%);
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.template-preview-content .page-break::after {
+  content: 'Page Break';
+  position: relative;
+  background: white;
+  padding: 6px 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  z-index: 2;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+/* Section page break indicators */
+.template-preview-content .template-section.page-break-after {
+  position: relative;
+  padding-bottom: 80px !important;
+}
+
+.template-preview-content .template-section.page-break-after::after {
+  content: 'Page Break After Section';
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 6px 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  z-index: 2;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.template-preview-content .template-section.page-break-after::before {
+  content: '';
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #cbd5e1 15%, #cbd5e1 85%, transparent 100%);
+  z-index: 1;
+}
+
+.template-preview-content .template-section.page-break-before {
+  position: relative;
+  padding-top: 80px !important;
+}
+
+.template-preview-content .template-section.page-break-before::before {
+  content: 'Page Break Before Section';
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 6px 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  z-index: 2;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+/* Print styles - hide visual indicators */
+@media print {
+  .template-preview-content .page-break::before,
+  .template-preview-content .page-break::after,
+  .template-preview-content .template-section.page-break-after::before,
+  .template-preview-content .template-section.page-break-after::after,
+  .template-preview-content .template-section.page-break-before::before {
+    display: none !important;
+  }
+
+  .template-preview-content .page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+    height: 0 !important;
+    visibility: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .template-preview-content .template-section.page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+    padding-bottom: 0 !important;
+  }
+
+  .template-preview-content .template-section.page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+    padding-top: 0 !important;
+  }
+}

@@ -11,7 +11,7 @@ import {
   ChevronRight,
   RefreshCw,
   GripVertical,
-  Type
+  Type,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,6 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { TemplateVariable } from '@/lib/templates/types'
 import { fieldMappingService } from '@/lib/templates/fieldMappingService'
-import { toast } from 'sonner'
 
 interface DraggableFieldProps {
   variable: TemplateVariable
@@ -54,16 +53,14 @@ function DraggableField({ variable, onCopy, isCopied }: DraggableFieldProps) {
     <div
       ref={setNodeRef}
       className={`group flex items-center gap-2 rounded-md p-2 transition-all ${
-        isDragging
-          ? 'opacity-50 shadow-lg'
-          : 'hover:bg-accent/50 hover:shadow-sm'
+        isDragging ? 'opacity-50 shadow-lg' : 'hover:bg-accent/50 hover:shadow-sm'
       }`}
     >
       {/* Drag Handle */}
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab touch-none rounded p-0.5 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100 active:cursor-grabbing"
+        className="cursor-grab touch-none rounded p-0.5 opacity-0 transition-opacity hover:bg-muted active:cursor-grabbing group-hover:opacity-100"
         title="Drag to canvas to add field"
       >
         <GripVertical className="h-3 w-3 text-muted-foreground" />
@@ -79,9 +76,7 @@ function DraggableField({ variable, onCopy, isCopied }: DraggableFieldProps) {
           )}
         </div>
         <div className="mt-0.5 flex items-center gap-2">
-          <code className="text-xs text-muted-foreground">
-            {`{{${variable.id}}}`}
-          </code>
+          <code className="text-xs text-muted-foreground">{`{{${variable.id}}}`}</code>
           <Badge
             variant="secondary"
             className={cn('px-1 py-0 text-xs', getTypeColor(variable.type))}
@@ -100,11 +95,7 @@ function DraggableField({ variable, onCopy, isCopied }: DraggableFieldProps) {
         className="opacity-0 transition-opacity group-hover:opacity-100"
         onClick={onCopy}
       >
-        {isCopied ? (
-          <Check className="h-4 w-4 text-green-600" />
-        ) : (
-          <Copy className="h-4 w-4" />
-        )}
+        {isCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
       </Button>
     </div>
   )
@@ -184,14 +175,14 @@ export function DraggableFieldPicker({
       if (filteredVars.length > 0) {
         filtered[category] = filteredVars
         // Auto-expand categories with search results
-        setExpandedCategories(prev => new Set([...prev, category]))
+        setExpandedCategories((prev) => new Set([...prev, category]))
       }
     })
     return filtered
   }, [categorizedVariables, searchTerm])
 
   const toggleCategory = (category: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(category)) {
         newSet.delete(category)
@@ -208,7 +199,6 @@ export function DraggableFieldPicker({
     setCopiedField(variable.id)
     setTimeout(() => setCopiedField(null), 2000)
     onFieldSelect?.(variable)
-    toast.success(`Copied {{${variable.id}}} to clipboard`)
   }
 
   const refreshFields = () => {
@@ -216,9 +206,8 @@ export function DraggableFieldPicker({
     try {
       const mappedFields = fieldMappingService.getMappedFieldsAsVariables()
       setMappedVariables(mappedFields)
-      toast.success('Fields refreshed')
     } catch (error) {
-      toast.error('Failed to refresh fields')
+      console.error('Failed to refresh fields:', error)
     } finally {
       setIsLoading(false)
     }
@@ -238,7 +227,7 @@ export function DraggableFieldPicker({
             onClick={refreshFields}
             disabled={isLoading}
           >
-            <RefreshCw className={cn("h-3 w-3", isLoading && "animate-spin")} />
+            <RefreshCw className={cn('h-3 w-3', isLoading && 'animate-spin')} />
           </Button>
           <Badge variant="secondary" className="ml-auto text-xs">
             {mappedVariables.length}

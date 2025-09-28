@@ -36,7 +36,6 @@ import {
   FileText,
   User,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import type { ReportTemplate } from '@/lib/templates/types'
 
 interface TemplateVersion {
@@ -80,7 +79,7 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
   const [versionType, setVersionType] = useState<'major' | 'minor' | 'patch'>('patch')
   const [versionNotes, setVersionNotes] = useState('')
 
-  const currentVersion = template.version || '1.0.0'
+  const currentVersion = String(template.version || '1.0.0')
   const [major, minor, patch] = currentVersion.split('.').map(Number)
 
   const getNextVersion = (type: 'major' | 'minor' | 'patch') => {
@@ -101,7 +100,8 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
       id: `v_${Date.now()}`,
       version: getNextVersion(versionType),
       type: versionType,
-      changes: versionNotes || `${versionType.charAt(0).toUpperCase() + versionType.slice(1)} update`,
+      changes:
+        versionNotes || `${versionType.charAt(0).toUpperCase() + versionType.slice(1)} update`,
       author: template.metadata?.author || 'Unknown',
       createdAt: new Date().toISOString(),
       template: { ...template },
@@ -127,24 +127,24 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
     onChange(updatedTemplate)
     setShowCreateDialog(false)
     setVersionNotes('')
-    toast.success(`Version ${newVersion.version} created successfully`)
+    // Version created successfully
   }, [template, versionType, versionNotes, versions, currentVersion, onChange])
 
   const loadVersion = (version: TemplateVersion) => {
     onChange(version.template)
-    toast.success(`Loaded version ${version.version}`)
+    // Version loaded successfully
   }
 
   const deleteVersion = (versionId: string) => {
     if (versions.length <= 1) {
-      toast.error('Cannot delete the last version')
+      // Cannot delete the last version
       return
     }
 
     const updatedVersions = versions.filter((v) => v.id !== versionId)
     setVersions(updatedVersions)
     localStorage.setItem(`template-versions-${template.id}`, JSON.stringify(updatedVersions))
-    toast.success('Version deleted')
+    // Version deleted
   }
 
   const compareVersions = (v1: TemplateVersion, v2: TemplateVersion) => {
@@ -172,9 +172,7 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
             v{currentVersion}
           </Badge>
         </CardTitle>
-        <CardDescription>
-          Manage template versions and track changes over time
-        </CardDescription>
+        <CardDescription>Manage template versions and track changes over time</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Create New Version */}
@@ -265,18 +263,13 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
                   <div
                     key={version.id}
                     className={`rounded-lg border p-3 transition-colors ${
-                      isCurrent
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
+                      isCurrent ? 'bg-primary/5 border-primary' : 'hover:bg-muted/50 border-border'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <Badge
-                            variant={isCurrent ? 'default' : 'outline'}
-                            className="text-xs"
-                          >
+                          <Badge variant={isCurrent ? 'default' : 'outline'} className="text-xs">
                             v{version.version}
                           </Badge>
                           {isCurrent && (
@@ -291,8 +284,8 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
                               version.type === 'major'
                                 ? 'border-red-500 text-red-500'
                                 : version.type === 'minor'
-                                ? 'border-yellow-500 text-yellow-500'
-                                : 'border-green-500 text-green-500'
+                                  ? 'border-yellow-500 text-yellow-500'
+                                  : 'border-green-500 text-green-500'
                             }`}
                           >
                             {version.type}
@@ -331,7 +324,7 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
                               navigator.clipboard.writeText(
                                 JSON.stringify(version.template, null, 2)
                               )
-                              toast.success('Template JSON copied to clipboard')
+                              // Template JSON copied to clipboard
                             }}
                           >
                             <Copy className="mr-2 h-4 w-4" />
@@ -359,7 +352,7 @@ export function TemplateVersioning({ template, onChange }: TemplateVersioningPro
         </div>
 
         {/* Version Info */}
-        <div className="rounded-lg bg-muted/50 p-3">
+        <div className="bg-muted/50 rounded-lg p-3">
           <p className="text-xs text-muted-foreground">
             <strong>Tip:</strong> Use <strong>Major</strong> versions for breaking changes,{' '}
             <strong>Minor</strong> for new features, and <strong>Patch</strong> for bug fixes.

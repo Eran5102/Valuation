@@ -179,8 +179,17 @@ export function RichTextEditor({
   // Handle paste to preserve formatting
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const text = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain')
-    document.execCommand('insertHTML', false, text)
+    const html = e.clipboardData.getData('text/html')
+    const text = e.clipboardData.getData('text/plain')
+
+    // If HTML is available and contains formatting, use it
+    // Otherwise use plain text to avoid pasting unwanted styles
+    if (html && (html.includes('<b>') || html.includes('<i>') || html.includes('<u>'))) {
+      document.execCommand('insertHTML', false, html)
+    } else {
+      // Insert plain text but keep current formatting
+      document.execCommand('insertText', false, text)
+    }
     handleContentChange()
   }
 
@@ -221,11 +230,11 @@ export function RichTextEditor({
   const handleFontFamilyChange = (family: string) => {
     editorRef.current?.focus()
     const fontMap: Record<string, string> = {
-      'default': 'inherit',
-      'serif': 'Georgia, serif',
-      'sans': 'Arial, sans-serif',
-      'mono': 'Courier New, monospace',
-      'cursive': 'Comic Sans MS, cursive',
+      default: 'inherit',
+      serif: 'Georgia, serif',
+      sans: 'Arial, sans-serif',
+      mono: 'Courier New, monospace',
+      cursive: 'Comic Sans MS, cursive',
     }
     execCommand('fontName', fontMap[family] || family)
     setFontFamily(family)
@@ -255,14 +264,14 @@ export function RichTextEditor({
   }
 
   return (
-    <div className={cn('border rounded-lg overflow-hidden bg-background', className)}>
+    <div className={cn('overflow-hidden rounded-lg border bg-background', className)}>
       {/* Toolbar */}
-      <div className="border-b bg-muted p-2 space-y-2">
+      <div className="space-y-2 border-b bg-muted p-2">
         {/* First row - Font controls */}
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1">
           {/* Font Family */}
           <Select value={fontFamily} onValueChange={handleFontFamilyChange}>
-            <SelectTrigger className="w-32 h-8">
+            <SelectTrigger className="h-8 w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -276,7 +285,7 @@ export function RichTextEditor({
 
           {/* Font Size */}
           <Select value={fontSize} onValueChange={handleFontSizeChange}>
-            <SelectTrigger className="w-20 h-8">
+            <SelectTrigger className="h-8 w-20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -299,7 +308,7 @@ export function RichTextEditor({
 
           {/* Heading Styles */}
           <Select value={heading} onValueChange={handleHeadingChange}>
-            <SelectTrigger className="w-28 h-8">
+            <SelectTrigger className="h-8 w-28">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -347,12 +356,31 @@ export function RichTextEditor({
                   />
                 </div>
                 <div className="grid grid-cols-8 gap-1">
-                  {['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef',
-                    '#f3f3f3', '#ffffff', '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff',
-                    '#4a86e8', '#0000ff', '#9900ff', '#ff00ff'].map(color => (
+                  {[
+                    '#000000',
+                    '#434343',
+                    '#666666',
+                    '#999999',
+                    '#b7b7b7',
+                    '#cccccc',
+                    '#d9d9d9',
+                    '#efefef',
+                    '#f3f3f3',
+                    '#ffffff',
+                    '#980000',
+                    '#ff0000',
+                    '#ff9900',
+                    '#ffff00',
+                    '#00ff00',
+                    '#00ffff',
+                    '#4a86e8',
+                    '#0000ff',
+                    '#9900ff',
+                    '#ff00ff',
+                  ].map((color) => (
                     <button
                       key={color}
-                      className="w-6 h-6 rounded border"
+                      className="h-6 w-6 rounded border"
                       style={{ backgroundColor: color }}
                       onClick={() => handleColorChange(color, false)}
                     />
@@ -372,7 +400,10 @@ export function RichTextEditor({
                 title="Background Color"
                 type="button"
               >
-                <Highlighter className="h-4 w-4" style={{ color: bgColor === 'transparent' ? '#999' : bgColor }} />
+                <Highlighter
+                  className="h-4 w-4"
+                  style={{ color: bgColor === 'transparent' ? '#999' : bgColor }}
+                />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-2">
@@ -394,11 +425,27 @@ export function RichTextEditor({
                   />
                 </div>
                 <div className="grid grid-cols-8 gap-1">
-                  {['transparent', '#ffffff', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#ff0000',
-                    '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#cfe2f3', '#d9d2e9', '#ead1dc', '#e1e1e1'].map(color => (
+                  {[
+                    'transparent',
+                    '#ffffff',
+                    '#ffff00',
+                    '#00ff00',
+                    '#00ffff',
+                    '#0000ff',
+                    '#ff00ff',
+                    '#ff0000',
+                    '#fce5cd',
+                    '#fff2cc',
+                    '#d9ead3',
+                    '#d0e0e3',
+                    '#cfe2f3',
+                    '#d9d2e9',
+                    '#ead1dc',
+                    '#e1e1e1',
+                  ].map((color) => (
                     <button
                       key={color}
-                      className="w-6 h-6 rounded border"
+                      className="h-6 w-6 rounded border"
                       style={{ backgroundColor: color === 'transparent' ? '#fff' : color }}
                       onClick={() => handleColorChange(color, true)}
                     >
@@ -412,7 +459,7 @@ export function RichTextEditor({
         </div>
 
         {/* Second row - Formatting controls */}
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1">
           {/* Text formatting */}
           <div className="flex items-center gap-0.5">
             <Button
@@ -647,6 +694,65 @@ export function RichTextEditor({
         div[contenteditable]:empty:before {
           content: attr(data-placeholder);
           color: #9ca3af;
+        }
+
+        /* List styles for proper display in editor */
+        div[contenteditable] ul {
+          list-style-type: disc;
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+        }
+
+        div[contenteditable] ul ul {
+          list-style-type: circle;
+        }
+
+        div[contenteditable] ul ul ul {
+          list-style-type: square;
+        }
+
+        div[contenteditable] ol {
+          list-style-type: decimal;
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+        }
+
+        div[contenteditable] ol ol {
+          list-style-type: lower-alpha;
+        }
+
+        div[contenteditable] ol ol ol {
+          list-style-type: lower-roman;
+        }
+
+        div[contenteditable] li {
+          display: list-item;
+          margin: 0.25em 0;
+        }
+
+        div[contenteditable] blockquote {
+          border-left: 4px solid #e5e7eb;
+          padding-left: 1em;
+          margin: 1em 0;
+          font-style: italic;
+          color: #6b7280;
+        }
+
+        div[contenteditable] pre {
+          background-color: #f3f4f6;
+          padding: 1em;
+          border-radius: 4px;
+          overflow-x: auto;
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 0.9em;
+        }
+
+        div[contenteditable] code {
+          background-color: #f3f4f6;
+          padding: 0.2em 0.4em;
+          border-radius: 3px;
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 0.9em;
         }
       `}</style>
     </div>

@@ -33,6 +33,7 @@ import { TableActionButtons } from '@/components/ui/table-action-buttons'
 import { StatusSelector } from '@/components/ui/status-selector'
 import { AssignmentSelector } from '@/components/assignment/AssignmentSelector'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface Client {
@@ -59,6 +60,8 @@ export default function ClientsPage() {
   const [searchQuery] = useState('')
   const [statusFilter] = useState<'all' | 'active' | 'inactive' | 'prospect'>('all')
   const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('all')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [clientToDelete, setClientToDelete] = useState<number | null>(null)
 
   useEffect(() => {
     fetchClients()
@@ -130,21 +133,24 @@ export default function ClientsPage() {
     return matchesSearch && matchesStatus && matchesAssignment
   })
 
-  const deleteClient = useCallback(
-    async (clientId: number) => {
-      if (confirm('Are you sure you want to delete this client?')) {
-        try {
-          await fetch(`/api/companies/${clientId}`, {
-            method: 'DELETE',
-          })
-          fetchClients() // Refresh the list
-        } catch (error) {
-          // TODO: Implement user notification for failed deletion
-        }
+  const deleteClient = useCallback(async (clientId: number) => {
+    setClientToDelete(clientId)
+    setDeleteDialogOpen(true)
+  }, [])
+
+  const confirmDeleteClient = useCallback(async () => {
+    if (clientToDelete) {
+      try {
+        await fetch(`/api/companies/${clientToDelete}`, {
+          method: 'DELETE',
+        })
+        fetchClients() // Refresh the list
+      } catch (error) {
+        // TODO: Implement user notification for failed deletion
       }
-    },
-    [fetchClients]
-  )
+      setClientToDelete(null)
+    }
+  }, [clientToDelete, fetchClients])
 
   const handleClientStatusChange = useCallback(async (clientId: number, newStatus: string) => {
     try {
@@ -459,6 +465,20 @@ export default function ClientsPage() {
             />
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Client"
+          description={`Are you sure you want to delete this client? This action cannot be undone and will remove all associated data.`}
+          confirmText="Delete Client"
+          cancelText="Cancel"
+          variant="destructive"
+          icon="delete"
+          onConfirm={confirmDeleteClient}
+          onCancel={() => setClientToDelete(null)}
+        />
       </div>
     </AppLayout>
   )

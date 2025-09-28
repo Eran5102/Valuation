@@ -761,7 +761,7 @@ export const footnoteFields: TemplateFieldMappings = {
     transformer: (date) => formatDate(date, 'MMMM DD, YYYY'),
     fallback: 'Current date',
   },
-  'time_to_maturity': {
+  time_to_maturity: {
     sourceModule: 'valuation',
     sourcePath: 'options.timeToMaturity',
     transformer: (v) => v?.toFixed(1) + ' years',
@@ -809,6 +809,165 @@ export const footnoteFields: TemplateFieldMappings = {
   },
 }
 
+// Appraiser and Designee Fields
+export const appraiserDesigneeFields: TemplateFieldMappings = {
+  'appraiser.first_name': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.firstName',
+    fallback: 'John',
+  },
+  'appraiser.last_name': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.lastName',
+    fallback: 'Smith',
+  },
+  'appraiser.email': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.email',
+    fallback: 'appraiser@valuation.com',
+  },
+  'appraiser.phone': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.phone',
+    fallback: '(555) 123-4567',
+  },
+  'appraiser.address': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.address',
+    fallback: '123 Valuation Street',
+  },
+  'appraiser.city': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.city',
+    fallback: 'New York',
+  },
+  'appraiser.state': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.state',
+    fallback: 'NY',
+  },
+  'appraiser.zip': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.zip',
+    fallback: '10001',
+  },
+  'appraiser.signature_date': {
+    sourceModule: 'company',
+    sourcePath: 'appraiser.signatureDate',
+    transformer: (date) => formatDate(date, 'MMMM DD, YYYY'),
+  },
+  'designee.first_name': {
+    sourceModule: 'company',
+    sourcePath: 'designee.firstName',
+    fallback: 'Jane',
+  },
+  'designee.last_name': {
+    sourceModule: 'company',
+    sourcePath: 'designee.lastName',
+    fallback: 'Doe',
+  },
+  'designee.title': {
+    sourceModule: 'company',
+    sourcePath: 'designee.title',
+    fallback: 'Chief Financial Officer',
+  },
+  'designee.email': {
+    sourceModule: 'company',
+    sourcePath: 'designee.email',
+    fallback: 'designee@company.com',
+  },
+  'designee.phone': {
+    sourceModule: 'company',
+    sourcePath: 'designee.phone',
+    fallback: '(555) 987-6543',
+  },
+  'designee.address': {
+    sourceModule: 'company',
+    sourcePath: 'designee.address',
+    fallback: '456 Corporate Blvd',
+  },
+  'designee.city': {
+    sourceModule: 'company',
+    sourcePath: 'designee.city',
+    fallback: 'San Francisco',
+  },
+  'designee.state': {
+    sourceModule: 'company',
+    sourcePath: 'designee.state',
+    fallback: 'CA',
+  },
+  'designee.zip': {
+    sourceModule: 'company',
+    sourcePath: 'designee.zip',
+    fallback: '94105',
+  },
+}
+
+// Security/Share Class Fields
+export const securityFields: TemplateFieldMappings = {
+  'security.type': {
+    sourceModule: 'valuation',
+    sourcePath: 'security.type',
+    fallback: 'Common Stock',
+  },
+  'security.class': {
+    sourceModule: 'valuation',
+    sourcePath: 'security.class',
+    fallback: 'Class A',
+  },
+  'security.shares_authorized': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.sharesAuthorized',
+    transformer: formatNumber,
+  },
+  'security.shares_issued': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.sharesIssued',
+    transformer: formatNumber,
+  },
+  'security.shares_outstanding': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.sharesOutstanding',
+    transformer: formatNumber,
+    required: true,
+  },
+  'security.par_value': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.parValue',
+    transformer: formatCurrency,
+  },
+  'security.liquidation_preference': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.liquidationPreference',
+    transformer: formatCurrency,
+  },
+  'security.conversion_ratio': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.conversionRatio',
+    fallback: '1:1',
+  },
+  'security.dividend_rate': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.dividendRate',
+    transformer: formatPercentage,
+  },
+  'security.cumulative': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.cumulative',
+    fallback: 'No',
+  },
+  'security.participating': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.participating',
+    fallback: 'No',
+  },
+  'security.voting_rights': {
+    sourceModule: 'capTable',
+    sourcePath: 'security.votingRights',
+    fallback: '1 vote per share',
+  },
+}
+
 // Combine all field mappings
 export const allFieldMappings: TemplateFieldMappings = {
   ...companyFields,
@@ -823,11 +982,19 @@ export const allFieldMappings: TemplateFieldMappings = {
   ...dlomFields,
   ...valuationResultsFields,
   ...footnoteFields,
+  ...appraiserDesigneeFields,
+  ...securityFields,
 }
 
 // Export categories for UI organization
 export const fieldCategories = [
   { id: 'company', name: 'Company Information', fields: Object.keys(companyFields) },
+  {
+    id: 'appraiser_designee',
+    name: 'Appraiser & Designee',
+    fields: Object.keys(appraiserDesigneeFields),
+  },
+  { id: 'security', name: 'Security Information', fields: Object.keys(securityFields) },
   { id: 'dcf', name: 'DCF Assumptions', fields: Object.keys(dcfAssumptionsFields) },
   { id: 'wacc', name: 'WACC', fields: Object.keys(waccFields) },
   { id: 'working_capital', name: 'Working Capital', fields: Object.keys(workingCapitalFields) },

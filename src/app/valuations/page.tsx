@@ -36,6 +36,7 @@ import { PageHeader } from '@/components/common/PageHeader'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
 import { AssignmentSelector } from '@/components/assignment/AssignmentSelector'
 import { useAuth } from '@/contexts/AuthContext'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 
 interface Valuation {
   id: string | number
@@ -60,6 +61,8 @@ export default function ValuationsPage() {
   const [searchTerm] = useState('')
   const [statusFilter] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'all' | 'my' | 'team'>('all')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [valuationToDelete, setValuationToDelete] = useState<Valuation | null>(null)
 
   useEffect(() => {
     fetchValuations()
@@ -117,15 +120,23 @@ export default function ValuationsPage() {
     }
   }
 
-  const deleteValuation = async (valuationId: string | number) => {
-    if (confirm('Are you sure you want to delete this valuation?')) {
-      try {
-        await fetch(`/api/valuations/${valuationId}`, {
-          method: 'DELETE',
-        })
-        fetchValuations() // Refresh the list
-      } catch (error) {
-      }
+  const handleDeleteClick = (valuation: Valuation) => {
+    setValuationToDelete(valuation)
+    setDeleteDialogOpen(true)
+  }
+
+  const deleteValuation = async () => {
+    if (!valuationToDelete) return
+
+    try {
+      await fetch(`/api/valuations/${valuationToDelete.id}`, {
+        method: 'DELETE',
+      })
+      fetchValuations() // Refresh the list
+    } catch (error) {
+    } finally {
+      setDeleteDialogOpen(false)
+      setValuationToDelete(null)
     }
   }
 
@@ -216,7 +227,7 @@ export default function ValuationsPage() {
           return (
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
                   <Calculator className="h-4 w-4 text-primary" />
                 </div>
               </div>
@@ -302,8 +313,7 @@ export default function ValuationsPage() {
                       )
                     )
                   }
-                } catch (error) {
-                }
+                } catch (error) {}
               }}
               entityType="valuation"
             />
@@ -335,7 +345,7 @@ export default function ValuationsPage() {
               itemId={valuation.id}
               viewHref={`/valuations/${valuation.id}`}
               showEdit={false}
-              onDelete={() => deleteValuation(valuation.id)}
+              onDelete={() => handleDeleteClick(valuation)}
             />
           )
         },
@@ -421,6 +431,19 @@ export default function ValuationsPage() {
             />
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Valuation"
+          description={`Are you sure you want to delete this valuation for "${valuationToDelete?.clientName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          onConfirm={deleteValuation}
+          icon="delete"
+        />
       </div>
     </AppLayout>
   )

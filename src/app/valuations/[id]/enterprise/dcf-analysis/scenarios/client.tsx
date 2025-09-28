@@ -26,12 +26,8 @@ import {
 } from '@/components/ui/select'
 import { OptimizedDataTable } from '@/components/ui/optimized-data-table'
 import { PercentageInput } from '@/components/ui/percentage-input'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Plus,
   Copy,
@@ -124,6 +120,8 @@ export function ScenarioManagerClient({
   const [isCreating, setIsCreating] = useState(false)
   const [isComparing, setIsComparing] = useState(false)
   const [comparisonData, setComparisonData] = useState<any[]>([])
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [scenarioToDelete, setScenarioToDelete] = useState<string | null>(null)
 
   // New scenario dialog state
   const [newScenarioOpen, setNewScenarioOpen] = useState(false)
@@ -255,14 +253,20 @@ export function ScenarioManagerClient({
 
   // Handle scenario deletion
   const handleDeleteScenario = async (scenarioId: string) => {
-    if (!confirm('Are you sure you want to delete this scenario?')) return
+    setScenarioToDelete(scenarioId)
+    setDeleteDialogOpen(true)
+  }
 
-    try {
-      await deleteScenario(valuationId, scenarioId)
-      setScenarios(scenarios.filter((s) => s.id !== scenarioId))
-      toast.success('Scenario deleted')
-    } catch (error) {
-      toast.error('Failed to delete scenario')
+  const confirmDeleteScenario = async () => {
+    if (scenarioToDelete) {
+      try {
+        await deleteScenario(valuationId, scenarioToDelete)
+        setScenarios(scenarios.filter((s) => s.id !== scenarioToDelete))
+        toast.success('Scenario deleted')
+      } catch (error) {
+        toast.error('Failed to delete scenario')
+      }
+      setScenarioToDelete(null)
     }
   }
 
@@ -1059,6 +1063,20 @@ export function ScenarioManagerClient({
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Scenario Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Scenario"
+        description={`Are you sure you want to delete this scenario? This action cannot be undone and will remove all associated data and calculations.`}
+        confirmText="Delete Scenario"
+        cancelText="Cancel"
+        variant="destructive"
+        icon="delete"
+        onConfirm={confirmDeleteScenario}
+        onCancel={() => setScenarioToDelete(null)}
+      />
     </div>
   )
 }

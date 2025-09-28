@@ -22,6 +22,19 @@ import type { TemplateBlock, TemplateVariable } from '@/lib/templates/types'
 import { VariablePicker } from './VariablePicker'
 import { LightweightTableEditor } from './LightweightTableEditor'
 import { RichTextEditor } from './RichTextEditor'
+import {
+  SignatureBlockEditor,
+  DateBlockEditor,
+  QuoteBlockEditor,
+  SeparatorEditor,
+  CoverPageEditor,
+  FootnoteEditor,
+  TOCEditor,
+  ExecutiveSummaryEditor,
+  GlossaryEditor,
+  ValuationSummaryEditor,
+  GenericRichTextEditor,
+} from './block-editors/SpecialBlockEditors'
 
 interface BlockEditorProps {
   block: TemplateBlock
@@ -103,9 +116,7 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
                 {listItems.map((item, index) => (
                   <div key={index} className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {index + 1}.
-                      </span>
+                      <span className="text-sm text-muted-foreground">{index + 1}.</span>
                       <Button
                         size="sm"
                         variant="outline"
@@ -184,23 +195,62 @@ export function BlockEditor({ block, variables, onChange }: BlockEditorProps) {
           </div>
         )
 
+      case 'signatureBlock':
+        return <SignatureBlockEditor content={block.content} onChange={handleContentChange} />
+
+      case 'dateBlock':
+        return <DateBlockEditor content={block.content} onChange={handleContentChange} />
+
+      case 'quote':
+        return <QuoteBlockEditor content={block.content} onChange={handleContentChange} />
+
+      case 'separator':
+        return <SeparatorEditor content={block.content} onChange={handleContentChange} />
+
+      case 'coverPage':
+        return <CoverPageEditor content={block.content} onChange={handleContentChange} />
+
+      case 'footnote':
+        return <FootnoteEditor content={block.content} onChange={handleContentChange} />
+
+      case 'tableOfContents':
+        return <TOCEditor content={block.content} onChange={handleContentChange} />
+
+      case 'executiveSummary':
+        return <ExecutiveSummaryEditor content={block.content} onChange={handleContentChange} />
+
+      case 'glossary':
+        return <GlossaryEditor content={block.content} onChange={handleContentChange} />
+
+      case 'valuationSummary':
+        return <ValuationSummaryEditor content={block.content} onChange={handleContentChange} />
+
+      case 'appendix':
+      case 'bibliography':
+        return (
+          <GenericRichTextEditor
+            content={block.content}
+            onChange={handleContentChange}
+            placeholder={
+              block.type === 'appendix'
+                ? 'Enter appendix content...'
+                : 'Enter bibliography entries...'
+            }
+          />
+        )
+
+      case 'text':
+      case 'pageBreak':
+      case 'dynamicTable':
+      case 'breakpointsTable':
+      case 'managementTable':
       default:
         return (
-          <div>
-            <Label htmlFor="content">Content</Label>
-            <Textarea
-              id="content"
-              value={JSON.stringify(block.content, null, 2)}
-              onChange={(e) => {
-                try {
-                  handleContentChange(JSON.parse(e.target.value))
-                } catch {
-                  handleContentChange(e.target.value)
-                }
-              }}
-              rows={6}
-            />
-          </div>
+          <GenericRichTextEditor
+            content={block.content}
+            onChange={handleContentChange}
+            placeholder="Enter content..."
+          />
         )
     }
   }

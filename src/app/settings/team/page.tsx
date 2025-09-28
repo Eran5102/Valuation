@@ -43,6 +43,7 @@ import { usePermissions } from '@/contexts/PermissionsContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { formatDate } from '@/lib/utils'
 
 interface TeamMember {
@@ -76,6 +77,8 @@ export default function TeamManagementPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<string>('viewer')
   const [sending, setSending] = useState(false)
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null)
 
   useEffect(() => {
     if (!permissionsLoading && !canManageTeam) {
@@ -145,22 +148,26 @@ export default function TeamManagementPage() {
       if (response.ok) {
         fetchTeamData()
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const removeMember = async (memberId: string) => {
-    if (!confirm('Are you sure you want to remove this team member?')) return
+    setMemberToRemove(memberId)
+    setRemoveDialogOpen(true)
+  }
 
-    try {
-      const response = await fetch(`/api/organization/members/${memberId}`, {
-        method: 'DELETE',
-      })
+  const confirmRemoveMember = async () => {
+    if (memberToRemove) {
+      try {
+        const response = await fetch(`/api/organization/members/${memberToRemove}`, {
+          method: 'DELETE',
+        })
 
-      if (response.ok) {
-        fetchTeamData()
-      }
-    } catch (error) {
+        if (response.ok) {
+          fetchTeamData()
+        }
+      } catch (error) {}
+      setMemberToRemove(null)
     }
   }
 
@@ -173,8 +180,7 @@ export default function TeamManagementPage() {
       if (response.ok) {
         fetchTeamData()
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const getRoleIcon = (role: string) => {
@@ -323,7 +329,7 @@ export default function TeamManagementPage() {
                   className="flex items-center justify-between rounded-lg border p-4"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
                       <User className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -423,6 +429,20 @@ export default function TeamManagementPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Remove Member Confirmation Dialog */}
+        <ConfirmationDialog
+          open={removeDialogOpen}
+          onOpenChange={setRemoveDialogOpen}
+          title="Remove Team Member"
+          description={`Are you sure you want to remove this team member? They will lose access to the organization and all associated projects.`}
+          confirmText="Remove Member"
+          cancelText="Cancel"
+          variant="destructive"
+          icon="delete"
+          onConfirm={confirmRemoveMember}
+          onCancel={() => setMemberToRemove(null)}
+        />
       </div>
     </AppLayout>
   )

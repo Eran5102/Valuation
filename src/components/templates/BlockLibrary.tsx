@@ -26,6 +26,7 @@ import {
   PenTool,
   FileUp,
   FileDown,
+  Calculator,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { BlockType } from '@/lib/templates/types'
@@ -269,7 +270,8 @@ const blockTypes: BlockTypeConfig[] = [
     description: 'Add footnotes with dynamic content',
     defaultContent: {
       text: 'This statement is based on ',
-      footnoteContent: 'Volatility of {{volatility}}% based on {{data_source}} as of {{valuation_date}}',
+      footnoteContent:
+        'Volatility of {{volatility}}% based on {{data_source}} as of {{valuation_date}}',
       type: 'footnote', // or 'endnote'
     },
     category: 'text',
@@ -376,6 +378,261 @@ const blockTypes: BlockTypeConfig[] = [
       margin: '20px 0',
     },
   },
+  // 409A Specialized Tables
+  {
+    type: 'capitalStructureTable',
+    label: 'Capital Structure Table',
+    icon: Table,
+    description: '409A capital structure breakdown',
+    defaultContent: {
+      title: 'Capital Structure',
+      dataSource: 'valuation.capital_structure',
+      showTotals: true,
+      columns: [
+        { key: 'security_type', label: 'Security Type' },
+        { key: 'series', label: 'Series' },
+        { key: 'authorized', label: 'Authorized', format: 'number' },
+        { key: 'issued', label: 'Issued & Outstanding', format: 'number' },
+        { key: 'reserved', label: 'Reserved for Issuance', format: 'number' },
+        { key: 'fully_diluted', label: 'Fully Diluted', format: 'number' },
+        { key: 'percentage', label: '% Ownership', format: 'percentage' },
+      ],
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
+  {
+    type: 'rightsPreferencesTable',
+    label: 'Rights & Preferences Table',
+    icon: Table,
+    description: 'Preferred stock rights and preferences',
+    defaultContent: {
+      title: 'Rights and Preferences',
+      dataSource: 'valuation.rights_preferences',
+      columns: [
+        { key: 'series', label: 'Series' },
+        { key: 'original_issue_price', label: 'Original Issue Price', format: 'currency' },
+        { key: 'liquidation_preference', label: 'Liquidation Preference', format: 'currency' },
+        { key: 'liquidation_multiple', label: 'Multiple', format: 'number' },
+        { key: 'participation', label: 'Participation' },
+        { key: 'conversion_ratio', label: 'Conversion Ratio' },
+        { key: 'dividends', label: 'Dividends' },
+        { key: 'voting_rights', label: 'Voting Rights' },
+      ],
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+      fontSize: '12px',
+    },
+  },
+  {
+    type: 'opmBreakpointsTable',
+    label: 'OPM Breakpoints Table',
+    icon: TrendingUp,
+    description: 'Option pricing model breakpoint analysis',
+    defaultContent: {
+      title: 'OPM Breakpoint Analysis',
+      dataSource: 'valuation.opm_breakpoints',
+      showCalculations: true,
+      columns: [
+        { key: 'breakpoint', label: 'Breakpoint #' },
+        { key: 'exit_value', label: 'Exit Value', format: 'currency' },
+        { key: 'proceeds_to_common', label: 'Proceeds to Common', format: 'currency' },
+        { key: 'proceeds_to_preferred', label: 'Proceeds to Preferred', format: 'currency' },
+        { key: 'common_percentage', label: 'Common %', format: 'percentage' },
+        { key: 'option_value', label: 'Option Value', format: 'currency' },
+        { key: 'probability', label: 'Probability', format: 'percentage' },
+      ],
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
+  {
+    type: 'dlomTable',
+    label: 'DLOM Analysis Table',
+    icon: BarChart3,
+    description: 'Discount for lack of marketability analysis',
+    defaultContent: {
+      title: 'DLOM Analysis',
+      dataSource: 'valuation.dlom',
+      showMethodology: true,
+      columns: [
+        { key: 'method', label: 'Method' },
+        { key: 'input_factors', label: 'Input Factors' },
+        { key: 'calculated_discount', label: 'Calculated Discount', format: 'percentage' },
+        { key: 'weight', label: 'Weight', format: 'percentage' },
+        { key: 'weighted_discount', label: 'Weighted Discount', format: 'percentage' },
+      ],
+      showSummary: true,
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
+  {
+    type: 'comparableCompaniesTable',
+    label: 'Comparable Companies Table',
+    icon: Users,
+    description: 'Market comparable companies analysis',
+    defaultContent: {
+      title: 'Comparable Public Companies',
+      dataSource: 'valuation.comparables',
+      columns: [
+        { key: 'company_name', label: 'Company' },
+        { key: 'ticker', label: 'Ticker' },
+        { key: 'market_cap', label: 'Market Cap', format: 'currency' },
+        { key: 'ev_revenue', label: 'EV/Revenue', format: 'number' },
+        { key: 'ev_ebitda', label: 'EV/EBITDA', format: 'number' },
+        { key: 'pe_ratio', label: 'P/E Ratio', format: 'number' },
+        { key: 'revenue_growth', label: 'Revenue Growth', format: 'percentage' },
+      ],
+      showStatistics: true,
+      highlightSubject: true,
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
+  {
+    type: 'transactionCompsTable',
+    label: 'Transaction Comps Table',
+    icon: TrendingUp,
+    description: 'Comparable M&A transactions',
+    defaultContent: {
+      title: 'Comparable Transactions',
+      dataSource: 'valuation.transactions',
+      columns: [
+        { key: 'target', label: 'Target Company' },
+        { key: 'acquirer', label: 'Acquirer' },
+        { key: 'date', label: 'Date', format: 'date' },
+        { key: 'transaction_value', label: 'Transaction Value', format: 'currency' },
+        { key: 'ev_revenue', label: 'EV/Revenue', format: 'number' },
+        { key: 'ev_ebitda', label: 'EV/EBITDA', format: 'number' },
+        { key: 'description', label: 'Description' },
+      ],
+      dateRange: 'last_24_months',
+      showMedian: true,
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
+  {
+    type: 'financialProjectionsTable',
+    label: 'Financial Projections Table',
+    icon: BarChart3,
+    description: 'Revenue and expense projections',
+    defaultContent: {
+      title: 'Financial Projections',
+      dataSource: 'valuation.projections',
+      years: 5,
+      columns: [
+        { key: 'year', label: 'Year' },
+        { key: 'revenue', label: 'Revenue', format: 'currency' },
+        { key: 'cogs', label: 'COGS', format: 'currency' },
+        { key: 'gross_profit', label: 'Gross Profit', format: 'currency' },
+        { key: 'opex', label: 'Operating Expenses', format: 'currency' },
+        { key: 'ebitda', label: 'EBITDA', format: 'currency' },
+        { key: 'ebitda_margin', label: 'EBITDA Margin', format: 'percentage' },
+      ],
+      showGrowthRates: true,
+      showCAGR: true,
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
+  {
+    type: 'weightedAverageTable',
+    label: 'Valuation Weighting Table',
+    icon: Calculator,
+    description: 'Weighted average valuation summary',
+    defaultContent: {
+      title: 'Valuation Summary - Weighted Average',
+      dataSource: 'valuation.weighting',
+      columns: [
+        { key: 'method', label: 'Valuation Method' },
+        { key: 'enterprise_value', label: 'Enterprise Value', format: 'currency' },
+        { key: 'equity_value', label: 'Equity Value', format: 'currency' },
+        { key: 'weight', label: 'Weight', format: 'percentage' },
+        { key: 'weighted_value', label: 'Weighted Value', format: 'currency' },
+      ],
+      showTotal: true,
+      showPerShareValue: true,
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+      backgroundColor: '#f8f9fa',
+      padding: '15px',
+    },
+  },
+  {
+    type: 'sensitivityAnalysisTable',
+    label: 'Sensitivity Analysis Table',
+    icon: BarChart3,
+    description: 'Valuation sensitivity to key assumptions',
+    defaultContent: {
+      title: 'Sensitivity Analysis',
+      dataSource: 'valuation.sensitivity',
+      primaryVariable: 'discount_rate',
+      secondaryVariable: 'terminal_growth_rate',
+      showHeatmap: true,
+      highlightBaseCase: true,
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
+  {
+    type: 'optionPoolTable',
+    label: 'Option Pool Table',
+    icon: Users,
+    description: 'Stock option plan details',
+    defaultContent: {
+      title: 'Employee Stock Option Plan',
+      dataSource: 'valuation.option_pool',
+      columns: [
+        { key: 'grant_type', label: 'Grant Type' },
+        { key: 'authorized', label: 'Authorized', format: 'number' },
+        { key: 'granted', label: 'Granted', format: 'number' },
+        { key: 'exercised', label: 'Exercised', format: 'number' },
+        { key: 'cancelled', label: 'Cancelled/Forfeited', format: 'number' },
+        { key: 'outstanding', label: 'Outstanding', format: 'number' },
+        { key: 'available', label: 'Available for Grant', format: 'number' },
+        {
+          key: 'weighted_avg_exercise_price',
+          label: 'Weighted Avg Exercise Price',
+          format: 'currency',
+        },
+      ],
+      showVestingSchedule: true,
+    },
+    category: 'data',
+    defaultStyling: {
+      margin: '20px 0',
+      width: '100%',
+    },
+  },
   {
     type: 'signatureBlock',
     label: 'Signature Block',
@@ -479,8 +736,8 @@ function DraggableBlock({ blockType }: DraggableBlockProps) {
         isDragging ? 'opacity-50' : ''
       }`}
     >
-      <div className="flex items-center rounded-lg border border-border p-3 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5">
-        <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+      <div className="hover:border-primary/50 hover:bg-primary/5 flex items-center rounded-lg border border-border p-3 transition-all duration-200">
+        <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
           <Icon className="h-4 w-4" />
         </div>
         <div className="ml-3 min-w-0 flex-1">
@@ -509,7 +766,7 @@ export function BlockLibrary() {
         </CardTitle>
         <p className="text-xs text-muted-foreground">Drag blocks to add them to your template</p>
       </CardHeader>
-      <CardContent className="h-[calc(100vh-240px)] space-y-4 overflow-y-auto pr-2 pb-6">
+      <CardContent className="h-[calc(100vh-240px)] space-y-4 overflow-y-auto pb-6 pr-2">
         {/* Text Blocks */}
         <div>
           <h4 className="mb-2 text-sm font-medium text-muted-foreground">Text</h4>

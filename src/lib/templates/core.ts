@@ -237,7 +237,10 @@ export class TemplateEngine {
             user-select: none;
             overflow: hidden;
           ">
-            ${Array(6).fill(0).map((_, i) => `
+            ${Array(6)
+              .fill(0)
+              .map(
+                (_, i) => `
               <div style="
                 position: absolute;
                 top: ${i * 20}%;
@@ -247,23 +250,31 @@ export class TemplateEngine {
                 justify-content: space-around;
                 transform: rotate(${angle}deg);
               ">
-                ${Array(3).fill(0).map(() => `
+                ${Array(3)
+                  .fill(0)
+                  .map(
+                    () => `
                   <span style="
                     font-size: ${fontSize}px;
                     color: rgba(0, 0, 0, ${opacity});
                     font-weight: bold;
                     text-transform: uppercase;
                   ">${text}</span>
-                `).join('')}
+                `
+                  )
+                  .join('')}
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
         `
       } else {
         // Single watermark
         const positionStyles = {
           center: 'top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(' + angle + 'deg);',
-          diagonal: 'top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(' + angle + 'deg);',
+          diagonal:
+            'top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(' + angle + 'deg);',
           top: 'top: 20%; left: 50%; transform: translateX(-50%) rotate(' + angle + 'deg);',
           bottom: 'bottom: 20%; left: 50%; transform: translateX(-50%) rotate(' + angle + 'deg);',
         }
@@ -419,7 +430,11 @@ export class TemplateEngine {
   /**
    * Generate Table of Contents HTML
    */
-  private static generateTableOfContents(block: TemplateBlock, styleAttr: string, blockId: string): string {
+  private static generateTableOfContents(
+    block: TemplateBlock,
+    styleAttr: string,
+    blockId: string
+  ): string {
     const content = block.content as any
     const title = content?.title || 'Table of Contents'
     // In a real implementation, this would scan the document for headers
@@ -441,12 +456,17 @@ export class TemplateEngine {
   /**
    * Generate Cover Page HTML
    */
-  private static generateCoverPage(block: TemplateBlock, styleAttr: string, blockId: string): string {
+  private static generateCoverPage(
+    block: TemplateBlock,
+    styleAttr: string,
+    blockId: string
+  ): string {
     const content = block.content as any
     const title = content?.title || '409A Valuation Report'
     const subtitle = content?.subtitle || ''
-    const confidentialityNotice = content?.includeConfidentiality ?
-      '<div class="confidentiality-notice">CONFIDENTIAL - PROPRIETARY INFORMATION</div>' : ''
+    const confidentialityNotice = content?.includeConfidentiality
+      ? '<div class="confidentiality-notice">CONFIDENTIAL - PROPRIETARY INFORMATION</div>'
+      : ''
 
     return `
       <div class="cover-page"${blockId}${styleAttr}>
@@ -464,7 +484,11 @@ export class TemplateEngine {
   /**
    * Generate Executive Summary HTML
    */
-  private static generateExecutiveSummary(block: TemplateBlock, styleAttr: string, blockId: string): string {
+  private static generateExecutiveSummary(
+    block: TemplateBlock,
+    styleAttr: string,
+    blockId: string
+  ): string {
     const content = block.content as any
     const title = content?.title || 'Executive Summary'
 
@@ -481,7 +505,11 @@ export class TemplateEngine {
   /**
    * Generate Appendix HTML
    */
-  private static generateAppendix(block: TemplateBlock, styleAttr: string, blockId: string): string {
+  private static generateAppendix(
+    block: TemplateBlock,
+    styleAttr: string,
+    blockId: string
+  ): string {
     const content = block.content as any
     const title = content?.title || 'Appendix'
 
@@ -498,14 +526,18 @@ export class TemplateEngine {
   /**
    * Generate Bibliography HTML
    */
-  private static generateBibliography(block: TemplateBlock, styleAttr: string, blockId: string): string {
+  private static generateBibliography(
+    block: TemplateBlock,
+    styleAttr: string,
+    blockId: string
+  ): string {
     const content = block.content as any
     const title = content?.title || 'References'
     const entries = content?.entries || []
 
-    const entriesHTML = entries.map((entry: any) =>
-      `<li class="bibliography-entry">${entry}</li>`
-    ).join('\n')
+    const entriesHTML = entries
+      .map((entry: any) => `<li class="bibliography-entry">${entry}</li>`)
+      .join('\n')
 
     return `
       <div class="bibliography"${blockId}${styleAttr}>
@@ -520,15 +552,23 @@ export class TemplateEngine {
   /**
    * Generate Glossary HTML
    */
-  private static generateGlossary(block: TemplateBlock, styleAttr: string, blockId: string): string {
+  private static generateGlossary(
+    block: TemplateBlock,
+    styleAttr: string,
+    blockId: string
+  ): string {
     const content = block.content as any
     const title = content?.title || 'Glossary'
     const terms = content?.terms || []
 
-    const termsHTML = terms.map((item: any) => `
+    const termsHTML = terms
+      .map(
+        (item: any) => `
       <dt class="glossary-term">${item.term}</dt>
       <dd class="glossary-definition">${item.definition}</dd>
-    `).join('\n')
+    `
+      )
+      .join('\n')
 
     return `
       <div class="glossary"${blockId}${styleAttr}>
@@ -543,11 +583,17 @@ export class TemplateEngine {
   /**
    * Generate Signature Block HTML
    */
-  private static generateSignatureBlock(block: TemplateBlock, styleAttr: string, blockId: string): string {
+  private static generateSignatureBlock(
+    block: TemplateBlock,
+    styleAttr: string,
+    blockId: string
+  ): string {
     const content = block.content as any
     const signatories = content?.signatories || []
 
-    const signaturesHTML = signatories.map((sig: any) => `
+    const signaturesHTML = signatories
+      .map(
+        (sig: any) => `
       <div class="signature-item">
         <div class="signature-line"></div>
         <div class="signature-name">${sig.name || ''}</div>
@@ -555,13 +601,17 @@ export class TemplateEngine {
         <div class="signature-credentials">${sig.credentials || ''}</div>
         <div class="signature-date">${sig.date || ''}</div>
       </div>
-    `).join('\n')
+    `
+      )
+      .join('\n')
 
-    const disclaimer = content?.includeDisclaimer ? `
+    const disclaimer = content?.includeDisclaimer
+      ? `
       <div class="signature-disclaimer">
         This valuation report is prepared solely for the use specified herein and may not be relied upon for any other purpose.
       </div>
-    ` : ''
+    `
+      : ''
 
     return `
       <div class="signature-block"${blockId}${styleAttr}>
@@ -585,8 +635,10 @@ export class TemplateEngine {
     }
 
     // Apply theme settings - Check both settings and metadata for theme
-    const theme = (template.settings as any)?.theme || (template.metadata as any)?.theme || 'default'
-    const themeColors = (template.settings as any)?.themeColors || (template.metadata as any)?.themeColors
+    const theme =
+      (template.settings as any)?.theme || (template.metadata as any)?.theme || 'default'
+    const themeColors =
+      (template.settings as any)?.themeColors || (template.metadata as any)?.themeColors
 
     // Use custom theme colors if available, otherwise use predefined themes
     const themes = {
@@ -669,16 +721,92 @@ export class TemplateEngine {
         margin-bottom: 2rem;
       }
       
+      /* Page breaks - Updated for better functionality */
       .page-break-before {
         page-break-before: always;
+        break-before: page;
       }
-      
+
       .page-break-after {
         page-break-after: always;
+        break-after: page;
       }
-      
+
       .page-break {
         page-break-after: always;
+        break-after: page;
+        display: block;
+        height: 0;
+        clear: both;
+        visibility: hidden;
+      }
+
+      /* Visual indicators for screen/preview only */
+      @media screen {
+        .page-break {
+          position: relative;
+          height: 40px;
+          margin: 40px 0;
+          visibility: visible;
+        }
+
+        .page-break::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent 0%, #ccc 10%, #ccc 90%, transparent 100%);
+          transform: translateY(-50%);
+        }
+
+        .page-break::after {
+          content: 'Page Break';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: ${selectedTheme.bgColor};
+          padding: 4px 12px;
+          color: #999;
+          font-size: 11px;
+          font-style: italic;
+          font-weight: normal;
+          letter-spacing: 0.5px;
+          border: 1px solid #ddd;
+          border-radius: 12px;
+        }
+
+        .template-section.page-break-after {
+          position: relative;
+          padding-bottom: 60px;
+        }
+
+        .template-section.page-break-after::after {
+          content: 'Page Break After Section';
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: ${selectedTheme.bgColor};
+          padding: 4px 12px;
+          color: #999;
+          font-size: 11px;
+          font-style: italic;
+          border: 1px solid #ddd;
+          border-radius: 12px;
+        }
+
+        .template-section.page-break-after::before {
+          content: '';
+          position: absolute;
+          bottom: 30px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent 0%, #ccc 10%, #ccc 90%, transparent 100%);
+        }
       }
       
       h1, h2, h3, h4, h5, h6,
@@ -755,14 +883,41 @@ export class TemplateEngine {
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
-        
+
         .template-section {
           orphans: 2;
           widows: 2;
         }
-        
+
         .template-header {
           page-break-after: avoid;
+        }
+
+        /* Hide visual page break indicators in print */
+        .page-break::before,
+        .page-break::after,
+        .template-section.page-break-after::before,
+        .template-section.page-break-after::after {
+          display: none;
+        }
+
+        /* Ensure page breaks work in print */
+        .page-break {
+          page-break-after: always !important;
+          break-after: page !important;
+          height: 0;
+          visibility: hidden;
+        }
+
+        .template-section.page-break-after {
+          page-break-after: always !important;
+          break-after: page !important;
+          padding-bottom: 0;
+        }
+
+        .template-section.page-break-before {
+          page-break-before: always !important;
+          break-before: page !important;
         }
       }
 

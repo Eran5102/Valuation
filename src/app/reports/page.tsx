@@ -21,6 +21,7 @@ import { SummaryCardsGrid, SummaryCard } from '@/components/ui/summary-cards-gri
 import { PageHeader } from '@/components/common/PageHeader'
 import { TableActionButtons } from '@/components/ui/table-action-buttons'
 import { Button } from '@/components/ui/button'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import draftService, { SavedDraft } from '@/services/draftService'
 import { useRouter } from 'next/navigation'
 import { EnhancedReportGenerator } from '@/components/reports/EnhancedReportGenerator'
@@ -43,6 +44,8 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm] = useState('')
   const [showCreateFlow, setShowCreateFlow] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -137,11 +140,19 @@ export default function ReportsPage() {
   }
 
   const handleDeleteDraft = (report: Report) => {
-    if (report.isDraft && confirm(`Are you sure you want to delete "${report.title}"?`)) {
-      const deleted = draftService.deleteDraft(report.id)
+    if (report.isDraft) {
+      setReportToDelete(report)
+      setDeleteDialogOpen(true)
+    }
+  }
+
+  const confirmDeleteReport = () => {
+    if (reportToDelete && reportToDelete.isDraft) {
+      const deleted = draftService.deleteDraft(reportToDelete.id)
       if (deleted) {
         fetchReports() // Refresh the list
       }
+      setReportToDelete(null)
     }
   }
 
@@ -349,7 +360,7 @@ export default function ReportsPage() {
                   size="sm"
                   variant="outline"
                   onClick={() => handleDeleteDraft(report)}
-                  className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive"
+                  className="hover:bg-destructive/10 h-8 px-2 hover:text-destructive"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -450,6 +461,20 @@ export default function ReportsPage() {
             </Card>
           </>
         )}
+
+        {/* Delete Report Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Report"
+          description={`Are you sure you want to delete "${reportToDelete?.title}"? This action cannot be undone.`}
+          confirmText="Delete Report"
+          cancelText="Cancel"
+          variant="destructive"
+          icon="delete"
+          onConfirm={confirmDeleteReport}
+          onCancel={() => setReportToDelete(null)}
+        />
       </div>
     </AppLayout>
   )

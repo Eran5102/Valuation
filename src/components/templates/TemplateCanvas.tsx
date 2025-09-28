@@ -19,6 +19,7 @@ interface TemplateCanvasProps {
   onBlockSelect: (block: TemplateBlock) => void
   onBlockUpdate: (blockId: string, updates: Partial<TemplateBlock>) => void
   onBlockDelete: (blockId: string) => void
+  onBlockDuplicate: (blockId: string) => void
   onSectionUpdate: (updates: Partial<TemplateSection>) => void
   onSaveBlockToLibrary?: (block: TemplateBlock) => void
 }
@@ -28,6 +29,7 @@ export function TemplateCanvas({
   onBlockSelect,
   onBlockUpdate,
   onBlockDelete,
+  onBlockDuplicate,
   onSectionUpdate,
   onSaveBlockToLibrary,
 }: TemplateCanvasProps) {
@@ -86,7 +88,7 @@ export function TemplateCanvas({
             ref={setNodeRef}
             className={`min-h-[200px] rounded-lg border-2 border-dashed transition-all duration-200 ${
               isOver
-                ? 'bg-primary/10 border-primary shadow-inner scale-[1.01]'
+                ? 'bg-primary/10 scale-[1.01] border-primary shadow-inner'
                 : 'hover:border-primary/30 hover:bg-primary/5 border-border'
             }`}
           >
@@ -99,8 +101,8 @@ export function TemplateCanvas({
                   </div>
                   <h3 className="mb-2 text-lg font-medium">No blocks yet</h3>
                   <p className="max-w-sm text-sm">
-                    Drag blocks from the library or data fields from the right to start building your template
-                    section.
+                    Drag blocks from the library or data fields from the right to start building
+                    your template section.
                   </p>
                 </div>
               </div>
@@ -116,7 +118,7 @@ export function TemplateCanvas({
                     id={`drop-zone-${section.id}-0`}
                     sectionId={section.id}
                     index={0}
-                    className="h-2 -mt-2 mb-2"
+                    className="-mt-2 mb-2 h-2"
                   />
 
                   {section.blocks.map((block, index) => (
@@ -127,6 +129,7 @@ export function TemplateCanvas({
                         onClick={() => onBlockSelect(block)}
                         onUpdate={(updates) => onBlockUpdate(block.id, updates)}
                         onDelete={() => onBlockDelete(block.id)}
+                        onDuplicate={() => onBlockDuplicate(block.id)}
                         onSaveToLibrary={onSaveBlockToLibrary}
                       />
 
@@ -135,7 +138,7 @@ export function TemplateCanvas({
                         id={`drop-zone-${section.id}-${index + 1}`}
                         sectionId={section.id}
                         index={index + 1}
-                        className="h-4 -my-1"
+                        className="-my-1 h-4"
                       />
                     </React.Fragment>
                   ))}

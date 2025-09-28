@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getOrganizationId } from '@/lib/auth/get-organization'
+import { standard409ATemplate } from '@/lib/templates/409a-template'
+import { value8Template409A } from '@/lib/templates/value8-409a-template'
 
 // Updated to use service client to bypass RLS
 
@@ -10,7 +12,10 @@ export async function GET(request: NextRequest) {
     const organizationId = await getOrganizationId()
 
     // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -28,28 +33,72 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform the database format to match the frontend ReportTemplate interface
-    const transformedTemplates = templates?.map(template => ({
-      id: template.id,
-      name: template.name,
-      description: template.description || '',
-      category: template.type === '409a' ? 'financial' :
-                template.type === 'board_deck' ? 'presentation' :
-                template.type === 'cap_table' ? 'operational' :
-                template.type === 'investor_update' ? 'investor' : 'other',
-      version: `${template.version}.0.0`,
-      sections: template.blocks || [],
-      variables: Object.keys(template.variables_schema || {}),
-      settings: template.branding,
-      metadata: {
-        createdAt: template.created_at,
-        updatedAt: template.updated_at,
-        author: template.owner_id || 'System',
-        tags: template.type ? [template.type] : [],
-        isSystem: template.is_system || false,
-      }
-    })) || []
+    const transformedTemplates =
+      templates?.map((template) => ({
+        id: template.id,
+        name: template.name,
+        description: template.description || '',
+        category:
+          template.type === '409a'
+            ? 'financial'
+            : template.type === 'board_deck'
+              ? 'presentation'
+              : template.type === 'cap_table'
+                ? 'operational'
+                : template.type === 'investor_update'
+                  ? 'investor'
+                  : 'other',
+        version: `${template.version}.0.0`,
+        sections: template.blocks || [],
+        variables: Object.keys(template.variables_schema || {}),
+        settings: template.branding,
+        metadata: {
+          createdAt: template.created_at,
+          updatedAt: template.updated_at,
+          author: template.owner_id || 'System',
+          tags: template.type ? [template.type] : [],
+          isSystem: template.is_system || false,
+        },
+      })) || []
 
-    return NextResponse.json(transformedTemplates)
+    // Check if predefined templates have been deleted (soft delete)
+    const { data: deletedTemplates } = await supabase
+      .from('report_templates')
+      .select('id')
+      .in('id', ['409a-standard-v1', 'value8-409a-comprehensive'])
+      .eq('is_active', false)
+
+    const deletedIds = deletedTemplates?.map((t) => t.id) || []
+
+    // Add predefined templates from codebase (only if not deleted)
+    const predefinedTemplates = []
+
+    if (!deletedIds.includes('409a-standard-v1')) {
+      predefinedTemplates.push({
+        ...standard409ATemplate,
+        metadata: {
+          ...standard409ATemplate.metadata,
+          isSystem: true,
+          author: 'System',
+        },
+      })
+    }
+
+    if (!deletedIds.includes('value8-409a-comprehensive')) {
+      predefinedTemplates.push({
+        ...value8Template409A,
+        metadata: {
+          ...value8Template409A.metadata,
+          isSystem: true,
+          author: 'Value8',
+        },
+      })
+    }
+
+    // Combine database templates with predefined templates
+    const allTemplates = [...predefinedTemplates, ...transformedTemplates]
+
+    return NextResponse.json(allTemplates)
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -62,7 +111,10 @@ export async function POST(request: NextRequest) {
     const organizationId = await getOrganizationId()
 
     // Get the current user
-    const { data: { user }, error: userError } = await authClient.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await authClient.auth.getUser()
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -70,7 +122,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Log to verify service role key is present
-    console.log('POST /api/report-templates - Service role key present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    console.log(
+      'POST /api/report-templates - Service role key present:',
+      !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
     console.log('POST /api/report-templates - User ID:', user.id)
     console.log('POST /api/report-templates - Organization ID:', organizationId)
 
@@ -78,24 +133,31 @@ export async function POST(request: NextRequest) {
     const templateData = {
       name: body.name,
       description: body.description || null,
-      type: body.category === 'financial' ? '409a' :
-            body.category === 'presentation' ? 'board_deck' :
-            body.category === 'operational' ? 'cap_table' :
-            body.category === 'investor' ? 'investor_update' : 'custom',
+      type:
+        body.category === 'financial'
+          ? '409a'
+          : body.category === 'presentation'
+            ? 'board_deck'
+            : body.category === 'operational'
+              ? 'cap_table'
+              : body.category === 'investor'
+                ? 'investor_update'
+                : 'custom',
       is_system: false,
       is_active: true,
       owner_id: user.id,
       organization_id: organizationId,
       blocks: body.sections || [],
-      variables_schema: body.variables?.reduce((acc: any, v: string) => {
-        acc[v] = { type: 'string', required: false }
-        return acc
-      }, {}) || {},
+      variables_schema:
+        body.variables?.reduce((acc: any, v: string) => {
+          acc[v] = { type: 'string', required: false }
+          return acc
+        }, {}) || {},
       branding: body.settings || {
         primaryColor: '#124E66',
         fontFamily: 'Inter',
         headerEnabled: true,
-        footerEnabled: true
+        footerEnabled: true,
       },
       version: 1,
     }
@@ -121,13 +183,16 @@ export async function POST(request: NextRequest) {
         message: error.message,
         code: error.code,
         details: error.details,
-        hint: error.hint
+        hint: error.hint,
       })
-      return NextResponse.json({
-        error: 'Failed to create template',
-        details: error.message,
-        code: error.code
-      }, { status: 500 })
+      return NextResponse.json(
+        {
+          error: 'Failed to create template',
+          details: error.message,
+          code: error.code,
+        },
+        { status: 500 }
+      )
     }
 
     // Transform the response to match frontend format
@@ -146,7 +211,7 @@ export async function POST(request: NextRequest) {
         author: user.email || 'Current User',
         tags: body.metadata?.tags || [],
         isSystem: false,
-      }
+      },
     }
 
     return NextResponse.json(transformedTemplate)
@@ -163,7 +228,10 @@ export async function PUT(request: NextRequest) {
     const organizationId = await getOrganizationId()
 
     // Get the current user
-    const { data: { user }, error: userError } = await authClient.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await authClient.auth.getUser()
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -208,10 +276,13 @@ export async function PUT(request: NextRequest) {
 
       if (cloneError) {
         console.error('Failed to clone template:', cloneError)
-        return NextResponse.json({
-          error: 'Failed to clone template',
-          details: cloneError.message
-        }, { status: 500 })
+        return NextResponse.json(
+          {
+            error: 'Failed to clone template',
+            details: cloneError.message,
+          },
+          { status: 500 }
+        )
       }
 
       // Transform the response
@@ -219,10 +290,16 @@ export async function PUT(request: NextRequest) {
         id: newTemplate.id,
         name: newTemplate.name,
         description: newTemplate.description || '',
-        category: newTemplate.type === '409a' ? 'financial' :
-                  newTemplate.type === 'board_deck' ? 'presentation' :
-                  newTemplate.type === 'cap_table' ? 'operational' :
-                  newTemplate.type === 'investor_update' ? 'investor' : 'other',
+        category:
+          newTemplate.type === '409a'
+            ? 'financial'
+            : newTemplate.type === 'board_deck'
+              ? 'presentation'
+              : newTemplate.type === 'cap_table'
+                ? 'operational'
+                : newTemplate.type === 'investor_update'
+                  ? 'investor'
+                  : 'other',
         version: `${newTemplate.version}.0.0`,
         sections: newTemplate.blocks || [],
         variables: Object.keys(newTemplate.variables_schema || {}),
@@ -233,7 +310,7 @@ export async function PUT(request: NextRequest) {
           author: user.email || 'Current User',
           tags: newTemplate.type ? [newTemplate.type] : [],
           isSystem: false,
-        }
+        },
       }
 
       return NextResponse.json(transformedTemplate)
@@ -271,15 +348,39 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Template ID required' }, { status: 400 })
     }
 
-    // Soft delete by setting is_active to false
-    const { error } = await supabase
-      .from('report_templates')
-      .update({ is_active: false })
-      .eq('id', templateId)
-      .eq('organization_id', organizationId)
+    // Check if this is a predefined template
+    const predefinedIds = ['409a-standard-v1', 'value8-409a-comprehensive']
 
-    if (error) {
-      return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
+    if (predefinedIds.includes(templateId)) {
+      // For predefined templates, create a "deleted" record in the database
+      // This will prevent them from showing up when we check in GET
+      const { error } = await supabase.from('report_templates').upsert({
+        id: templateId,
+        name: 'Deleted Template',
+        organization_id: organizationId,
+        is_active: false,
+        is_system: true,
+        type: '409a',
+        version: 1,
+        blocks: [],
+        variables_schema: {},
+        owner_id: (await supabase.auth.getUser()).data.user?.id,
+      })
+
+      if (error) {
+        return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
+      }
+    } else {
+      // Regular soft delete for database templates
+      const { error } = await supabase
+        .from('report_templates')
+        .update({ is_active: false })
+        .eq('id', templateId)
+        .eq('organization_id', organizationId)
+
+      if (error) {
+        return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ success: true })
