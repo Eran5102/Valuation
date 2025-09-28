@@ -15,54 +15,9 @@ const INITIALIZED_KEY = '409a-blocks-initialized-v2'
 export function initialize409ABlocks(forceReset = false) {
   if (!isBrowser) return
 
-  // Check if already initialized (unless forcing reset)
-  const isInitialized = localStorage.getItem(INITIALIZED_KEY)
-  if (isInitialized === 'true' && !forceReset) {
-    // Still check if blocks exist, in case localStorage was cleared
-    const existingBlocks = localStorage.getItem(SAVED_BLOCKS_KEY)
-    if (existingBlocks) {
-      const blocks = JSON.parse(existingBlocks)
-      const has409ABlocks = blocks.some((b: any) => b.category === '409A Standards')
-      if (has409ABlocks) {
-        return // Already has 409A blocks
-      }
-    }
-  }
-
-  // Get existing saved blocks
-  const existingBlocks = localStorage.getItem(SAVED_BLOCKS_KEY)
-  let savedBlocks = existingBlocks ? JSON.parse(existingBlocks) : []
-
-  // Add standard 409A blocks if not already present
-  standard409ABlocksList.forEach((blockTemplate) => {
-    const exists = savedBlocks.some((b: any) => b.id === blockTemplate.id)
-    if (!exists) {
-      const now = new Date().toISOString()
-      // Transform to SavedBlock format expected by SavedBlocksManager
-      savedBlocks.push({
-        id: blockTemplate.id,
-        name: blockTemplate.name,
-        category: blockTemplate.category || '409A Standards',
-        description: `Standard 409A section: ${blockTemplate.name}`,
-        tags: ['409A', 'standard', 'system'],
-        block: {
-          id: `block_${blockTemplate.id}`,
-          type: 'composite' as const,
-          content: '',
-          styling: {},
-          children: blockTemplate.blocks,
-        },
-        createdAt: now,
-        updatedAt: now, // This was missing!
-      })
-    }
-  })
-
-  // Save back to localStorage
-  localStorage.setItem(SAVED_BLOCKS_KEY, JSON.stringify(savedBlocks))
-  localStorage.setItem(INITIALIZED_KEY, 'true')
-
-  console.log(`409A standard blocks initialized successfully. Total blocks: ${savedBlocks.length}`)
+  // DISABLED: No longer auto-adding 409A blocks
+  // User can manually create and save their own blocks
+  return
 }
 
 // Function to get all standard block categories

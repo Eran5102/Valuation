@@ -267,7 +267,7 @@ export function CoverPageEditor({
       <div>
         <Label>Report Title</Label>
         <Input
-          value={data.title}
+          value={data.title || ''}
           onChange={(e) => onChange({ ...data, title: e.target.value })}
           placeholder="{{report.title}}"
         />
@@ -275,7 +275,7 @@ export function CoverPageEditor({
       <div>
         <Label>Subtitle</Label>
         <Input
-          value={data.subtitle}
+          value={data.subtitle || ''}
           onChange={(e) => onChange({ ...data, subtitle: e.target.value })}
           placeholder="Optional subtitle"
         />
@@ -283,7 +283,7 @@ export function CoverPageEditor({
       <div>
         <Label>Company Name</Label>
         <Input
-          value={data.companyName}
+          value={data.companyName || ''}
           onChange={(e) => onChange({ ...data, companyName: e.target.value })}
           placeholder="{{company.name}}"
         />
@@ -291,7 +291,7 @@ export function CoverPageEditor({
       <div>
         <Label>Report Type</Label>
         <Input
-          value={data.reportType}
+          value={data.reportType || ''}
           onChange={(e) => onChange({ ...data, reportType: e.target.value })}
           placeholder="e.g., Valuation Report, Financial Analysis"
         />
@@ -299,7 +299,7 @@ export function CoverPageEditor({
       <div>
         <Label>Date</Label>
         <Input
-          value={data.date}
+          value={data.date || ''}
           onChange={(e) => onChange({ ...data, date: e.target.value })}
           placeholder="{{report.date}}"
         />
@@ -307,7 +307,7 @@ export function CoverPageEditor({
       <div>
         <Label>Logo URL</Label>
         <Input
-          value={data.logoUrl}
+          value={data.logoUrl || ''}
           onChange={(e) => onChange({ ...data, logoUrl: e.target.value })}
           placeholder="{{company.logo}}"
         />
@@ -316,7 +316,7 @@ export function CoverPageEditor({
         <div>
           <Label>Prepared By</Label>
           <Input
-            value={data.preparedBy}
+            value={data.preparedBy || ''}
             onChange={(e) => onChange({ ...data, preparedBy: e.target.value })}
             placeholder="{{company.name}}"
           />
@@ -324,7 +324,7 @@ export function CoverPageEditor({
         <div>
           <Label>Prepared For</Label>
           <Input
-            value={data.preparedFor}
+            value={data.preparedFor || ''}
             onChange={(e) => onChange({ ...data, preparedFor: e.target.value })}
             placeholder="{{client.name}}"
           />

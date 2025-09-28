@@ -18,7 +18,7 @@ export class TemplateEngine {
   ): GeneratedReport {
     const processedSections = template.sections.map((section) => ({
       ...section,
-      blocks: this.processBlocks(section.blocks, data, template.variables),
+      blocks: this.processBlocks(section.blocks, data, template.variables || []),
     }))
 
     const html = this.generateHTML(
@@ -47,14 +47,20 @@ export class TemplateEngine {
   private static processBlocks(
     blocks: TemplateBlock[],
     data: Record<string, any>,
-    variables: TemplateVariable[]
+    variables: TemplateVariable[] = []
   ): TemplateBlock[] {
+    if (!blocks || !Array.isArray(blocks)) {
+      return []
+    }
+
     return blocks
       .filter((block) => this.shouldDisplayBlock(block, data))
       .map((block) => ({
         ...block,
-        content: this.processContent(block.content, data, variables),
-        children: block.children ? this.processBlocks(block.children, data, variables) : undefined,
+        content: this.processContent(block.content, data || {}, variables),
+        children: block.children
+          ? this.processBlocks(block.children, data || {}, variables)
+          : undefined,
       }))
   }
 
@@ -89,7 +95,7 @@ export class TemplateEngine {
   private static processContent(
     content: string | any,
     data: Record<string, any>,
-    variables: TemplateVariable[]
+    variables: TemplateVariable[] = []
   ): string | any {
     if (typeof content !== 'string') {
       if (Array.isArray(content)) {
@@ -100,8 +106,11 @@ export class TemplateEngine {
 
     // Replace template variables in the format {{variable_name}}
     return content.replace(/\{\{([^}]+)\}\}/g, (match, variableName) => {
-      const variable = variables.find((v) => v.id === variableName.trim())
-      const value = data[variableName.trim()]
+      // Handle case where variables is undefined or not an array
+      const variable = Array.isArray(variables)
+        ? variables.find((v) => v.id === variableName.trim())
+        : undefined
+      const value = data?.[variableName.trim()]
 
       if (value === undefined || value === null) {
         return variable?.defaultValue || match // Keep placeholder if no value
@@ -344,18 +353,18 @@ export class TemplateEngine {
 
     switch (block.type) {
       case 'header':
-        return `<h1 class="template-header"${blockId}${styleAttr}>${block.content}</h1>`
+        return `<h1 class="template-header"${blockId}${styleAttr}>${block.content || ''}</h1>`
 
       case 'paragraph':
-        const paragraphContent = String(block.content).replace(/\n/g, '<br>')
+        const paragraphContent = block.content ? String(block.content).replace(/\n/g, '<br>') : ''
         return `<p class="template-paragraph"${blockId}${styleAttr}>${paragraphContent}</p>`
 
       case 'list':
         if (Array.isArray(block.content)) {
-          const listItems = block.content.map((item) => `<li>${item}</li>`).join('\n')
+          const listItems = block.content.map((item) => `<li>${item || ''}</li>`).join('\n')
           return `<ul class="template-list"${blockId}${styleAttr}>${listItems}</ul>`
         }
-        return `<div class="template-list"${blockId}${styleAttr}>${block.content}</div>`
+        return `<div class="template-list"${blockId}${styleAttr}>${block.content || ''}</div>`
 
       case 'table':
         return `<div class="template-table"${blockId}${styleAttr}>[Table content will be implemented]</div>`
@@ -1086,27 +1095,31 @@ export class TemplateEngine {
     const warnings: string[] = []
 
     // Check required variables
-    template.variables.forEach((variable) => {
-      if (
-        variable.required &&
-        (data[variable.id] === undefined || data[variable.id] === null || data[variable.id] === '')
-      ) {
-        errors.push(`Required variable '${variable.name}' (${variable.id}) is missing`)
-      }
-    })
+    if (template.variables && Array.isArray(template.variables)) {
+      template.variables.forEach((variable) => {
+        if (
+          variable.required &&
+          (data[variable.id] === undefined ||
+            data[variable.id] === null ||
+            data[variable.id] === '')
+        ) {
+          errors.push(`Required variable '${variable.name}' (${variable.id}) is missing`)
+        }
+      })
 
-    // Type validation
-    template.variables.forEach((variable) => {
-      const value = data[variable.id]
-      if (value !== undefined && value !== null && value !== '') {
-        if (variable.type === 'number' && isNaN(Number(value))) {
-          warnings.push(`Variable '${variable.name}' should be a number but got: ${value}`)
+      // Type validation
+      template.variables.forEach((variable) => {
+        const value = data[variable.id]
+        if (value !== undefined && value !== null && value !== '') {
+          if (variable.type === 'number' && isNaN(Number(value))) {
+            warnings.push(`Variable '${variable.name}' should be a number but got: ${value}`)
+          }
+          if (variable.type === 'date' && isNaN(Date.parse(value))) {
+            warnings.push(`Variable '${variable.name}' should be a valid date but got: ${value}`)
+          }
         }
-        if (variable.type === 'date' && isNaN(Date.parse(value))) {
-          warnings.push(`Variable '${variable.name}' should be a valid date but got: ${value}`)
-        }
-      }
-    })
+      })
+    }
 
     return {
       isValid: errors.length === 0,

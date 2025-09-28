@@ -9,6 +9,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import type { ReportTemplate, TemplateVariable } from '@/lib/templates/types'
 import draftService from '@/services/draftService'
 import { TemplatePersistenceService } from '@/lib/templates/templatePersistenceService'
+import { Clear409ABlocksInitializer } from '@/components/templates/Clear409ABlocksInitializer'
 
 // Create a sample template based on the 409A template structure
 const createSampleTemplate = (templateId?: string, templateName?: string): ReportTemplate => {
@@ -446,6 +447,7 @@ function TemplateEditorContent() {
 
   return (
     <AppLayout>
+      <Clear409ABlocksInitializer />
       <div className="h-full bg-background">
         {/* Enhanced Header with Context */}
         <div className="bg-card/50 border-b border-border">

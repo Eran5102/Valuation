@@ -28,18 +28,24 @@ import { toast } from 'sonner'
 import { useDCFModel } from '@/contexts/DCFModelContext'
 import { WorkingCapitalData, WorkingCapitalPeriod } from '@/types/dcf'
 import { ColumnDef } from '@tanstack/react-table'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-} from 'recharts'
+import dynamic from 'next/dynamic'
+
+// Dynamically import recharts components to reduce initial bundle size
+const LineChart = dynamic(() => import('recharts').then((mod) => mod.LineChart), { ssr: false })
+const Line = dynamic(() => import('recharts').then((mod) => mod.Line), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then((mod) => mod.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then((mod) => mod.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then((mod) => mod.CartesianGrid), {
+  ssr: false,
+})
+const Tooltip = dynamic(() => import('recharts').then((mod) => mod.Tooltip), { ssr: false })
+const Legend = dynamic(() => import('recharts').then((mod) => mod.Legend), { ssr: false })
+const ResponsiveContainer = dynamic(
+  () => import('recharts').then((mod) => mod.ResponsiveContainer),
+  { ssr: false }
+)
+const Area = dynamic(() => import('recharts').then((mod) => mod.Area), { ssr: false })
+const AreaChart = dynamic(() => import('recharts').then((mod) => mod.AreaChart), { ssr: false })
 
 interface WorkingCapitalItem {
   year: number
@@ -200,7 +206,10 @@ export function WorkingCapitalClient({ valuationId }: WorkingCapitalClientProps)
       const cogs = revenue * (1 - financialData.grossMargin / 100)
       const operatingExpenses = revenue * (financialData.opexPercent / 100)
 
-      let ar, inventory, ap, nwc = 0
+      let ar,
+        inventory,
+        ap,
+        nwc = 0
 
       if (assumptions.projectionMethod === 'days') {
         ar = (revenue * assumptions.daysReceivables) / 365
@@ -488,11 +497,7 @@ export function WorkingCapitalClient({ valuationId }: WorkingCapitalClientProps)
               <CardDescription>Historical and projected working capital components</CardDescription>
             </CardHeader>
             <CardContent>
-              <EditableDataTable
-                tableId="working-capital"
-                columns={columns}
-                data={combinedData}
-              />
+              <EditableDataTable tableId="working-capital" columns={columns} data={combinedData} />
             </CardContent>
           </Card>
         </TabsContent>
