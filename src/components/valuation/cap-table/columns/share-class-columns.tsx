@@ -1,7 +1,6 @@
 import React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -15,6 +14,12 @@ import {
 import { Edit3, Save, Trash2, DollarSign, Calendar } from 'lucide-react'
 import { ShareClass } from '../types'
 import { formatNumber, formatCurrency } from '@/lib/utils'
+import {
+  ControlledInput,
+  ControlledNumberInput,
+  ControlledCurrencyInput,
+  ControlledPercentageInput,
+} from '../components/ControlledInput'
 
 export function createShareClassColumns(
   editingRows: Set<string>,
@@ -42,7 +47,7 @@ export function createShareClassColumns(
                 updateShareClass(shareClass.id, 'shareType', value)
               }
             >
-              <SelectTrigger className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-primary">
+              <SelectTrigger className="border-primary/20 w-28 bg-background focus:border-primary focus:ring-primary">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="border-primary/20 bg-card">
@@ -58,8 +63,8 @@ export function createShareClassColumns(
             variant={shareClass.shareType === 'preferred' ? 'default' : 'secondary'}
             className={
               shareClass.shareType === 'preferred'
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+                ? 'hover:bg-primary/90 bg-primary text-primary-foreground'
+                : 'hover:bg-secondary/90 bg-secondary text-secondary-foreground'
             }
           >
             {shareClass.shareType === 'common' ? 'Common' : 'Preferred'}
@@ -80,11 +85,12 @@ export function createShareClassColumns(
 
         if (isEditing) {
           return (
-            <Input
-              defaultValue={shareClass.name}
-              onBlur={(e) => updateShareClass(shareClass.id, 'name', e.target.value)}
-              className="w-40 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+            <ControlledInput
+              value={shareClass.name}
+              onChange={(value) => updateShareClass(shareClass.id, 'name', value)}
+              className="border-primary/20 w-40 bg-background"
               placeholder="Enter class name"
+              debounceMs={800}
             />
           )
         }
@@ -114,7 +120,7 @@ export function createShareClassColumns(
                   date?.toISOString().split('T')[0] || ''
                 )
               }
-              className="w-36 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+              className="border-primary/20 w-36 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
             />
           )
         }
@@ -140,15 +146,13 @@ export function createShareClassColumns(
 
         if (isEditing) {
           return (
-            <Input
-              type="number"
-              min="0"
-              defaultValue={shareClass.sharesOutstanding}
-              onBlur={(e) =>
-                updateShareClass(shareClass.id, 'sharesOutstanding', parseInt(e.target.value) || 0)
-              }
-              className="w-32 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+            <ControlledNumberInput
+              value={shareClass.sharesOutstanding}
+              onChange={(value) => updateShareClass(shareClass.id, 'sharesOutstanding', value)}
+              min={0}
+              className="border-primary/20 w-32 bg-background"
               placeholder="0"
+              debounceMs={800}
             />
           )
         }
@@ -169,16 +173,13 @@ export function createShareClassColumns(
 
         if (isEditing) {
           return (
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={shareClass.pricePerShare}
-              onBlur={(e) =>
-                updateShareClass(shareClass.id, 'pricePerShare', parseFloat(e.target.value) || 0)
-              }
-              className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
-              placeholder="0.00"
+            <ControlledCurrencyInput
+              value={shareClass.pricePerShare}
+              onChange={(value) => updateShareClass(shareClass.id, 'pricePerShare', value)}
+              min={0}
+              className="border-primary/20 w-28 bg-background"
+              placeholder="$0.00"
+              debounceMs={800}
             />
           )
         }
@@ -229,7 +230,7 @@ export function createShareClassColumns(
               variant="ghost"
               size="sm"
               onClick={() => toggleRowEdit(shareClass.id)}
-              className="h-8 w-8 p-0 hover:bg-primary/10"
+              className="hover:bg-primary/10 h-8 w-8 p-0"
             >
               {isEditing ? (
                 <Save className="h-4 w-4 text-primary" />
@@ -241,7 +242,7 @@ export function createShareClassColumns(
               variant="ghost"
               size="sm"
               onClick={() => deleteShareClass(shareClass.id)}
-              className="h-8 w-8 p-0 hover:bg-destructive/10"
+              className="hover:bg-destructive/10 h-8 w-8 p-0"
             >
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>

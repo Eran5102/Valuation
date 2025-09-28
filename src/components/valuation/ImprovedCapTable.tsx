@@ -19,6 +19,12 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Input } from '@/components/ui/input'
+import {
+  ControlledInput,
+  ControlledNumberInput,
+  ControlledCurrencyInput,
+  ControlledPercentageInput,
+} from './cap-table/components/ControlledInput'
 import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
@@ -36,6 +42,7 @@ import {
   enhanceShareClassesWithCalculations,
 } from '@/lib/capTableCalculations'
 import { formatCurrency } from '@/lib/utils'
+import { SaveStatusIndicator } from '@/components/valuation/cap-table/components/SaveStatusIndicator'
 
 interface CapTableProps {
   valuationId: string
@@ -50,7 +57,10 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isEditingRef = useRef(false)
 
   // Load cap table data
   useEffect(() => {
@@ -74,33 +84,93 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
     loadCapTableData()
   }, [valuationId])
 
-  // Save cap table data
-  const saveCapTable = useCallback(async () => {
-    if (!hasChanges || isSaving) return
+  // Save cap table data with retry logic
+  const saveCapTable = useCallback(
+    async (retryCount = 0) => {
+      const MAX_RETRIES = 3
+      const RETRY_DELAY = 1000 // 1 second
 
-    setIsSaving(true)
-    setSaveError(null)
+      if (!hasChanges || isSaving || isEditingRef.current) return
 
-    try {
-      const response = await fetch(`/api/valuations/${valuationId}/cap-table`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shareClasses, options }),
-      })
+      setIsSaving(true)
+      setSaveError(null)
+      setSaveStatus('saving')
 
-      if (response.ok) {
-        setHasChanges(false)
-        onSave?.({ shareClasses, options })
-      } else {
-        const error = await response.json()
-        setSaveError(error.message || 'Failed to save cap table')
+      try {
+        // Ensure each shareClass has a companyId
+        const shareClassesWithCompanyId = shareClasses.map((sc) => ({
+          ...sc,
+          companyId: sc.companyId || 1, // Default to 1 if not set
+        }))
+
+        const response = await fetch(`/api/valuations/${valuationId}/cap-table`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            shareClasses: shareClassesWithCompanyId,
+            options,
+          }),
+        })
+
+        if (response.ok) {
+          setHasChanges(false)
+          setSaveStatus('saved')
+          setLastSaved(new Date())
+          onSave?.({ shareClasses: shareClassesWithCompanyId, options })
+
+          // Reset status after 3 seconds
+          setTimeout(() => {
+            setSaveStatus('idle')
+          }, 3000)
+        } else {
+          const error = await response.json()
+
+          // Handle specific error cases
+          if (response.status === 400 && error.details) {
+            // Validation error - don't retry
+            setSaveError(`Validation failed: ${error.details.join(', ')}`)
+            setSaveStatus('error')
+          } else if (response.status === 404) {
+            // Valuation not found - don't retry
+            setSaveError('Valuation not found. Please refresh the page.')
+            setSaveStatus('error')
+          } else if (response.status >= 500 && retryCount < MAX_RETRIES) {
+            // Server error - retry
+            console.warn(`Save failed, retrying... (${retryCount + 1}/${MAX_RETRIES})`)
+            setTimeout(
+              () => {
+                saveCapTable(retryCount + 1)
+              },
+              RETRY_DELAY * Math.pow(2, retryCount)
+            ) // Exponential backoff
+            return
+          } else {
+            setSaveError(error.message || 'Failed to save cap table')
+            setSaveStatus('error')
+          }
+        }
+      } catch (error) {
+        // Network or other errors
+        if (retryCount < MAX_RETRIES) {
+          console.warn(`Network error, retrying... (${retryCount + 1}/${MAX_RETRIES})`)
+          setTimeout(
+            () => {
+              saveCapTable(retryCount + 1)
+            },
+            RETRY_DELAY * Math.pow(2, retryCount)
+          ) // Exponential backoff
+          return
+        } else {
+          setSaveError('Network error: Failed to save cap table after multiple attempts')
+          setSaveStatus('error')
+          console.error('Save error:', error)
+        }
+      } finally {
+        setIsSaving(false)
       }
-    } catch (error) {
-      setSaveError('Network error: Failed to save cap table')
-    } finally {
-      setIsSaving(false)
-    }
-  }, [valuationId, shareClasses, options, hasChanges, onSave, isSaving])
+    },
+    [valuationId, shareClasses, options, hasChanges, onSave, isSaving]
+  )
 
   // Auto-save with debouncing
   useEffect(() => {
@@ -111,10 +181,12 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
       clearTimeout(saveTimeoutRef.current)
     }
 
-    // Set new timeout for auto-save (2 seconds)
+    // Set new timeout for auto-save (5 seconds) - increased from 2 seconds
     saveTimeoutRef.current = setTimeout(() => {
-      saveCapTable()
-    }, 2000)
+      if (!isEditingRef.current) {
+        saveCapTable()
+      }
+    }, 5000)
 
     // Cleanup
     return () => {
@@ -124,9 +196,16 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
     }
   }, [hasChanges, saveCapTable])
 
-  // Update share class on blur (when user leaves the field)
+  // Update share class with better handling
   const updateShareClass = useCallback(
     (id: string, field: keyof ShareClass, value: any) => {
+      // Set editing flag
+      isEditingRef.current = true
+
+      // Clear editing flag after a short delay
+      setTimeout(() => {
+        isEditingRef.current = false
+      }, 100)
       // Validation for share type changes
       if (field === 'shareType' && value === 'common') {
         const hasOtherCommon = shareClasses.some((sc) => sc.shareType === 'common' && sc.id !== id)
@@ -160,7 +239,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
       setHasChanges(true)
 
-      // Update state and run calculations immediately on blur
+      // Update state and run calculations
       setShareClasses((prev) => {
         const updated = prev.map((sc) => (sc.id === id ? { ...sc, [field]: value } : sc))
         return enhanceShareClassesWithCalculations(updated)
@@ -212,7 +291,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
     const newShareClass: ShareClass = {
       id: uniqueId,
-      companyId: 1,
+      companyId: 1, // Will be set properly by API based on valuation's company_id
       shareType: !commonClassExists ? 'common' : 'preferred',
       name: !commonClassExists
         ? 'Common Stock'
@@ -315,7 +394,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
             <select
               defaultValue={option.type}
               onBlur={(e) => updateOption(option.id, 'type', e.target.value as OptionsType)}
-              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
+              className="focus:ring-primary/50 w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2"
             >
               <option value="Options">Options</option>
               <option value="Warrants">Warrants</option>
@@ -353,14 +432,13 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
         if (isEditing) {
           return (
-            <input
-              type="number"
-              defaultValue={option.numOptions}
-              onBlur={(e) => updateOption(option.id, 'numOptions', parseFloat(e.target.value) || 0)}
-              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
+            <ControlledNumberInput
+              value={option.numOptions}
+              onChange={(value) => updateOption(option.id, 'numOptions', value)}
+              min={0}
+              className="w-full text-sm"
               placeholder="0"
-              min="0"
-              step="1"
+              debounceMs={800}
             />
           )
         }
@@ -382,16 +460,13 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
         if (isEditing) {
           return (
-            <input
-              type="number"
-              defaultValue={option.exercisePrice}
-              onBlur={(e) =>
-                updateOption(option.id, 'exercisePrice', parseFloat(e.target.value) || 0)
-              }
-              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
-              placeholder="0.00"
-              min="0"
-              step="0.01"
+            <ControlledCurrencyInput
+              value={option.exercisePrice}
+              onChange={(value) => updateOption(option.id, 'exercisePrice', value)}
+              min={0}
+              className="w-full text-sm"
+              placeholder="$0.00"
+              debounceMs={800}
             />
           )
         }
@@ -416,7 +491,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               onClick={() => toggleRowEdit(option.id)}
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 hover:bg-primary/10"
+              className="hover:bg-primary/10 h-8 w-8 p-0"
               title={isEditing ? 'Save' : 'Edit'}
             >
               {isEditing ? (
@@ -429,7 +504,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               onClick={() => deleteOption(option.id)}
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 hover:bg-destructive/10"
+              className="hover:bg-destructive/10 h-8 w-8 p-0"
               title="Delete"
             >
               <Trash2 className="h-4 w-4 text-destructive" />
@@ -460,7 +535,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                 updateShareClass(shareClass.id, 'shareType', value)
               }
             >
-              <SelectTrigger className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-primary">
+              <SelectTrigger className="border-primary/20 w-28 bg-background focus:border-primary focus:ring-primary">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="border-primary/20 bg-card">
@@ -476,8 +551,8 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
             variant={shareClass.shareType === 'preferred' ? 'default' : 'secondary'}
             className={
               shareClass.shareType === 'preferred'
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+                ? 'hover:bg-primary/90 bg-primary text-primary-foreground'
+                : 'hover:bg-secondary/90 bg-secondary text-secondary-foreground'
             }
           >
             {shareClass.shareType === 'common' ? 'Common' : 'Preferred'}
@@ -498,11 +573,12 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
         if (isEditing) {
           return (
-            <Input
-              defaultValue={shareClass.name}
-              onBlur={(e) => updateShareClass(shareClass.id, 'name', e.target.value)}
-              className="w-40 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+            <ControlledInput
+              value={shareClass.name}
+              onChange={(value) => updateShareClass(shareClass.id, 'name', value)}
+              className="border-primary/20 w-40 bg-background"
               placeholder="Enter class name"
+              debounceMs={800}
             />
           )
         }
@@ -532,7 +608,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                   date?.toISOString().split('T')[0] || ''
                 )
               }
-              className="w-36 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+              className="border-primary/20 w-36 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
             />
           )
         }
@@ -558,15 +634,13 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
         if (isEditing) {
           return (
-            <Input
-              type="number"
-              min="0"
-              defaultValue={shareClass.sharesOutstanding}
-              onBlur={(e) =>
-                updateShareClass(shareClass.id, 'sharesOutstanding', parseInt(e.target.value) || 0)
-              }
-              className="w-32 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+            <ControlledNumberInput
+              value={shareClass.sharesOutstanding}
+              onChange={(value) => updateShareClass(shareClass.id, 'sharesOutstanding', value)}
+              min={0}
+              className="border-primary/20 w-32 bg-background"
               placeholder="0"
+              debounceMs={800}
             />
           )
         }
@@ -587,16 +661,13 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
         if (isEditing) {
           return (
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={shareClass.pricePerShare}
-              onBlur={(e) =>
-                updateShareClass(shareClass.id, 'pricePerShare', parseFloat(e.target.value) || 0)
-              }
-              className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
-              placeholder="0.00"
+            <ControlledCurrencyInput
+              value={shareClass.pricePerShare}
+              onChange={(value) => updateShareClass(shareClass.id, 'pricePerShare', value)}
+              min={0}
+              className="border-primary/20 w-28 bg-background"
+              placeholder="$0.00"
+              debounceMs={800}
             />
           )
         }
@@ -655,7 +726,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                 value: 'non-participating' | 'participating' | 'participating-with-cap'
               ) => updateShareClass(shareClass.id, 'preferenceType', value)}
             >
-              <SelectTrigger className="w-40 border-primary/20 bg-background focus:border-primary focus:ring-primary">
+              <SelectTrigger className="border-primary/20 w-40 bg-background focus:border-primary focus:ring-primary">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="border-primary/20 bg-card">
@@ -702,7 +773,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               onBlur={(e) =>
                 updateShareClass(shareClass.id, 'lpMultiple', parseFloat(e.target.value) || 1.0)
               }
-              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+              className="border-primary/20 w-20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="1.0"
             />
           )
@@ -761,7 +832,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                   updateShareClass(shareClass.id, 'seniority', newValue)
                 }
               }}
-              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+              className="border-primary/20 w-20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0"
             />
           )
@@ -814,7 +885,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                   parseFloat(e.target.value) || null
                 )
               }
-              className="w-28 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+              className="border-primary/20 w-28 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0.00"
             />
           )
@@ -857,7 +928,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                   parseFloat(e.target.value) || 1.0
                 )
               }
-              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+              className="border-primary/20 w-20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="1.0"
             />
           )
@@ -953,7 +1024,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               onBlur={(e) =>
                 updateShareClass(shareClass.id, 'dividendsRate', parseFloat(e.target.value) || null)
               }
-              className="w-20 border-primary/20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
+              className="border-primary/20 w-20 bg-background focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="0.00"
             />
           )
@@ -991,7 +1062,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                 updateShareClass(shareClass.id, 'dividendsType', value || null)
               }
             >
-              <SelectTrigger className="w-32 border-primary/20 bg-background focus:border-primary focus:ring-primary">
+              <SelectTrigger className="border-primary/20 w-32 bg-background focus:border-primary focus:ring-primary">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent className="border-primary/20 bg-card">
@@ -1081,7 +1152,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               variant="ghost"
               size="sm"
               onClick={() => toggleRowEdit(shareClass.id)}
-              className="h-8 w-8 p-0 hover:bg-primary/10"
+              className="hover:bg-primary/10 h-8 w-8 p-0"
             >
               {isEditing ? (
                 <Save className="h-4 w-4 text-primary" />
@@ -1093,7 +1164,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
               variant="ghost"
               size="sm"
               onClick={() => deleteShareClass(shareClass.id)}
-              className="h-8 w-8 p-0 hover:bg-destructive/10"
+              className="hover:bg-destructive/10 h-8 w-8 p-0"
             >
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
@@ -1147,7 +1218,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
       {/* Main Table */}
       <Card className="border-primary/20 bg-card">
-        <CardHeader className="border-b border-primary/20 bg-primary/5">
+        <CardHeader className="border-primary/20 bg-primary/5 border-b">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Cap Table Configuration</h3>
@@ -1155,22 +1226,26 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
                 Manage share classes and their properties
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={addShareClass} size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Share Class
-              </Button>
-              {hasChanges && (
-                <Button
-                  onClick={saveCapTable}
-                  variant="secondary"
-                  size="sm"
-                  title="Save all changes to database (row edit buttons only update local state)"
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
+            <div className="flex items-center gap-4">
+              <SaveStatusIndicator status={saveStatus} lastSaved={lastSaved} error={saveError} />
+              <div className="flex items-center gap-2">
+                <Button onClick={addShareClass} size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Share Class
                 </Button>
-              )}
+                {hasChanges && (
+                  <Button
+                    onClick={saveCapTable}
+                    variant="secondary"
+                    size="sm"
+                    title="Save all changes to database (row edit buttons only update local state)"
+                    disabled={isSaving}
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -1201,7 +1276,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
 
       {/* Options/Warrants Table */}
       <Card className="border-primary/20 bg-card">
-        <CardHeader className="border-b border-primary/20 bg-primary/5">
+        <CardHeader className="border-primary/20 bg-primary/5 border-b">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Options & Warrants</h3>
@@ -1212,7 +1287,7 @@ export function ImprovedCapTable({ valuationId, onSave }: CapTableProps) {
             <div className="flex items-center gap-2">
               <Button
                 onClick={addOption}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="hover:bg-primary/90 bg-primary text-primary-foreground"
                 size="sm"
               >
                 <Plus className="mr-2 h-4 w-4" />
