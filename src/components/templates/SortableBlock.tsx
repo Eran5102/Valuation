@@ -85,6 +85,7 @@ const blockIcons = {
   bibliography: BookOpen,
   glossary: Book,
   signatureBlock: PenTool,
+  capitalStructureTable: Table,
 }
 
 interface SortableBlockProps {

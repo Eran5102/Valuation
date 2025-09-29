@@ -51,7 +51,7 @@ export interface ValuationProject {
 // Cap table related types
 export interface ShareClass {
   id: string
-  companyId: number
+  companyId?: number
   shareType: 'common' | 'preferred'
   name: string
   roundDate: string
