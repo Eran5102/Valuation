@@ -54,9 +54,17 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  // Try to get session with error handling
+  let session = null
+  try {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) {
+      console.error('Session error in middleware:', error)
+    }
+    session = data?.session
+  } catch (error) {
+    console.error('Failed to get session in middleware:', error)
+  }
 
   // List of public routes that don't require authentication
   const publicRoutes = [
@@ -68,9 +76,19 @@ export async function middleware(request: NextRequest) {
   ]
 
   const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
 
-  // Redirect to login if not authenticated and trying to access protected route
+  // Handle unauthenticated requests
   if (!session && !isPublicRoute) {
+    // For API routes, return 401 JSON response instead of redirecting
+    if (isApiRoute) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // For regular routes, redirect to login
     const redirectUrl = new URL('/auth/login', request.url)
     redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
     return NextResponse.redirect(redirectUrl)

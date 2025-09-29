@@ -51,16 +51,16 @@ export function DatePicker({
             'w-full justify-start text-left font-normal',
             !value && 'text-muted-foreground',
             'bg-background hover:bg-accent hover:text-accent-foreground',
-            'border-input',
+            'min-w-[150px] max-w-[200px] border-input',
             className
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, 'PPP') : <span>{placeholder}</span>}
+          <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+          <span className="truncate">{value ? format(value, 'MM/dd/yyyy') : placeholder}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align={align} side={side}>
+      <PopoverContent className="w-auto p-0" align={align} side={side} sideOffset={5}>
         <DayPicker
           mode="single"
           selected={value}
@@ -68,8 +68,10 @@ export function DatePicker({
           disabled={disabledDays || disabledDates}
           fromDate={fromDate}
           toDate={toDate}
+          defaultMonth={value || new Date()}
+          showOutsideDays={false}
           initialFocus
-          className="rounded-md border"
+          className="rounded-md border p-3"
           classNames={{
             months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
             month: 'space-y-4',
@@ -81,8 +83,8 @@ export function DatePicker({
               'hover:bg-accent hover:text-accent-foreground',
               'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
             ),
-            nav_button_previous: 'absolute left-1',
-            nav_button_next: 'absolute right-1',
+            nav_button_previous: 'absolute left-1 top-1',
+            nav_button_next: 'absolute right-1 top-1',
             table: 'w-full border-collapse space-y-1',
             head_row: 'flex',
             head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
@@ -187,8 +189,8 @@ export function DateRangePicker({
               'hover:bg-accent hover:text-accent-foreground',
               'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
             ),
-            nav_button_previous: 'absolute left-1',
-            nav_button_next: 'absolute right-1',
+            nav_button_previous: 'absolute left-1 top-1',
+            nav_button_next: 'absolute right-1 top-1',
             table: 'w-full border-collapse space-y-1',
             head_row: 'flex',
             head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',

@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import ImprovedCapTable from '@/components/valuation/ImprovedCapTable'
+import { UnifiedCapTable } from '@/components/valuation/UnifiedCapTable'
 
 export default function CapTablePage() {
   const params = useParams()
@@ -15,7 +15,7 @@ export default function CapTablePage() {
           Manage share classes, options, and ownership structure
         </p>
       </div>
-      <ImprovedCapTable valuationId={valuationId} />
+      <UnifiedCapTable valuationId={valuationId} />
     </div>
   )
 }

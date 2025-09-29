@@ -2,14 +2,14 @@ import { z } from 'zod'
 
 // Common schemas
 export const IdParamSchema = z.object({
-  id: z.string().uuid('Invalid ID format')
+  id: z.string().uuid('Invalid ID format'),
 })
 
 export const PaginationSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
   sort: z.string().optional(),
-  order: z.enum(['asc', 'desc']).default('desc')
+  order: z.enum(['asc', 'desc']).default('desc'),
 })
 
 // Company schemas
@@ -21,7 +21,7 @@ export const CreateCompanySchema = z.object({
   description: z.string().optional(),
   founded_date: z.string().datetime().optional(),
   employee_count: z.number().min(0).optional(),
-  revenue: z.number().min(0).optional()
+  revenue: z.number().min(0).optional(),
 })
 
 export const UpdateCompanySchema = CreateCompanySchema.partial()
@@ -31,12 +31,18 @@ export const CreateValuationSchema = z.object({
   company_id: z.string().uuid(),
   valuation_name: z.string().min(1).max(255),
   valuation_date: z.string().datetime(),
-  purpose: z.enum(['409a', 'purchase_price_allocation', 'goodwill_impairment', 'strategic_planning', 'other']),
+  purpose: z.enum([
+    '409a',
+    'purchase_price_allocation',
+    'goodwill_impairment',
+    'strategic_planning',
+    'other',
+  ]),
   status: z.enum(['draft', 'in_progress', 'review', 'completed']).default('draft'),
   assigned_appraiser: z.string().uuid().optional(),
   fair_market_value: z.number().min(0).optional(),
   discount_for_lack_of_marketability: z.number().min(0).max(100).optional(),
-  discount_for_lack_of_control: z.number().min(0).max(100).optional()
+  discount_for_lack_of_control: z.number().min(0).max(100).optional(),
 })
 
 export const UpdateValuationSchema = CreateValuationSchema.partial()
@@ -44,7 +50,7 @@ export const UpdateValuationSchema = CreateValuationSchema.partial()
 // Cap Table schemas
 export const ShareClassSchema = z.object({
   id: z.string(),
-  companyId: z.number(),
+  companyId: z.number().optional(), // Made optional - API will add it
   shareType: z.enum(['common', 'preferred']),
   name: z.string(),
   roundDate: z.string(),
@@ -55,15 +61,15 @@ export const ShareClassSchema = z.object({
   lpMultiple: z.number().min(0),
   totalLP: z.number().min(0).optional(),
   seniority: z.number().min(0),
-  participationCap: z.number().min(0).nullable().optional(),
+  participationCap: z.union([z.number().min(0), z.null()]).optional(),
   conversionRatio: z.number().min(0),
   asConvertedShares: z.number().min(0).optional(),
   dividendsDeclared: z.boolean(),
-  dividendsRate: z.number().min(0).nullable().optional(),
-  dividendsType: z.enum(['cumulative', 'non-cumulative']).nullable().optional(),
+  dividendsRate: z.union([z.number().min(0), z.null()]).optional(),
+  dividendsType: z.union([z.enum(['cumulative', 'non-cumulative']), z.null()]).optional(),
   pik: z.boolean(),
   totalDividends: z.number().min(0).optional(),
-  shares: z.number().min(0).optional()
+  shares: z.number().min(0).optional(),
 })
 
 export const OptionGrantSchema = z.object({
@@ -71,14 +77,14 @@ export const OptionGrantSchema = z.object({
   numOptions: z.number().min(0),
   exercisePrice: z.number().min(0),
   type: z.enum(['Options', 'Warrants', 'RSUs']),
-  isEditing: z.boolean().optional()
+  isEditing: z.boolean().optional(),
 })
 
 export const UpdateCapTableSchema = z.object({
   shareClasses: z.array(ShareClassSchema),
   options: z.array(OptionGrantSchema),
   totalSharesOutstanding: z.number().min(0).optional(),
-  fullyDilutedShares: z.number().min(0).optional()
+  fullyDilutedShares: z.number().min(0).optional(),
 })
 
 // Report schemas
@@ -89,7 +95,7 @@ export const CreateReportSchema = z.object({
   type: z.enum(['full', 'summary', 'draft', 'custom']),
   status: z.enum(['draft', 'generating', 'review', 'final']).default('draft'),
   content: z.record(z.string(), z.any()).optional(),
-  generated_at: z.string().datetime().optional()
+  generated_at: z.string().datetime().optional(),
 })
 
 export const UpdateReportSchema = CreateReportSchema.partial()
@@ -155,30 +161,30 @@ export const DCFAssumptionsSchema = z.object({
   amortization: z.number().optional(),
   changeInNWC: z.number().optional(),
   otherOperatingExpenses: z.number().optional(),
-  priceInflation: z.number().min(0).max(1).optional()
+  priceInflation: z.number().min(0).max(1).optional(),
 })
 
 export const DCFCalculateSchema = z.object({
   assumptions: DCFAssumptionsSchema,
   historicalData: z.array(z.record(z.string(), z.number())).optional(),
-  useScheduleData: z.boolean().default(false)
+  useScheduleData: z.boolean().default(false),
 })
 
 // Peer Beta schemas
 export const PeerBetaRequestSchema = z.object({
   customPeers: z.array(z.string()).optional(),
-  refreshData: z.boolean().default(false)
+  refreshData: z.boolean().default(false),
 })
 
 // Team/Organization schemas
 export const InviteMemberSchema = z.object({
   email: z.string().email(),
   role: z.enum(['owner', 'admin', 'member', 'viewer']),
-  message: z.string().optional()
+  message: z.string().optional(),
 })
 
 export const UpdateMemberRoleSchema = z.object({
-  role: z.enum(['owner', 'admin', 'member', 'viewer'])
+  role: z.enum(['owner', 'admin', 'member', 'viewer']),
 })
 
 // Jobs schemas
@@ -186,26 +192,34 @@ export const CreateJobSchema = z.object({
   type: z.string(),
   data: z.record(z.string(), z.any()),
   priority: z.enum(['low', 'normal', 'high', 'critical']).default('normal'),
-  scheduledFor: z.string().datetime().optional()
+  scheduledFor: z.string().datetime().optional(),
 })
 
 export const UpdateJobSchema = z.object({
   status: z.enum(['pending', 'processing', 'completed', 'failed', 'cancelled']),
   result: z.record(z.string(), z.any()).optional(),
-  error: z.string().optional()
+  error: z.string().optional(),
 })
 
 // Field Mapping schemas
 export const FieldMappingSchema = z.object({
-  sourceModule: z.enum(['manual', 'assumptions', 'valuation', 'company', 'capTable', 'dlom', 'calculated']),
+  sourceModule: z.enum([
+    'manual',
+    'assumptions',
+    'valuation',
+    'company',
+    'capTable',
+    'dlom',
+    'calculated',
+  ]),
   sourcePath: z.string(),
   required: z.boolean().default(false),
   fallback: z.union([z.string(), z.number(), z.boolean()]).optional(),
-  transformer: z.any().optional() // Function validation not supported in Next.js builds
+  transformer: z.any().optional(), // Function validation not supported in Next.js builds
 })
 
 export const UpdateFieldMappingsSchema = z.object({
-  mappings: z.record(z.string(), FieldMappingSchema)
+  mappings: z.record(z.string(), FieldMappingSchema),
 })
 
 // Valuation Assumptions schemas
@@ -215,25 +229,27 @@ export const AssumptionItemSchema = z.object({
   value: z.union([z.string(), z.number(), z.boolean()]),
   type: z.enum(['text', 'number', 'date', 'boolean', 'select']),
   required: z.boolean().default(false),
-  description: z.string().optional()
+  description: z.string().optional(),
 })
 
 export const AssumptionCategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
-  items: z.array(AssumptionItemSchema)
+  items: z.array(AssumptionItemSchema),
 })
 
 export const UpdateAssumptionsSchema = z.object({
-  assumptions: z.array(AssumptionCategorySchema)
+  assumptions: z.array(AssumptionCategorySchema),
 })
 
 // Export helper function for validation
 export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): T {
   const result = schema.safeParse(data)
   if (!result.success) {
-    throw new Error(`Validation failed: ${result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`)
+    throw new Error(
+      `Validation failed: ${result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+    )
   }
   return result.data
 }

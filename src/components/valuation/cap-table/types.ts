@@ -1,6 +1,6 @@
 export interface ShareClass {
   id: string
-  companyId: number
+  companyId?: number // Made optional - API will add it if missing
   shareType: 'common' | 'preferred'
   name: string
   roundDate: string
