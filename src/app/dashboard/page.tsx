@@ -62,8 +62,14 @@ interface DeadlineItem {
 
 export default function Dashboard() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, refreshSession } = useAuth()
   const { currentOrganization, loading: orgLoading } = useOrganization()
+
+  // Debug logging
+  console.log('Dashboard render - user:', user)
+  console.log('Dashboard render - authLoading:', authLoading)
+  console.log('Dashboard render - currentOrganization:', currentOrganization)
+
   const [firstName, setFirstName] = useState<string>('there')
   const [stats, setStats] = useState<DashboardStats>({
     myActiveValuations: 0,
@@ -75,21 +81,46 @@ export default function Dashboard() {
     recentActivity: [],
     upcomingDeadlines: [],
   })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Changed to false by default
+
+  // Refresh session on mount to ensure we have the latest auth state
+  useEffect(() => {
+    const checkAuth = async () => {
+      console.log('[Dashboard] Checking authentication state...')
+
+      // Check server-side session status
+      try {
+        const sessionRes = await fetch('/api/auth/session')
+        const sessionData = await sessionRes.json()
+        console.log('[Dashboard] Server session status:', sessionData)
+      } catch (error) {
+        console.error('[Dashboard] Error checking server session:', error)
+      }
+
+      // Also refresh client-side session
+      try {
+        await refreshSession()
+        console.log('[Dashboard] Client session refreshed')
+      } catch (error) {
+        console.error('[Dashboard] Error refreshing client session:', error)
+      }
+    }
+    checkAuth()
+  }, [])
 
   useEffect(() => {
     // Reset loading state on mount/update
     let cancelled = false
 
-    // Don't wait for orgLoading if authLoading is done
-    if (!authLoading) {
-      if (user) {
-        fetchDashboardData(cancelled)
-      } else {
-        // If no user, still set loading to false
-        if (!cancelled) {
-          setLoading(false)
-        }
+    // Always try to fetch data if user exists
+    if (user) {
+      console.log('[Dashboard] User authenticated, fetching dashboard data')
+      fetchDashboardData(cancelled)
+    } else if (!authLoading) {
+      // If no user and auth is done, set loading to false
+      console.log('[Dashboard] No user found after auth loading completed')
+      if (!cancelled) {
+        setLoading(false)
       }
     }
 
@@ -114,14 +145,45 @@ export default function Dashboard() {
   const fetchDashboardData = async (cancelled?: boolean) => {
     if (cancelled) return
 
+    console.log('Dashboard - User data:', user)
+    console.log('Dashboard - Organization:', currentOrganization)
+
     setLoading(true) // Ensure loading is set at start
     try {
+      // Detailed logging of user object
+      console.log('[Dashboard] Full user object:', user)
+      console.log('[Dashboard] User metadata:', user?.user_metadata)
+      console.log('[Dashboard] User email:', user?.email)
+
       // Handle both first_name and full_name formats
       let extractedFirstName = user?.user_metadata?.first_name
       if (!extractedFirstName && user?.user_metadata?.full_name) {
         extractedFirstName = user.user_metadata.full_name.split(' ')[0]
       }
+
+      // Try from raw user metadata
+      if (!extractedFirstName && user?.user_metadata) {
+        // Check for name, given_name, or any name-like field
+        const metadata = user.user_metadata
+        extractedFirstName =
+          metadata.name?.split(' ')[0] ||
+          metadata.given_name ||
+          metadata.firstName ||
+          metadata.fname
+      }
+
+      // Also check email for name
+      if (!extractedFirstName && user?.email) {
+        // Try to extract name from email (e.g., eran.bareket@... -> Eran)
+        const emailParts = user.email.split('@')[0]
+        // Handle both dot and underscore separators
+        const nameParts = emailParts.split(/[._-]/)
+        extractedFirstName =
+          nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1).toLowerCase()
+      }
+
       extractedFirstName = extractedFirstName || 'there'
+      console.log('[Dashboard] Final extracted name:', extractedFirstName)
       setFirstName(extractedFirstName)
 
       // Fetch real data from APIs with better error handling
@@ -343,15 +405,14 @@ export default function Dashboard() {
     }
   }
 
-  // Only show loading spinner if we're still fetching data
-  // Don't wait forever for orgLoading
-  if (authLoading || (loading && !authLoading && user)) {
+  // Show loading only during initial auth check
+  if (authLoading && !user) {
     return (
       <AppLayout>
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-sm text-muted-foreground">Loading dashboard...</p>
+            <p className="mt-4 text-sm text-muted-foreground">Checking authentication...</p>
           </div>
         </div>
       </AppLayout>
@@ -360,7 +421,16 @@ export default function Dashboard() {
 
   // If user is null and we're not loading auth, redirect to login
   if (!authLoading && !user) {
-    return null // Let AuthContext handle redirect
+    return (
+      <AppLayout>
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg text-muted-foreground">Please log in to continue</p>
+            <p className="mt-2 text-sm text-muted-foreground">Redirecting to login...</p>
+          </div>
+        </div>
+      </AppLayout>
+    )
   }
 
   return (

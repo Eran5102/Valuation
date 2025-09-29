@@ -50,7 +50,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       const { data: orgsData, error: orgsError } = await supabase
         .from('organizations')
         .select('*')
-        .or(`owner_id.eq.${user?.id},member_ids.cs.{${user?.id}}`)
+        .eq('owner_id', user?.id)
         .order('created_at', { ascending: false })
 
       let userOrganizations: Organization[] = []

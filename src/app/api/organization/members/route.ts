@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import {
-  PaginationSchema,
-  validateRequest,
-} from '@/lib/validation/api-schemas'
+import { PaginationSchema, validateRequest } from '@/lib/validation/api-schemas'
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,17 +62,13 @@ export async function GET(request: NextRequest) {
       .select('id, first_name, last_name, avatar_url')
       .in('id', userIds)
 
-    // Get emails from auth.users (using RPC function or direct query)
-    const { data: users } = await supabase
-      .from('auth.users')
-      .select('id, email, raw_user_meta_data')
-      .in('id', userIds)
+    // Note: We cannot directly query auth.users table in Supabase
+    // Email should come from user_profiles or be fetched separately
 
     // Combine the data
     const formattedMembers =
       members?.map((member: any) => {
         const profile = profiles?.find((p) => p.id === member.user_id)
-        const authUser = users?.find((u) => u.id === member.user_id)
 
         return {
           id: member.id,
@@ -83,10 +76,10 @@ export async function GET(request: NextRequest) {
           role: member.role,
           joined_at: member.joined_at,
           is_active: member.is_active,
-          email: authUser?.email || '',
-          first_name: profile?.first_name || authUser?.raw_user_meta_data?.first_name || '',
-          last_name: profile?.last_name || authUser?.raw_user_meta_data?.last_name || '',
-          avatar_url: profile?.avatar_url || authUser?.raw_user_meta_data?.avatar_url || '',
+          email: '', // Email not available from this endpoint
+          first_name: profile?.first_name || '',
+          last_name: profile?.last_name || '',
+          avatar_url: profile?.avatar_url || '',
         }
       }) || []
 

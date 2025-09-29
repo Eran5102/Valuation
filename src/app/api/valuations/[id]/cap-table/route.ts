@@ -188,8 +188,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         // Check if it's a UUID (existing) or a temporary ID (new)
+        // More robust UUID validation to prevent false positives
         const isExistingShareClass =
           shareClass.id &&
+          typeof shareClass.id === 'string' &&
+          shareClass.id.length === 36 && // UUID length
           shareClass.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
 
         if (isExistingShareClass) {
@@ -256,8 +259,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         // Check if it's a UUID (existing) or a temporary ID (new)
+        // More robust UUID validation to prevent false positives
         const isExistingOption =
           option.id &&
+          typeof option.id === 'string' &&
+          option.id.length === 36 && // UUID length
           option.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
 
         if (isExistingOption) {

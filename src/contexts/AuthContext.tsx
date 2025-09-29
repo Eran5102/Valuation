@@ -40,25 +40,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true
 
     // Get initial session
+    console.log('[AuthContext] Initializing auth context...')
     supabase.auth
       .getSession()
       .then(({ data: { session }, error }) => {
         if (!mounted) return
 
         if (error) {
-          console.error('Error getting session:', error)
+          console.error('[AuthContext] Error getting session:', error)
         }
+
+        console.log('[AuthContext] Session retrieved:', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          email: session?.user?.email,
+          metadata: session?.user?.user_metadata,
+        })
+
         setSession(session)
         setUser(session?.user ?? null)
         if (session?.user) {
           fetchUserOrganizations(session.user.id).catch((err) => {
-            console.error('Error fetching organizations:', err)
+            console.error('[AuthContext] Error fetching organizations:', err)
           })
         }
         setLoading(false)
       })
       .catch((err) => {
-        console.error('Error in getSession:', err)
+        console.error('[AuthContext] Error in getSession:', err)
         if (mounted) {
           setLoading(false)
         }
@@ -70,6 +79,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return
 
+      console.log('[AuthContext] Auth state changed:', {
+        event: _event,
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email,
+      })
+
       setSession(session)
       setUser(session?.user ?? null)
 
@@ -77,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           await fetchUserOrganizations(session.user.id)
         } catch (err) {
-          console.error('Error in auth state change:', err)
+          console.error('[AuthContext] Error in auth state change:', err)
         }
       } else {
         setOrganization(null)
