@@ -95,11 +95,11 @@ export function UnifiedCapTable({ valuationId, onSave }: CapTableProps) {
   return (
     <div className="space-y-6">
       {/* Share Classes Table */}
-      <Card className="border-0 shadow-none">
-        <CardHeader className="px-0 pb-4">
+      <Card className="border-primary/20 bg-card">
+        <CardHeader className="border-primary/20 bg-primary/5 border-b">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold">Share Classes</h3>
+              <h3 className="text-lg font-semibold text-foreground">Share Classes</h3>
               <p className="text-sm text-muted-foreground">
                 Manage share classes and their properties
               </p>
@@ -125,7 +125,12 @@ export function UnifiedCapTable({ valuationId, onSave }: CapTableProps) {
               )}
 
               {/* Add share class button */}
-              <Button variant="default" size="sm" onClick={addShareClass} disabled={isLoading}>
+              <Button
+                onClick={addShareClass}
+                disabled={isLoading}
+                className="hover:bg-primary/90 bg-primary text-primary-foreground"
+                size="sm"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Share Class
               </Button>

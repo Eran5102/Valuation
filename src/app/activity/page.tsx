@@ -3,6 +3,18 @@
 import React from 'react'
 import { Clock, Building2, Calculator, FileText } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
+import {
+  Timeline,
+  TimelineItem,
+  TimelineConnector,
+  TimelineHeader,
+  TimelineTitle,
+  TimelineIcon,
+  TimelineDescription,
+  TimelineContent,
+  TimelineTime,
+} from '@/components/ui/timeline'
+import { Badge } from '@/components/ui/badge'
 
 export default function ActivityPage() {
   const activities = [
@@ -45,14 +57,14 @@ export default function ActivityPage() {
     }
   }
 
-  const getStatusStyle = (status: string) => {
+  const getStatusVariant = (status: string): 'default' | 'secondary' | 'outline' => {
     switch (status) {
       case 'completed':
-        return 'text-accent bg-accent/10 border-accent/30'
+        return 'default'
       case 'in_progress':
-        return 'text-primary bg-primary/10 border-primary/30'
+        return 'secondary'
       default:
-        return 'text-muted-foreground bg-muted border-border'
+        return 'outline'
     }
   }
 
@@ -72,32 +84,31 @@ export default function ActivityPage() {
             <p className="mt-1 text-sm text-muted-foreground">Latest updates and completed tasks</p>
           </div>
           <div className="px-4 py-5 sm:p-6">
-            <div className="space-y-4">
-              {activities.map((activity) => {
+            <Timeline>
+              {activities.map((activity, index) => {
                 const Icon = getActivityIcon(activity.type)
                 return (
-                  <div key={activity.id} className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <div className="rounded-lg bg-muted p-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-card-foreground">{activity.title}</p>
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusStyle(activity.status)}`}
-                        >
+                  <TimelineItem key={activity.id}>
+                    {index < activities.length - 1 && <TimelineConnector />}
+                    <TimelineHeader>
+                      <TimelineIcon>
+                        <Icon className="h-4 w-4" />
+                      </TimelineIcon>
+                      <TimelineTitle>{activity.title}</TimelineTitle>
+                      <TimelineTime>{activity.timestamp}</TimelineTime>
+                    </TimelineHeader>
+                    <TimelineContent>
+                      <TimelineDescription className="flex items-center gap-2">
+                        {activity.client}
+                        <Badge variant={getStatusVariant(activity.status)}>
                           {activity.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{activity.client}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{activity.timestamp}</p>
-                    </div>
-                  </div>
+                        </Badge>
+                      </TimelineDescription>
+                    </TimelineContent>
+                  </TimelineItem>
                 )
               })}
-            </div>
+            </Timeline>
           </div>
         </div>
       </div>

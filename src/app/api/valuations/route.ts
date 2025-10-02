@@ -123,6 +123,7 @@ export const POST = async (request: NextRequest) => {
     const insertData = {
       ...valuationData,
       organization_id: organizationId,
+      assigned_to: user?.id, // Assign to current user by default
       created_at: new Date().toISOString(),
       // Add database-specific fields
       title: valuationData.valuation_name,
@@ -141,7 +142,27 @@ export const POST = async (request: NextRequest) => {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to create valuation' }, { status: 500 })
+      // Detailed error logging for debugging
+      console.error('Database error creating valuation:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        insertData: insertData,
+      })
+
+      // Return detailed error in development mode
+      const isDev = process.env.NODE_ENV === 'development'
+      return NextResponse.json(
+        {
+          error: 'Failed to create valuation',
+          message: isDev ? error.message : 'Database error',
+          details: isDev ? error.details : undefined,
+          hint: isDev ? error.hint : undefined,
+          code: isDev ? error.code : undefined,
+        },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(
@@ -152,12 +173,23 @@ export const POST = async (request: NextRequest) => {
       { status: 201 }
     )
   } catch (error) {
+    // Log all errors for debugging
+    console.error('Error in valuation creation:', error)
+
     if (error instanceof Error && error.message.startsWith('Validation failed:')) {
       return NextResponse.json(
         { error: 'Validation Error', message: error.message },
         { status: 400 }
       )
     }
-    return NextResponse.json({ error: 'Failed to create valuation' }, { status: 500 })
+
+    const isDev = process.env.NODE_ENV === 'development'
+    return NextResponse.json(
+      {
+        error: 'Failed to create valuation',
+        message: isDev && error instanceof Error ? error.message : 'Internal server error',
+      },
+      { status: 500 }
+    )
   }
 }

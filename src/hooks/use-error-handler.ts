@@ -8,7 +8,7 @@ import {
   NotFoundError,
   PermissionError,
   NetworkError,
-  ValidationError
+  ValidationError,
 } from '@/lib/error-utils'
 
 // useError Hook
@@ -24,59 +24,58 @@ export function useError(options: UseErrorOptions = {}) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const {
-    autoLog = true,
-    autoRedirect = false,
-    redirectPath = '/error',
-    onError
-  } = options
+  const { autoLog = true, autoRedirect = false, redirectPath = '/error', onError } = options
 
-  const handleError = useCallback((error: unknown) => {
-    setError(error)
+  const handleError = useCallback(
+    (error: unknown) => {
+      setError(error)
 
-    if (autoLog) {
-      logError(error)
-    }
-
-    if (onError) {
-      onError(error)
-    }
-
-    const parsedError = parseError(error)
-
-    if (autoRedirect) {
-      if (parsedError.statusCode === 404) {
-        router.push('/404')
-      } else if (parsedError.statusCode === 403) {
-        router.push('/403')
-      } else if (parsedError.statusCode === 401) {
-        router.push('/login')
-      } else if (parsedError.statusCode && parsedError.statusCode >= 500) {
-        router.push(redirectPath)
+      if (autoLog) {
+        logError(error)
       }
-    }
-  }, [autoLog, autoRedirect, redirectPath, onError, router])
+
+      if (onError) {
+        onError(error)
+      }
+
+      const parsedError = parseError(error)
+
+      if (autoRedirect) {
+        if (parsedError.statusCode === 404) {
+          router.push('/404')
+        } else if (parsedError.statusCode === 403) {
+          router.push('/403')
+        } else if (parsedError.statusCode === 401) {
+          router.push('/login')
+        } else if (parsedError.statusCode && parsedError.statusCode >= 500) {
+          router.push(redirectPath)
+        }
+      }
+    },
+    [autoLog, autoRedirect, redirectPath, onError, router]
+  )
 
   const clearError = useCallback(() => {
     setError(null)
   }, [])
 
-  const executeAsync = useCallback(async <T,>(
-    fn: () => Promise<T>
-  ): Promise<T | null> => {
-    setIsLoading(true)
-    setError(null)
+  const executeAsync = useCallback(
+    async <T>(fn: () => Promise<T>): Promise<T | null> => {
+      setIsLoading(true)
+      setError(null)
 
-    try {
-      const result = await fn()
-      setIsLoading(false)
-      return result
-    } catch (error) {
-      handleError(error)
-      setIsLoading(false)
-      return null
-    }
-  }, [handleError])
+      try {
+        const result = await fn()
+        setIsLoading(false)
+        return result
+      } catch (error) {
+        handleError(error)
+        setIsLoading(false)
+        return null
+      }
+    },
+    [handleError]
+  )
 
   return {
     error,
@@ -84,7 +83,7 @@ export function useError(options: UseErrorOptions = {}) {
     handleError,
     clearError,
     executeAsync,
-    errorMessage: error ? formatErrorMessage(error) : null
+    errorMessage: error ? formatErrorMessage(error) : null,
   }
 }
 
@@ -104,12 +103,7 @@ export function useAPICall<T = unknown>(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<unknown>(null)
 
-  const {
-    onSuccess,
-    onError,
-    retryCount = 0,
-    retryDelay = 1000
-  } = options
+  const { onSuccess, onError, retryCount = 0, retryDelay = 1000 } = options
 
   const execute = useCallback(async () => {
     setLoading(true)
@@ -130,7 +124,7 @@ export function useAPICall<T = unknown>(
         attempts++
 
         if (attempts <= retryCount) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay * attempts))
+          await new Promise((resolve) => setTimeout(resolve, retryDelay * attempts))
         }
       }
     }
@@ -154,133 +148,7 @@ export function useAPICall<T = unknown>(
     error,
     execute,
     reset,
-    errorMessage: error ? formatErrorMessage(error) : null
-  }
-}
-
-// useFormValidation Hook
-interface UseFormValidationOptions {
-  validateOnChange?: boolean
-  validateOnBlur?: boolean
-}
-
-export function useFormValidation<T extends Record<string, any>>(
-  initialValues: T,
-  validationRules: Record<keyof T, ((value: any) => string | null)[]>,
-  options: UseFormValidationOptions = {}
-) {
-  const [values, setValues] = useState<T>(initialValues)
-  const [errors, setErrors] = useState<Record<keyof T, string>>({} as Record<keyof T, string>)
-  const [touched, setTouched] = useState<Record<keyof T, boolean>>({} as Record<keyof T, boolean>)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const {
-    validateOnChange = true,
-    validateOnBlur = true
-  } = options
-
-  const validateField = useCallback((field: keyof T, value: any): string | null => {
-    const validators = validationRules[field] || []
-    for (const validator of validators) {
-      const error = validator(value)
-      if (error) return error
-    }
-    return null
-  }, [validationRules])
-
-  const validateAllFields = useCallback((): boolean => {
-    const newErrors: Record<keyof T, string> = {} as Record<keyof T, string>
-    let isValid = true
-
-    for (const field in validationRules) {
-      const error = validateField(field, values[field])
-      if (error) {
-        newErrors[field] = error
-        isValid = false
-      }
-    }
-
-    setErrors(newErrors)
-    return isValid
-  }, [values, validationRules, validateField])
-
-  const handleChange = useCallback((field: keyof T) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const value = e.target.type === 'checkbox'
-      ? (e.target as HTMLInputElement).checked
-      : e.target.value
-
-    setValues(prev => ({ ...prev, [field]: value }))
-
-    if (validateOnChange && touched[field]) {
-      const error = validateField(field, value)
-      setErrors(prev => ({ ...prev, [field]: error || '' }))
-    }
-  }, [validateOnChange, touched, validateField])
-
-  const handleBlur = useCallback((field: keyof T) => () => {
-    setTouched(prev => ({ ...prev, [field]: true }))
-
-    if (validateOnBlur) {
-      const error = validateField(field, values[field])
-      setErrors(prev => ({ ...prev, [field]: error || '' }))
-    }
-  }, [validateOnBlur, values, validateField])
-
-  const handleSubmit = useCallback((
-    onSubmit: (values: T) => void | Promise<void>
-  ) => async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    setIsSubmitting(true)
-    const allTouched = Object.keys(validationRules).reduce(
-      (acc, field) => ({ ...acc, [field]: true }),
-      {} as Record<keyof T, boolean>
-    )
-    setTouched(allTouched)
-
-    if (validateAllFields()) {
-      try {
-        await onSubmit(values)
-      } catch (error) {
-        logError(error)
-        throw error
-      }
-    }
-
-    setIsSubmitting(false)
-  }, [values, validationRules, validateAllFields])
-
-  const reset = useCallback(() => {
-    setValues(initialValues)
-    setErrors({} as Record<keyof T, string>)
-    setTouched({} as Record<keyof T, boolean>)
-    setIsSubmitting(false)
-  }, [initialValues])
-
-  const setFieldValue = useCallback((field: keyof T, value: any) => {
-    setValues(prev => ({ ...prev, [field]: value }))
-  }, [])
-
-  const setFieldError = useCallback((field: keyof T, error: string) => {
-    setErrors(prev => ({ ...prev, [field]: error }))
-  }, [])
-
-  return {
-    values,
-    errors,
-    touched,
-    isSubmitting,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    reset,
-    setFieldValue,
-    setFieldError,
-    validateField,
-    validateAllFields,
-    isValid: Object.keys(errors).length === 0
+    errorMessage: error ? formatErrorMessage(error) : null,
   }
 }
 
@@ -304,48 +172,42 @@ interface UseRetryOptions {
 }
 
 export function useRetry(options: UseRetryOptions = {}) {
-  const {
-    maxAttempts = 3,
-    delay = 1000,
-    backoff = 'exponential',
-    onRetry
-  } = options
+  const { maxAttempts = 3, delay = 1000, backoff = 'exponential', onRetry } = options
 
   const [attempt, setAttempt] = useState(0)
   const [isRetrying, setIsRetrying] = useState(false)
 
-  const retry = useCallback(async <T,>(
-    fn: () => Promise<T>
-  ): Promise<T> => {
-    setIsRetrying(true)
-    let lastError: unknown
+  const retry = useCallback(
+    async <T>(fn: () => Promise<T>): Promise<T> => {
+      setIsRetrying(true)
+      let lastError: unknown
 
-    for (let i = 0; i < maxAttempts; i++) {
-      setAttempt(i + 1)
+      for (let i = 0; i < maxAttempts; i++) {
+        setAttempt(i + 1)
 
-      try {
-        const result = await fn()
-        setIsRetrying(false)
-        setAttempt(0)
-        return result
-      } catch (error) {
-        lastError = error
-        onRetry?.(i + 1, error)
+        try {
+          const result = await fn()
+          setIsRetrying(false)
+          setAttempt(0)
+          return result
+        } catch (error) {
+          lastError = error
+          onRetry?.(i + 1, error)
 
-        if (i < maxAttempts - 1) {
-          const waitTime = backoff === 'exponential'
-            ? delay * Math.pow(2, i)
-            : delay * (i + 1)
+          if (i < maxAttempts - 1) {
+            const waitTime = backoff === 'exponential' ? delay * Math.pow(2, i) : delay * (i + 1)
 
-          await new Promise(resolve => setTimeout(resolve, waitTime))
+            await new Promise((resolve) => setTimeout(resolve, waitTime))
+          }
         }
       }
-    }
 
-    setIsRetrying(false)
-    setAttempt(0)
-    throw lastError
-  }, [maxAttempts, delay, backoff, onRetry])
+      setIsRetrying(false)
+      setAttempt(0)
+      throw lastError
+    },
+    [maxAttempts, delay, backoff, onRetry]
+  )
 
   const reset = useCallback(() => {
     setAttempt(0)
@@ -357,28 +219,30 @@ export function useRetry(options: UseRetryOptions = {}) {
     isRetrying,
     retry,
     reset,
-    canRetry: attempt < maxAttempts
+    canRetry: attempt < maxAttempts,
   }
 }
 
-// useErrorToast Hook (requires a toast library)
+// useErrorToast Hook
 export function useErrorToast() {
-  const showError = useCallback((error: unknown, options?: {
-    title?: string
-    duration?: number
-  }) => {
-    const message = formatErrorMessage(error)
+  const showError = useCallback(
+    async (
+      error: unknown,
+      options?: {
+        title?: string
+        duration?: number
+      }
+    ) => {
+      const message = formatErrorMessage(error)
+      const { toast } = await import('sonner')
 
-    // This would integrate with your toast library
-    // For example, with shadcn/ui toast:
-    // toast({
-    //   title: options?.title || 'Error',
-    //   description: message,
-    //   variant: 'destructive',
-    //   duration: options?.duration || 5000
-    // })
-
-  }, [])
+      toast.error(options?.title || 'Error', {
+        description: message,
+        duration: options?.duration || 5000,
+      })
+    },
+    []
+  )
 
   return { showError }
 }

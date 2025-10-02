@@ -1,9 +1,16 @@
 'use client'
 
-import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { PageHeaderProps, BreadcrumbItem } from '@/types/common'
 import { cn } from '@/lib/utils'
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem as BreadcrumbItemUI,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 
 export function PageHeader({
   title,
@@ -15,29 +22,30 @@ export function PageHeader({
   return (
     <div className={cn('mb-6 border-b border-gray-200 pb-5', className)}>
       {breadcrumbs.length > 0 && (
-        <nav className="mb-4" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-2 text-sm">
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
-              <li key={index} className="flex items-center">
-                {index > 0 && <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />}
-                {item.href ? (
-                  <Link
-                    href={item.href}
-                    className="text-gray-500 transition-colors hover:text-gray-700"
-                  >
-                    {item.icon && <item.icon className="mr-1 inline h-4 w-4" />}
-                    {item.label}
-                  </Link>
-                ) : (
-                  <span className="font-medium text-gray-900">
-                    {item.icon && <item.icon className="mr-1 inline h-4 w-4" />}
-                    {item.label}
-                  </span>
-                )}
-              </li>
+              <span key={index} className="flex items-center">
+                <BreadcrumbItemUI>
+                  {item.href ? (
+                    <BreadcrumbLink asChild>
+                      <Link href={item.href} className="flex items-center">
+                        {item.icon && <item.icon className="mr-1 h-4 w-4" />}
+                        {item.label}
+                      </Link>
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage className="flex items-center">
+                      {item.icon && <item.icon className="mr-1 h-4 w-4" />}
+                      {item.label}
+                    </BreadcrumbPage>
+                  )}
+                </BreadcrumbItemUI>
+                {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+              </span>
             ))}
-          </ol>
-        </nav>
+          </BreadcrumbList>
+        </Breadcrumb>
       )}
 
       <div className="md:flex md:items-center md:justify-between">

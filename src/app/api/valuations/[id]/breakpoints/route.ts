@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { data: valuation, error } = await supabase
       .from('valuations')
-      .select('id, company_id, cap_table')
+      .select('id, company_id')
       .eq('id', idParam)
       .single()
 
@@ -23,33 +23,59 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Valuation not found' }, { status: 404 })
     }
 
-    // Get cap table data from the valuation
-    let shareClasses: DatabaseShareClass[] = []
-    let options: DatabaseOption[] = []
+    // Get cap table data from separate tables (not JSON column)
+    const { data: dbShareClasses, error: shareError } = await supabase
+      .from('share_classes')
+      .select('*')
+      .eq('valuation_id', idParam)
+      .order('seniority', { ascending: false })
 
-    if (valuation.cap_table && valuation.cap_table.shareClasses) {
-      // Transform cap table share classes to our database format
-      shareClasses = valuation.cap_table.shareClasses.map((sc: any) => ({
-        id: sc.id,
-        companyId: valuation.company_id,
-        shareType: sc.shareType,
-        name: sc.name,
-        roundDate: sc.roundDate,
-        sharesOutstanding: sc.sharesOutstanding,
-        pricePerShare: sc.pricePerShare,
-        preferenceType: sc.preferenceType,
-        lpMultiple: sc.lpMultiple,
-        seniority: sc.seniority,
-        participationCap: sc.participationCap,
-        conversionRatio: sc.conversionRatio,
-        dividendsDeclared: sc.dividendsDeclared,
-        dividendsRate: sc.dividendsRate,
-        dividendsType: sc.dividendsType,
-        pik: sc.pik,
-      }))
-
-      options = valuation.cap_table.options || []
+    if (shareError) {
+      console.error('Error fetching share classes for breakpoints:', shareError)
+      return NextResponse.json({ error: 'Failed to fetch share classes' }, { status: 500 })
     }
+
+    const { data: dbOptions, error: optionsError } = await supabase
+      .from('options_warrants')
+      .select('*')
+      .eq('valuation_id', idParam)
+
+    if (optionsError) {
+      console.error('Error fetching options for breakpoints:', optionsError)
+      return NextResponse.json({ error: 'Failed to fetch options' }, { status: 500 })
+    }
+
+    // Transform database format to analyzer format
+    const shareClasses: DatabaseShareClass[] = (dbShareClasses || []).map((sc) => ({
+      id: sc.id,
+      companyId: valuation.company_id,
+      shareType: sc.type?.toLowerCase() === 'common' ? 'common' : 'preferred',
+      name: sc.class_name,
+      roundDate: sc.round_date,
+      sharesOutstanding: sc.shares || 0,
+      pricePerShare: sc.price_per_share || 0,
+      preferenceType:
+        sc.preference_type === 'Non-Participating'
+          ? 'non-participating'
+          : sc.preference_type === 'Participating'
+            ? 'participating'
+            : 'participating-with-cap',
+      lpMultiple: sc.liquidation_multiple || 1,
+      seniority: sc.seniority || 0,
+      participationCap: sc.participation_cap || 0,
+      conversionRatio: sc.conversion_ratio || 1,
+      dividendsDeclared: sc.dividends_declared || false,
+      dividendsRate: sc.div_rate || 0,
+      dividendsType: sc.dividends_type === 'Cumulative' ? 'cumulative' : 'non-cumulative',
+      pik: sc.pik || false,
+    }))
+
+    const options: DatabaseOption[] = (dbOptions || []).map((opt) => ({
+      id: opt.id,
+      numOptions: opt.num_options || 0,
+      exercisePrice: opt.exercise_price || 0,
+      type: opt.type || 'Options',
+    }))
 
     // Perform breakpoint analysis using V2 analyzer
     const analyzer = new BreakpointAnalyzer(shareClasses, options)
@@ -108,7 +134,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { data: valuation, error } = await supabase
       .from('valuations')
-      .select('id, company_id, cap_table')
+      .select('id, company_id')
       .eq('id', idParam)
       .single()
 
@@ -119,33 +145,61 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Optional: Accept custom parameters for analysis
     const { includeOptions = true, customExitValues = [], analysisType = 'comprehensive' } = body
 
-    // Get the most current cap table data
-    let shareClasses: DatabaseShareClass[] = []
+    // Get the most current cap table data from separate tables
+    const { data: dbShareClasses, error: shareError } = await supabase
+      .from('share_classes')
+      .select('*')
+      .eq('valuation_id', idParam)
+      .order('seniority', { ascending: false })
+
+    if (shareError) {
+      console.error('Error fetching share classes for breakpoints:', shareError)
+      return NextResponse.json({ error: 'Failed to fetch share classes' }, { status: 500 })
+    }
+
+    const { data: dbOptions, error: optionsError } = await supabase
+      .from('options_warrants')
+      .select('*')
+      .eq('valuation_id', idParam)
+
+    if (optionsError) {
+      console.error('Error fetching options for breakpoints:', optionsError)
+      return NextResponse.json({ error: 'Failed to fetch options' }, { status: 500 })
+    }
+
+    // Transform database format to analyzer format
+    const shareClasses: DatabaseShareClass[] = (dbShareClasses || []).map((sc) => ({
+      id: sc.id,
+      companyId: valuation.company_id,
+      shareType: sc.type?.toLowerCase() === 'common' ? 'common' : 'preferred',
+      name: sc.class_name,
+      roundDate: sc.round_date,
+      sharesOutstanding: sc.shares || 0,
+      pricePerShare: sc.price_per_share || 0,
+      preferenceType:
+        sc.preference_type === 'Non-Participating'
+          ? 'non-participating'
+          : sc.preference_type === 'Participating'
+            ? 'participating'
+            : 'participating-with-cap',
+      lpMultiple: sc.liquidation_multiple || 1,
+      seniority: sc.seniority || 0,
+      participationCap: sc.participation_cap || 0,
+      conversionRatio: sc.conversion_ratio || 1,
+      dividendsDeclared: sc.dividends_declared || false,
+      dividendsRate: sc.div_rate || 0,
+      dividendsType: sc.dividends_type === 'Cumulative' ? 'cumulative' : 'non-cumulative',
+      pik: sc.pik || false,
+    }))
+
     let options: DatabaseOption[] = []
-
-    if (valuation.cap_table && valuation.cap_table.shareClasses) {
-      shareClasses = valuation.cap_table.shareClasses.map((sc: any) => ({
-        id: sc.id,
-        companyId: valuation.company_id,
-        shareType: sc.shareType,
-        name: sc.name,
-        roundDate: sc.roundDate,
-        sharesOutstanding: sc.sharesOutstanding,
-        pricePerShare: sc.pricePerShare,
-        preferenceType: sc.preferenceType,
-        lpMultiple: sc.lpMultiple,
-        seniority: sc.seniority,
-        participationCap: sc.participationCap,
-        conversionRatio: sc.conversionRatio,
-        dividendsDeclared: sc.dividendsDeclared,
-        dividendsRate: sc.dividendsRate,
-        dividendsType: sc.dividendsType,
-        pik: sc.pik,
+    if (includeOptions) {
+      options = (dbOptions || []).map((opt) => ({
+        id: opt.id,
+        numOptions: opt.num_options || 0,
+        exercisePrice: opt.exercise_price || 0,
+        type: opt.type || 'Options',
       }))
-
-      if (includeOptions) {
-        options = valuation.cap_table.options || []
-      }
     }
 
     // Perform fresh analysis using V2 analyzer

@@ -1,6 +1,7 @@
 'use client'
 
 import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
+import { useMethodologyStore } from '@/hooks/useMethodologyStore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,12 +17,15 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  Settings,
+  Calculator,
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
 
 export default function ValuationOverviewPage() {
   const { valuation, loading } = useValuationWorkspace()
+  const { methodologies } = useMethodologyStore()
 
   if (loading || !valuation) {
     return (
@@ -34,14 +38,20 @@ export default function ValuationOverviewPage() {
   // Calculate progress based on completed sections
   const calculateProgress = () => {
     let completedSteps = 0
-    const totalSteps = 7 // Company, Enterprise, Allocation, Discounts, Assumptions, Cap Table, Report
+    const totalSteps = 5 // Company, Methodologies, Assumptions, Cap Table, Report
 
-    // Check which sections are completed (simplified logic)
+    // Check which sections are completed
     if (valuation.assumptions && Object.keys(valuation.assumptions).length > 0) completedSteps++
-    if (valuation.methodologies?.enterprise) completedSteps++
-    if (valuation.methodologies?.allocation?.method) completedSteps++
-    if (valuation.methodologies?.discounts) completedSteps++
-    if (valuation.fair_market_value) completedSteps += 3 // Assume calculation steps are done
+
+    // Check if any enterprise or allocation methodologies are enabled
+    const hasEnterpriseMethod = methodologies.some(
+      (m) => ['income', 'market', 'asset'].includes(m.category) && m.enabled
+    )
+    const hasAllocationMethod = methodologies.some((m) => m.category === 'allocation' && m.enabled)
+    if (hasEnterpriseMethod) completedSteps++
+    if (hasAllocationMethod) completedSteps++
+
+    if (valuation.fair_market_value) completedSteps += 2 // Assume calculation steps are done
 
     return Math.round((completedSteps / totalSteps) * 100)
   }
@@ -50,17 +60,18 @@ export default function ValuationOverviewPage() {
 
   const getNextStep = () => {
     if (!valuation.assumptions || Object.keys(valuation.assumptions).length === 0) {
-      return { name: 'Set up assumptions', href: 'assumptions', icon: Settings }
+      return { name: 'Set up assumptions and methodologies', href: 'assumptions', icon: Settings }
     }
-    if (!valuation.methodologies?.enterprise) {
-      return { name: 'Complete enterprise valuation', href: 'enterprise', icon: TrendingUp }
+
+    const hasEnterpriseMethod = methodologies.some(
+      (m) => ['income', 'market', 'asset'].includes(m.category) && m.enabled
+    )
+    const hasAllocationMethod = methodologies.some((m) => m.category === 'allocation' && m.enabled)
+
+    if (!hasEnterpriseMethod || !hasAllocationMethod) {
+      return { name: 'Select valuation methodologies', href: 'assumptions', icon: TrendingUp }
     }
-    if (!valuation.methodologies?.allocation?.method) {
-      return { name: 'Select allocation method', href: 'allocation', icon: Layers }
-    }
-    if (!valuation.methodologies?.discounts) {
-      return { name: 'Apply discounts', href: 'discounts', icon: Percent }
-    }
+
     if (!valuation.fair_market_value) {
       return { name: 'Calculate fair market value', href: 'calculate', icon: Calculator }
     }
@@ -160,7 +171,7 @@ export default function ValuationOverviewPage() {
             <Progress value={progress} className="h-2" />
 
             {progress < 100 && (
-              <div className="mt-4 rounded-lg border bg-muted/30 p-3">
+              <div className="bg-muted/30 mt-4 rounded-lg border p-3">
                 <p className="mb-2 text-sm font-medium">Next Step</p>
                 <Link href={`/valuations/${valuation.id}/${nextStep.href}`}>
                   <Button variant="outline" className="w-full justify-between">
@@ -218,78 +229,56 @@ export default function ValuationOverviewPage() {
         <Card>
           <CardHeader>
             <CardTitle>Valuation Methodology</CardTitle>
-            <CardDescription>Selected approaches and methods</CardDescription>
+            <CardDescription>
+              Selected approaches and methods - configure in Assumptions
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Enterprise Valuation */}
+              {/* Enterprise Valuation Methods */}
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
                     <TrendingUp className="h-4 w-4 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium">Enterprise Valuation</p>
                     <p className="text-sm text-muted-foreground">
-                      {valuation.methodologies?.enterprise
-                        ? `${Object.entries(valuation.methodologies.enterprise)
-                            .filter(([_, selected]) => selected)
-                            .map(([method]) => method)
-                            .join(', ')} approach`
-                        : 'Not configured'}
+                      {methodologies
+                        .filter(
+                          (m) => ['income', 'market', 'asset'].includes(m.category) && m.enabled
+                        )
+                        .map((m) => m.name)
+                        .join(', ') || 'Not configured'}
                     </p>
                   </div>
                 </div>
-                <Link href={`/valuations/${valuation.id}/enterprise`}>
+                <Link href={`/valuations/${valuation.id}/assumptions`}>
                   <Button variant="ghost" size="sm">
-                    {valuation.methodologies?.enterprise ? 'Edit' : 'Configure'}
+                    Configure
                   </Button>
                 </Link>
               </div>
 
-              {/* Equity Allocation */}
+              {/* Equity Allocation Method */}
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                    <Layers className="h-4 w-4 text-primary" />
+                  <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
+                    <Calculator className="h-4 w-4 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium">Equity Allocation</p>
                     <p className="text-sm text-muted-foreground">
-                      {valuation.methodologies?.allocation?.method
-                        ? `${valuation.methodologies.allocation.method.toUpperCase()} method`
-                        : 'Not selected'}
+                      {methodologies
+                        .filter((m) => m.category === 'allocation' && m.enabled)
+                        .map((m) => m.name)
+                        .join(', ') || 'Not selected'}
                     </p>
                   </div>
                 </div>
-                <Link href={`/valuations/${valuation.id}/allocation`}>
+                <Link href={`/valuations/${valuation.id}/assumptions`}>
                   <Button variant="ghost" size="sm">
-                    {valuation.methodologies?.allocation?.method ? 'Edit' : 'Select'}
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Discounts */}
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                    <Percent className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Discounts</p>
-                    <p className="text-sm text-muted-foreground">
-                      {valuation.methodologies?.discounts
-                        ? `${Object.entries(valuation.methodologies.discounts)
-                            .filter(([_, applied]) => applied)
-                            .map(([discount]) => discount.toUpperCase())
-                            .join(', ')} applied`
-                        : 'Not applied'}
-                    </p>
-                  </div>
-                </div>
-                <Link href={`/valuations/${valuation.id}/discounts`}>
-                  <Button variant="ghost" size="sm">
-                    {valuation.methodologies?.discounts ? 'Edit' : 'Apply'}
+                    Select
                   </Button>
                 </Link>
               </div>
@@ -300,6 +289,3 @@ export default function ValuationOverviewPage() {
     </div>
   )
 }
-
-// Add missing imports
-import { Settings, Layers, Percent, Calculator } from 'lucide-react'

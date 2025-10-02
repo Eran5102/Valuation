@@ -4,14 +4,27 @@ import React, { useState } from 'react'
 import { Building2, MapPin, User } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
-  FormSection,
-  FormGrid,
+  Form,
+  FormControl,
   FormField,
-  FormTextarea,
-  FormActions,
-  SubmitButton,
-} from '@/components/ui/form-components'
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { toast } from 'sonner'
 
 interface NewClientDialogProps {
   open: boolean
@@ -19,59 +32,68 @@ interface NewClientDialogProps {
   onClientCreated?: (client: { id: string; name: string }) => void
 }
 
+const clientSchema = z.object({
+  companyName: z.string().min(1, 'Company name is required'),
+  contactName: z.string().min(1, 'Contact name is required'),
+  email: z.string().email('Must be a valid email'),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  industry: z.string().optional(),
+  website: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  description: z.string().optional(),
+})
+
+type ClientFormData = z.infer<typeof clientSchema>
+
 export function NewClientDialog({ open, onOpenChange, onClientCreated }: NewClientDialogProps) {
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    companyName: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    industry: '',
-    website: '',
-    description: '',
+
+  const form = useForm<ClientFormData>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: {
+      companyName: '',
+      contactName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      industry: '',
+      website: '',
+      description: '',
+    },
   })
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (data: ClientFormData) => {
     setLoading(true)
 
     try {
-      const locationInfo = [formData.address, formData.city, formData.state, formData.zipCode]
+      const locationInfo = [data.address, data.city, data.state, data.zipCode]
         .filter(Boolean)
         .join(', ')
 
       const companyData: any = {
-        name: formData.companyName,
-        legal_name: formData.companyName,
-        industry: formData.industry,
-        state_of_incorporation: formData.state || null,
+        name: data.companyName,
+        legal_name: data.companyName,
+        industry: data.industry,
+        state_of_incorporation: data.state || null,
         location: locationInfo || null,
       }
 
       // Only add new fields if they're not empty
-      if (formData.contactName) companyData.contact_name = formData.contactName
-      if (formData.email) companyData.email = formData.email
-      if (formData.phone) companyData.phone = formData.phone
-      if (formData.website) companyData.website = formData.website
-      if (formData.description) companyData.description = formData.description
-      if (formData.address) companyData.address = formData.address
-      if (formData.city) companyData.city = formData.city
-      if (formData.state) companyData.state = formData.state
-      if (formData.zipCode) companyData.zip_code = formData.zipCode
+      if (data.contactName) companyData.contact_name = data.contactName
+      if (data.email) companyData.email = data.email
+      if (data.phone) companyData.phone = data.phone
+      if (data.website) companyData.website = data.website
+      if (data.description) companyData.description = data.description
+      if (data.address) companyData.address = data.address
+      if (data.city) companyData.city = data.city
+      if (data.state) companyData.state = data.state
+      if (data.zipCode) companyData.zip_code = data.zipCode
 
       // Call API to create company
       const response = await fetch('/api/companies', {
@@ -84,7 +106,6 @@ export function NewClientDialog({ open, onOpenChange, onClientCreated }: NewClie
 
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text()
         throw new Error(
           'Server error: Unable to process request. Please ensure Supabase environment variables are configured.'
         )
@@ -104,29 +125,20 @@ export function NewClientDialog({ open, onOpenChange, onClientCreated }: NewClie
         }
       }
 
+      // Show success message
+      toast.success(`Client "${data.companyName}" created successfully!`)
+
       // Notify parent component
       if (onClientCreated) {
         onClientCreated(responseData.data)
       }
 
       // Reset form and close dialog
-      setFormData({
-        companyName: '',
-        contactName: '',
-        email: '',
-        phone: '',
-        address: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        industry: '',
-        website: '',
-        description: '',
-      })
+      form.reset()
       onOpenChange(false)
     } catch (error) {
-
       let errorMessage = 'Failed to create client. Please try again.'
+
       if (error instanceof Error) {
         errorMessage = error.message
         if (error.message.includes('Failed to execute') || error.message.includes('JSON')) {
@@ -134,7 +146,9 @@ export function NewClientDialog({ open, onOpenChange, onClientCreated }: NewClie
             'Connection error: Unable to reach the server. Please check your configuration.'
         }
       }
-      alert(errorMessage)
+
+      // Show error message using toast
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -147,150 +161,216 @@ export function NewClientDialog({ open, onOpenChange, onClientCreated }: NewClie
           <DialogTitle>Add New Client</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Company Information */}
-          <FormSection title="Company Information" icon={Building2}>
-            <FormGrid columns={2}>
-              <FormField
-                label="Company Name"
-                id="companyName"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleInputChange}
-                placeholder="Enter company name"
-                required
-              />
-              <div>
-                <label
-                  htmlFor="industry"
-                  className="mb-1 block text-sm font-medium text-card-foreground"
-                >
-                  Industry
-                </label>
-                <select
-                  id="industry"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            {/* Company Information */}
+            <div className="space-y-4">
+              <h3 className="flex items-center gap-2 text-lg font-medium">
+                <Building2 className="h-5 w-5" />
+                Company Information
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="companyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter company name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="industry"
-                  value={formData.industry}
-                  onChange={handleInputChange}
-                  className="w-full rounded-md border border-border bg-card px-3 py-2 text-card-foreground hover:border-[#74BD92]/50 focus:border-[#74BD92] focus:outline-none focus:ring-2 focus:ring-[#74BD92]"
-                >
-                  <option value="">Select industry</option>
-                  <option value="Technology">Technology</option>
-                  <option value="Healthcare">Healthcare</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Manufacturing">Manufacturing</option>
-                  <option value="Retail">Retail</option>
-                  <option value="Other">Other</option>
-                </select>
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Industry</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select industry" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Select industry</SelectItem>
+                          <SelectItem value="Technology">Technology</SelectItem>
+                          <SelectItem value="Healthcare">Healthcare</SelectItem>
+                          <SelectItem value="Finance">Finance</SelectItem>
+                          <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                          <SelectItem value="Retail">Retail</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </FormGrid>
+              <FormField
+                control={form.control}
+                name="website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input type="url" placeholder="https://example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h3 className="flex items-center gap-2 text-lg font-medium">
+                <User className="h-5 w-5" />
+                Primary Contact
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="contactName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter contact name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="contact@company.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="+1 (555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Address Information */}
+            <div className="space-y-4">
+              <h3 className="flex items-center gap-2 text-lg font-medium">
+                <MapPin className="h-5 w-5" />
+                Business Address
+              </h3>
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="123 Business St" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 md:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="San Francisco" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input placeholder="CA" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="zipCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="94105" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
             <FormField
-              label="Website"
-              id="website"
-              name="website"
-              type="url"
-              value={formData.website}
-              onChange={handleInputChange}
-              placeholder="https://example.com"
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Brief description of the company and business model..."
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </FormSection>
 
-          {/* Contact Information */}
-          <FormSection title="Primary Contact" icon={User}>
-            <FormGrid columns={2}>
-              <FormField
-                label="Contact Name"
-                id="contactName"
-                name="contactName"
-                value={formData.contactName}
-                onChange={handleInputChange}
-                placeholder="Enter contact name"
-                required
-              />
-              <FormField
-                label="Email Address"
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="contact@company.com"
-                required
-              />
-            </FormGrid>
-            <FormField
-              label="Phone Number"
-              id="phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="+1 (555) 123-4567"
-            />
-          </FormSection>
-
-          {/* Address Information */}
-          <FormSection title="Business Address" icon={MapPin}>
-            <FormField
-              label="Street Address"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              placeholder="123 Business St"
-            />
-            <FormGrid columns={3}>
-              <FormField
-                label="City"
-                id="city"
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                placeholder="San Francisco"
-              />
-              <FormField
-                label="State"
-                id="state"
-                name="state"
-                value={formData.state}
-                onChange={handleInputChange}
-                placeholder="CA"
-              />
-              <FormField
-                label="ZIP Code"
-                id="zipCode"
-                name="zipCode"
-                value={formData.zipCode}
-                onChange={handleInputChange}
-                placeholder="94105"
-              />
-            </FormGrid>
-          </FormSection>
-
-          {/* Description */}
-          <FormTextarea
-            label="Company Description"
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Brief description of the company and business model..."
-            rows={3}
-          />
-
-          {/* Actions */}
-          <FormActions>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <SubmitButton loading={loading}>Create Client</SubmitButton>
-          </FormActions>
-        </form>
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Creating...' : 'Create Client'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

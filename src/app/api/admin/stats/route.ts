@@ -13,13 +13,13 @@ export async function GET(request: NextRequest) {
   }
 
   // Check if user is super admin
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('is_super_admin')
-    .eq('id', user.id)
+  const { data: superAdmin, error: superAdminError } = await supabase
+    .from('super_admins')
+    .select('id')
+    .eq('user_id', user.id)
     .single()
 
-  if (!profile?.is_super_admin) {
+  if (!superAdmin || superAdminError) {
     return NextResponse.json({ error: 'Forbidden - Super Admin access required' }, { status: 403 })
   }
 

@@ -65,8 +65,22 @@ export function ClientSelector({
         <PopoverContent className="w-full p-0" align="start">
           <Command>
             <CommandInput placeholder="Search clients..." />
-            <CommandList>
+            <CommandList className="max-h-[300px]">
               <CommandEmpty>No client found.</CommandEmpty>
+              <CommandGroup>
+                <CommandItem
+                  value="add-new-client"
+                  onSelect={() => {
+                    setOpen(false)
+                    onAddNew()
+                  }}
+                  className="font-medium"
+                >
+                  <Plus className="mr-2 h-4 w-4 text-[#74BD92]" />
+                  Add New Client
+                </CommandItem>
+              </CommandGroup>
+              <CommandSeparator />
               <CommandGroup>
                 {clients.map((client) => (
                   <CommandItem
@@ -86,20 +100,6 @@ export function ClientSelector({
                     {client.name}
                   </CommandItem>
                 ))}
-              </CommandGroup>
-              <CommandSeparator />
-              <CommandGroup>
-                <CommandItem
-                  value="add-new-client"
-                  onSelect={() => {
-                    setOpen(false)
-                    onAddNew()
-                  }}
-                  className="font-medium"
-                >
-                  <Plus className="mr-2 h-4 w-4 text-[#74BD92]" />
-                  Add New Client
-                </CommandItem>
               </CommandGroup>
             </CommandList>
           </Command>

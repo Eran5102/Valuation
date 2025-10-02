@@ -62,7 +62,7 @@ export function parseError(error: unknown): {
       message: error.message,
       statusCode: error.statusCode,
       type: 'api',
-      details: error.details
+      details: error.details,
     }
   }
 
@@ -70,14 +70,14 @@ export function parseError(error: unknown): {
     return {
       message: error.message,
       type: 'validation',
-      details: error.fields
+      details: error.fields,
     }
   }
 
   if (error instanceof NetworkError) {
     return {
       message: error.message,
-      type: 'network'
+      type: 'network',
     }
   }
 
@@ -86,7 +86,7 @@ export function parseError(error: unknown): {
       message: error.message,
       statusCode: 404,
       type: 'notfound',
-      details: { resource: error.resource }
+      details: { resource: error.resource },
     }
   }
 
@@ -95,21 +95,21 @@ export function parseError(error: unknown): {
       message: error.message,
       statusCode: 403,
       type: 'permission',
-      details: { resource: error.resource, action: error.action }
+      details: { resource: error.resource, action: error.action },
     }
   }
 
   if (error instanceof Error) {
     return {
       message: error.message,
-      type: 'unknown'
+      type: 'unknown',
     }
   }
 
   if (typeof error === 'string') {
     return {
       message: error,
-      type: 'unknown'
+      type: 'unknown',
     }
   }
 
@@ -119,13 +119,13 @@ export function parseError(error: unknown): {
       message: err.message || 'An unexpected error occurred',
       statusCode: err.statusCode || err.status,
       type: 'unknown',
-      details: err
+      details: err,
     }
   }
 
   return {
     message: 'An unexpected error occurred',
-    type: 'unknown'
+    type: 'unknown',
   }
 }
 
@@ -153,132 +153,6 @@ export async function handleAPIResponse<T>(response: Response): Promise<T> {
   }
 }
 
-// Form Validation Helper
-export function validateForm<T extends Record<string, any>>(
-  data: T,
-  rules: Record<keyof T, ((value: any) => string | null)[]>
-): { isValid: boolean; errors: Record<string, string> } {
-  const errors: Record<string, string> = {}
-
-  for (const [field, validators] of Object.entries(rules) as [keyof T, ((value: any) => string | null)[]][]) {
-    const value = data[field]
-    for (const validator of validators) {
-      const error = validator(value)
-      if (error) {
-        errors[field as string] = error
-        break
-      }
-    }
-  }
-
-  return {
-    isValid: Object.keys(errors).length === 0,
-    errors
-  }
-}
-
-// Common Validators
-export const validators = {
-  required: (message?: string) => (value: any) => {
-    if (!value || (typeof value === 'string' && !value.trim())) {
-      return message || 'This field is required'
-    }
-    return null
-  },
-
-  email: (message?: string) => (value: string) => {
-    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return message || 'Invalid email address'
-    }
-    return null
-  },
-
-  min: (min: number, message?: string) => (value: number | string) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value
-    if (!isNaN(num) && num < min) {
-      return message || `Must be at least ${min}`
-    }
-    return null
-  },
-
-  max: (max: number, message?: string) => (value: number | string) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value
-    if (!isNaN(num) && num > max) {
-      return message || `Must be at most ${max}`
-    }
-    return null
-  },
-
-  minLength: (min: number, message?: string) => (value: string) => {
-    if (value && value.length < min) {
-      return message || `Must be at least ${min} characters`
-    }
-    return null
-  },
-
-  maxLength: (max: number, message?: string) => (value: string) => {
-    if (value && value.length > max) {
-      return message || `Must be at most ${max} characters`
-    }
-    return null
-  },
-
-  pattern: (pattern: RegExp, message?: string) => (value: string) => {
-    if (value && !pattern.test(value)) {
-      return message || 'Invalid format'
-    }
-    return null
-  },
-
-  url: (message?: string) => (value: string) => {
-    if (value) {
-      try {
-        new URL(value)
-      } catch {
-        return message || 'Invalid URL'
-      }
-    }
-    return null
-  },
-
-  date: (message?: string) => (value: string) => {
-    if (value && isNaN(Date.parse(value))) {
-      return message || 'Invalid date'
-    }
-    return null
-  },
-
-  number: (message?: string) => (value: any) => {
-    if (value !== '' && value != null && isNaN(Number(value))) {
-      return message || 'Must be a number'
-    }
-    return null
-  },
-
-  integer: (message?: string) => (value: any) => {
-    if (value !== '' && value != null && !Number.isInteger(Number(value))) {
-      return message || 'Must be an integer'
-    }
-    return null
-  },
-
-  positive: (message?: string) => (value: number | string) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value
-    if (!isNaN(num) && num <= 0) {
-      return message || 'Must be positive'
-    }
-    return null
-  },
-
-  nonNegative: (message?: string) => (value: number | string) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value
-    if (!isNaN(num) && num < 0) {
-      return message || 'Must be non-negative'
-    }
-    return null
-  }
-}
-
 // Retry Logic
 export async function retryWithExponentialBackoff<T>(
   fn: () => Promise<T>,
@@ -293,7 +167,7 @@ export async function retryWithExponentialBackoff<T>(
     maxRetries = 3,
     initialDelay = 1000,
     maxDelay = 10000,
-    shouldRetry = (error) => error instanceof NetworkError
+    shouldRetry = (error) => error instanceof NetworkError,
   } = options
 
   let lastError: unknown
@@ -309,7 +183,7 @@ export async function retryWithExponentialBackoff<T>(
       }
 
       const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay)
-      await new Promise(resolve => setTimeout(resolve, delay))
+      await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }
 
@@ -328,7 +202,7 @@ export function logError(error: unknown, context?: Record<string, any>) {
     details: errorInfo.details,
     context,
     timestamp: new Date().toISOString(),
-    stack: error instanceof Error ? error.stack : undefined
+    stack: error instanceof Error ? error.stack : undefined,
   }
 
   // In production, you would send this to an error tracking service

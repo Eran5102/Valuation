@@ -223,13 +223,37 @@ export function AppHeader() {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex items-center gap-2">
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    // Open create organization dialog
+                    router.push('/settings/organization?action=create')
+                  }}
+                >
                   <PlusCircle className="h-4 w-4" />
                   <span>Create Organization</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2">
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onClick={() => router.push('/settings/organization')}
+                >
                   <Settings className="h-4 w-4" />
-                  <span>Manage Organizations</span>
+                  <span>Organization Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onClick={() => router.push('/settings/team')}
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Team Management</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onClick={() => router.push('/settings/billing')}
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>Billing & Plan</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -380,17 +404,13 @@ export function AppHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push('/profile')}>
                   <User className="mr-2 h-4 w-4" />
-                  Profile
+                  My Profile
                   <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                <DropdownMenuItem onClick={() => router.push('/settings/preferences')}>
                   <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                  <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/billing')}>
-                  <Shield className="mr-2 h-4 w-4" />
-                  Billing & Plan
+                  Preferences
+                  <DropdownMenuShortcut>⌘,</DropdownMenuShortcut>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push('/help')}>

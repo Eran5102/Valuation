@@ -37,13 +37,13 @@ export const GET = async (request: NextRequest) => {
     }
 
     // Check if user is a super admin
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('is_super_admin')
-      .eq('id', user.id)
+    const { data: superAdmin } = await supabase
+      .from('super_admins')
+      .select('user_id')
+      .eq('user_id', user.id)
       .single()
 
-    const isSuperAdmin = profile?.is_super_admin === true
+    const isSuperAdmin = !!superAdmin
 
     let organizationId = null
     if (!isSuperAdmin) {
@@ -72,7 +72,7 @@ export const GET = async (request: NextRequest) => {
     }
 
     // Build query
-    let query = supabase.from('companies').select('*', { count: 'exact' })
+    let query = supabase.from('clients').select('*', { count: 'exact' })
 
     // Super admins see all companies, others see only their organization's
     if (!isSuperAdmin && organizationId) {
@@ -154,7 +154,7 @@ export const POST = async (request: NextRequest) => {
 
     // Check if company name already exists
     const { data: existingCompanies, error: checkError } = await supabase
-      .from('companies')
+      .from('clients')
       .select('name')
       .ilike('name', companyData.name)
 
@@ -216,7 +216,7 @@ export const POST = async (request: NextRequest) => {
 
     // Create the company with all available fields and organization
     const { data: company, error: createError } = await serviceClient
-      .from('companies')
+      .from('clients')
       .insert({
         ...companyData,
         organization_id: organizationId,

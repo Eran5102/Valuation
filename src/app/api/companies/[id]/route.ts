@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import {
-  IdParamSchema,
-  UpdateCompanySchema,
-  validateRequest,
-} from '@/lib/validation/api-schemas'
+import { IdParamSchema, UpdateCompanySchema, validateRequest } from '@/lib/validation/api-schemas'
 
 // GET /api/companies/[id] - Get company by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const supabase = await createClient()
 
     const { data: company, error } = await supabase
-      .from('companies')
+      .from('clients')
       .select('*')
       .eq('id', id)
       .single()
@@ -54,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Update with all provided fields
     const { data: company, error } = await supabase
-      .from('companies')
+      .from('clients')
       .update({
         ...updateData,
         updated_at: new Date().toISOString(),
@@ -92,7 +88,7 @@ export async function DELETE(
 
     const supabase = await createClient()
 
-    const { error } = await supabase.from('companies').delete().eq('id', id)
+    const { error } = await supabase.from('clients').delete().eq('id', id)
 
     if (error) {
       return NextResponse.json({ error: 'Company not found or delete failed' }, { status: 404 })

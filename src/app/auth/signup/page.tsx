@@ -7,10 +7,27 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import {
   Mail,
   Lock,
@@ -28,6 +45,28 @@ import {
   DollarSign,
 } from 'lucide-react'
 
+const step1Schema = z
+  .object({
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+const step2Schema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  organizationName: z.string().min(1, 'Organization name is required'),
+  organizationType: z.string(),
+  phone: z.string().optional(),
+})
+
+type Step1FormData = z.infer<typeof step1Schema>
+type Step2FormData = z.infer<typeof step2Schema>
+
 export default function SignUpPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -35,82 +74,55 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  // Form data
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    organizationName: '',
-    organizationType: 'firm',
-    phone: '',
+  const step1Form = useForm<Step1FormData>({
+    resolver: zodResolver(step1Schema),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
+  const step2Form = useForm<Step2FormData>({
+    resolver: zodResolver(step2Schema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      organizationName: '',
+      organizationType: 'firm',
+      phone: '',
+    },
+  })
 
-  const validateStep1 = () => {
-    if (!formData.email || !formData.password || !formData.confirmPassword) {
-      setError('Please fill in all required fields')
-      return false
-    }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return false
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return false
-    }
-    return true
-  }
-
-  const validateStep2 = () => {
-    if (!formData.firstName || !formData.lastName || !formData.organizationName) {
-      setError('Please fill in all required fields')
-      return false
-    }
-    return true
-  }
-
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     setError(null)
-    if (step === 1 && validateStep1()) {
+    const isValid = await step1Form.trigger()
+    if (isValid) {
       setStep(2)
     }
   }
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSignUp = async (data: Step2FormData) => {
     setError(null)
-
-    if (!validateStep2()) {
-      return
-    }
-
     setLoading(true)
 
     try {
       const supabase = createClient()
+      const step1Data = step1Form.getValues()
 
       // Sign up the user
       const redirectUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+        email: step1Data.email,
+        password: step1Data.password,
         options: {
           emailRedirectTo: `${redirectUrl}/auth/callback`,
           data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            organization_name: formData.organizationName,
-            organization_type: formData.organizationType,
-            phone: formData.phone,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            organization_name: data.organizationName,
+            organization_type: data.organizationType,
+            phone: data.phone,
           },
         },
       })
@@ -165,6 +177,7 @@ export default function SignUpPage() {
   ]
 
   if (success) {
+    const email = step1Form.getValues('email')
     return (
       <div className="flex min-h-screen">
         <div className="flex w-full items-center justify-center p-8">
@@ -176,7 +189,7 @@ export default function SignUpPage() {
                 </div>
                 <h2 className="mt-4 text-2xl font-bold">Check your email</h2>
                 <p className="mt-2 text-muted-foreground">
-                  We've sent a confirmation link to {formData.email}
+                  We've sent a confirmation link to {email}
                 </p>
                 <p className="mt-4 text-sm text-muted-foreground">
                   Click the link in the email to verify your account and get started.
@@ -195,7 +208,7 @@ export default function SignUpPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Platform benefits (60%) */}
-      <div className="hidden flex-col justify-between bg-gradient-to-br from-primary/10 via-primary/5 to-background p-12 lg:flex lg:w-3/5">
+      <div className="from-primary/10 via-primary/5 hidden flex-col justify-between bg-gradient-to-br to-background p-12 lg:flex lg:w-3/5">
         <div>
           {/* Logo and Brand */}
           <div className="mb-12 flex items-center gap-3">
@@ -226,7 +239,7 @@ export default function SignUpPage() {
             {benefits.map((benefit, index) => (
               <div key={index} className="flex gap-3">
                 <div className="flex-shrink-0">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
                     <benefit.icon className="h-5 w-5 text-primary" />
                   </div>
                 </div>
@@ -240,7 +253,7 @@ export default function SignUpPage() {
         </div>
 
         {/* Bottom stats */}
-        <div className="mt-12 grid max-w-2xl grid-cols-3 gap-6 rounded-xl border bg-background/50 p-6 backdrop-blur">
+        <div className="bg-background/50 mt-12 grid max-w-2xl grid-cols-3 gap-6 rounded-xl border p-6 backdrop-blur">
           <div>
             <p className="text-3xl font-bold text-primary">$2.5T+</p>
             <p className="text-sm text-muted-foreground">Assets Valued</p>
@@ -295,178 +308,86 @@ export default function SignUpPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={step === 2 ? handleSignUp : (e) => e.preventDefault()}>
-                {step === 1 ? (
-                  <div className="space-y-4">
-                    {/* Email Field */}
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          placeholder="you@company.com"
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="pl-10"
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
+              {step === 1 ? (
+                <Form {...step1Form}>
+                  <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+                    <FormField
+                      control={step1Form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="email"
+                                placeholder="you@company.com"
+                                className="pl-10"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    {/* Password Field */}
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          placeholder="At least 6 characters"
-                          value={formData.password}
-                          onChange={handleChange}
-                          className="pl-10"
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
+                    <FormField
+                      control={step1Form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="password"
+                                placeholder="At least 6 characters"
+                                className="pl-10"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    {/* Confirm Password Field */}
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          placeholder="Re-enter your password"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          className="pl-10"
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Name Fields */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="firstName"
-                            name="firstName"
-                            type="text"
-                            placeholder="John"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            className="pl-10"
-                            required
-                            disabled={loading}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          type="text"
-                          placeholder="Doe"
-                          value={formData.lastName}
-                          onChange={handleChange}
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
+                    <FormField
+                      control={step1Form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="password"
+                                placeholder="Re-enter your password"
+                                className="pl-10"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    {/* Organization Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="organizationName">Organization Name</Label>
-                      <div className="relative">
-                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="organizationName"
-                          name="organizationName"
-                          type="text"
-                          placeholder="Your firm or company name"
-                          value={formData.organizationName}
-                          onChange={handleChange}
-                          className="pl-10"
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
+                    {/* Error Messages */}
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
 
-                    {/* Organization Type */}
-                    <div className="space-y-2">
-                      <Label htmlFor="organizationType">Organization Type</Label>
-                      <select
-                        id="organizationType"
-                        name="organizationType"
-                        value={formData.organizationType}
-                        onChange={handleChange}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        disabled={loading}
-                      >
-                        <option value="firm">Appraisal Firm</option>
-                        <option value="independent">Independent Appraiser</option>
-                        <option value="accounting">Accounting Firm</option>
-                        <option value="consulting">Consulting Firm</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-
-                    {/* Phone (Optional) */}
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone (Optional)</Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        placeholder="+1 (555) 123-4567"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Error Messages */}
-                {error && (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Action Buttons */}
-                <div className="mt-6 flex space-x-3">
-                  {step === 2 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setStep(1)}
-                      disabled={loading}
-                      className="flex-1"
-                    >
-                      Back
-                    </Button>
-                  )}
-                  {step === 1 ? (
                     <Button
                       type="button"
                       onClick={handleNextStep}
@@ -477,20 +398,150 @@ export default function SignUpPage() {
                       Continue
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
-                  ) : (
-                    <Button type="submit" disabled={loading} className="flex-1" size="lg">
-                      {loading ? (
-                        <>
-                          <LoadingSpinner size="sm" className="mr-2" />
-                          Creating account...
-                        </>
-                      ) : (
-                        'Start free trial'
+                  </form>
+                </Form>
+              ) : (
+                <Form {...step2Form}>
+                  <form onSubmit={step2Form.handleSubmit(handleSignUp)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={step2Form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  placeholder="John"
+                                  className="pl-10"
+                                  disabled={loading}
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={step2Form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Doe" disabled={loading} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={step2Form.control}
+                      name="organizationName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Organization Name</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Your firm or company name"
+                                className="pl-10"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </Button>
-                  )}
-                </div>
-              </form>
+                    />
+
+                    <FormField
+                      control={step2Form.control}
+                      name="organizationType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Organization Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            disabled={loading}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="firm">Appraisal Firm</SelectItem>
+                              <SelectItem value="independent">Independent Appraiser</SelectItem>
+                              <SelectItem value="accounting">Accounting Firm</SelectItem>
+                              <SelectItem value="consulting">Consulting Firm</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={step2Form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="+1 (555) 123-4567"
+                              disabled={loading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Error Messages */}
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setStep(1)}
+                        disabled={loading}
+                        className="flex-1"
+                      >
+                        Back
+                      </Button>
+                      <Button type="submit" disabled={loading} className="flex-1" size="lg">
+                        {loading ? (
+                          <>
+                            <LoadingSpinner size="sm" className="mr-2" />
+                            Creating account...
+                          </>
+                        ) : (
+                          'Start free trial'
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              )}
 
               {/* Sign In Link */}
               <div className="mt-6 text-center text-sm">

@@ -19,6 +19,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -225,19 +233,84 @@ export default function ValuationsPage() {
         cell: ({ row }) => {
           const valuation = row.original
           return (
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
-                  <Calculator className="h-4 w-4 text-primary" />
-                </div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-foreground">{valuation.clientName}</div>
-                <div className="text-sm text-muted-foreground">
-                  {valuation.valuationType} Valuation
-                </div>
-              </div>
-            </div>
+            <ContextMenu>
+              <ContextMenuTrigger>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <div className="flex cursor-pointer items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
+                          <Calculator className="h-4 w-4 text-primary" />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-foreground transition-colors hover:text-primary">
+                          {valuation.clientName}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {valuation.valuationType} Valuation
+                        </div>
+                      </div>
+                    </div>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold">{valuation.clientName}</h4>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div className="flex justify-between">
+                          <span>Valuation Type:</span>
+                          <span className="font-medium text-foreground">
+                            {valuation.valuationType}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Status:</span>
+                          <Badge className={getStatusColor(valuation.status)} variant="outline">
+                            {valuation.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                        {valuation.value > 0 && (
+                          <div className="flex justify-between">
+                            <span>Value:</span>
+                            <span className="font-medium text-foreground">
+                              {formatCurrency(valuation.value)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span>Created:</span>
+                          <span className="font-medium text-foreground">
+                            {formatDate(valuation.createdDate)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem asChild>
+                  <Link href={`/valuations/${valuation.id}`} className="flex items-center">
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Details
+                  </Link>
+                </ContextMenuItem>
+                <ContextMenuItem asChild>
+                  <Link href={`/valuations/${valuation.id}/overview`} className="flex items-center">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Valuation
+                  </Link>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => handleDeleteClick(valuation)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           )
         },
       },

@@ -4,48 +4,50 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Calculator, FileText } from 'lucide-react'
+import { toast } from 'sonner'
 import AppLayout from '@/components/layout/AppLayout'
-import {
-  FormCard,
-  FormSection,
-  FormGrid,
-  FormSelect,
-  FormTextarea,
-  FormActions,
-  SubmitButton,
-} from '@/components/ui/form-components'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { ClientSelector } from '@/components/ui/client-selector'
+import { GenericSelector } from '@/components/ui/generic-selector'
 import { NewClientDialog } from '@/components/clients/NewClientDialog'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Textarea } from '@/components/ui/textarea'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+
+const valuationSchema = z.object({
+  companyId: z.string().min(1, 'Please select a client'),
+  valuationType: z.string().min(1, 'Please select a valuation type'),
+  purpose: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+type ValuationFormData = z.infer<typeof valuationSchema>
 
 export default function NewValuationPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
   const [showNewClientDialog, setShowNewClientDialog] = useState(false)
-  const [formData, setFormData] = useState({
-    companyId: '',
-    valuationType: '409A',
-    purpose: '',
-    notes: '',
+
+  const form = useForm<ValuationFormData>({
+    resolver: zodResolver(valuationSchema),
+    defaultValues: {
+      companyId: '',
+      valuationType: '409A',
+      purpose: '',
+      notes: '',
+    },
   })
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const handleClientChange = (clientId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      companyId: clientId,
-    }))
-  }
 
   // Fetch companies on component mount
   const fetchCompanies = async () => {
@@ -65,22 +67,18 @@ export default function NewValuationPage() {
   const handleClientCreated = (client: { id: string; name: string }) => {
     // Add the new client to the list and select it
     setCompanies((prev) => [...prev, client])
-    setFormData((prev) => ({
-      ...prev,
-      companyId: client.id,
-    }))
+    form.setValue('companyId', client.id)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (data: ValuationFormData) => {
     setLoading(true)
 
     try {
       // Map valuation type to purpose enum
       let purpose = '409a'
-      if (formData.valuationType === '409A') {
+      if (data.valuationType === '409A') {
         purpose = '409a'
-      } else if (formData.valuationType === 'Company Valuation') {
+      } else if (data.valuationType === 'Company Valuation') {
         purpose = 'strategic_planning'
       } else {
         purpose = 'other'
@@ -88,17 +86,17 @@ export default function NewValuationPage() {
 
       // Prepare valuation data for API matching the schema
       const valuationData: any = {
-        company_id: formData.companyId,
-        valuation_name: `${formData.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
+        company_id: data.companyId,
+        valuation_name: `${data.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
         valuation_date: new Date().toISOString(), // Full ISO datetime
         purpose: purpose,
         status: 'draft',
-        notes: formData.notes,
+        notes: data.notes,
         // Store additional fields for backward compatibility
-        valuation_type: formData.valuationType,
-        title: `${formData.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
+        valuation_type: data.valuationType,
+        title: `${data.valuationType} Valuation - ${new Date().toLocaleDateString()}`,
         assumptions: {
-          notes: formData.notes,
+          notes: data.notes,
         },
       }
 
@@ -117,22 +115,19 @@ export default function NewValuationPage() {
       }
 
       const result = await response.json()
+      // Show success toast
+      toast.success('Valuation created successfully')
       // Redirect to the new valuation page
       router.push(`/valuations/${result.data.id}`)
     } catch (error) {
-      alert(
+      // Show error toast
+      toast.error(
         error instanceof Error ? error.message : 'Failed to create valuation. Please try again.'
       )
     } finally {
       setLoading(false)
     }
   }
-
-  // Prepare company options from fetched data
-  const companyOptions = companies.map((company) => ({
-    value: company.id,
-    label: company.name,
-  }))
 
   const valuationTypeOptions = [
     { value: '409A', label: '409A Valuation' },
@@ -155,67 +150,125 @@ export default function NewValuationPage() {
         </div>
 
         {/* Form */}
-        <FormCard onSubmit={handleSubmit}>
-          <FormSection title="Valuation Details" icon={Calculator}>
-            <FormGrid columns={2}>
-              <ClientSelector
-                label="Client/Company"
-                value={formData.companyId}
-                onChange={handleClientChange}
-                clients={companies}
-                onAddNew={() => setShowNewClientDialog(true)}
-                placeholder="Select client..."
-                required
-              />
+        <Card>
+          <CardContent className="p-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                {/* Valuation Details Section */}
+                <div>
+                  <h3 className="mb-4 flex items-center text-lg font-medium text-card-foreground">
+                    <Calculator className="mr-2 h-5 w-5" />
+                    Valuation Details
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Controller
+                      name="companyId"
+                      control={form.control}
+                      render={({ field, fieldState }) => (
+                        <FormItem>
+                          <FormLabel>Client/Company *</FormLabel>
+                          <FormControl>
+                            <ClientSelector
+                              value={field.value}
+                              onChange={field.onChange}
+                              clients={companies}
+                              onAddNew={() => setShowNewClientDialog(true)}
+                              placeholder="Select client..."
+                              required
+                            />
+                          </FormControl>
+                          <FormMessage>{fieldState.error?.message}</FormMessage>
+                        </FormItem>
+                      )}
+                    />
 
-              <FormSelect
-                label="Valuation Type"
-                id="valuationType"
-                name="valuationType"
-                value={formData.valuationType}
-                onChange={handleInputChange}
-                options={valuationTypeOptions}
-                required
-              />
-            </FormGrid>
-          </FormSection>
+                    <Controller
+                      name="valuationType"
+                      control={form.control}
+                      render={({ field, fieldState }) => (
+                        <FormItem>
+                          <FormLabel>Valuation Type *</FormLabel>
+                          <FormControl>
+                            <GenericSelector
+                              value={field.value}
+                              onChange={field.onChange}
+                              options={valuationTypeOptions}
+                              placeholder="Select valuation type..."
+                              searchPlaceholder="Search types..."
+                              emptyMessage="No type found."
+                              required
+                            />
+                          </FormControl>
+                          <FormMessage>{fieldState.error?.message}</FormMessage>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
 
-          <FormSection title="Additional Information" icon={FileText}>
-            <FormGrid columns={1}>
-              <FormTextarea
-                label="Purpose"
-                id="purpose"
-                name="purpose"
-                value={formData.purpose}
-                onChange={handleInputChange}
-                placeholder="Describe the purpose of this valuation..."
-                rows={3}
-              />
+                {/* Additional Information Section */}
+                <div>
+                  <h3 className="mb-4 flex items-center text-lg font-medium text-card-foreground">
+                    <FileText className="mr-2 h-5 w-5" />
+                    Additional Information
+                  </h3>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="purpose"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Purpose</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Describe the purpose of this valuation..."
+                              rows={3}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-              <FormTextarea
-                label="Notes"
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                placeholder="Any additional notes or comments..."
-                rows={4}
-              />
-            </FormGrid>
-          </FormSection>
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Any additional notes or comments..."
+                              rows={4}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
 
-          <FormActions>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push('/valuations')}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <SubmitButton loading={loading}>Create Valuation</SubmitButton>
-          </FormActions>
-        </FormCard>
+                {/* Actions */}
+                <div className="flex items-center justify-end space-x-4 border-t border-border pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push('/valuations')}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Creating...' : 'Create Valuation'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
 
         {/* New Client Dialog */}
         <NewClientDialog

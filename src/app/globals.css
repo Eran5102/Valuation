@@ -83,11 +83,24 @@
       sans-serif;
   }
 
-  /* Global select/option hover colors */
+  /* Global select/option hover colors - Force override browser defaults */
+  select option {
+    background-color: white;
+    color: #2e3944;
+  }
+
   select option:hover,
   select option:focus,
-  select option:checked {
+  select option:active {
     background-color: #74bd92 !important;
+    background: #74bd92 !important;
+    color: white !important;
+  }
+
+  select option:checked,
+  select option[selected] {
+    background-color: #74bd92 !important;
+    background: linear-gradient(0deg, #74bd92 0%, #74bd92 100%) !important;
     color: white !important;
   }
 
@@ -98,9 +111,16 @@
     border-color: #74bd92;
   }
 
-  /* Option elements in dropdowns */
-  option:hover {
+  /* Option elements in dropdowns - all states */
+  option {
+    background-color: white;
+  }
+
+  option:hover,
+  option:focus,
+  option:active {
     background-color: #74bd92 !important;
+    background: #74bd92 !important;
     color: white !important;
   }
 

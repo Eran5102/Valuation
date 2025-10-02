@@ -2,11 +2,27 @@
 
 import * as React from 'react'
 import { format } from 'date-fns'
-import { Calendar as CalendarIcon } from 'lucide-react'
-import { DayPicker } from 'react-day-picker'
+import { CalendarIcon } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+
+function formatDate(date: Date | undefined) {
+  if (!date) {
+    return ''
+  }
+  return format(date, 'MMMM dd, yyyy')
+}
+
+function isValidDate(date: Date | undefined) {
+  if (!date) {
+    return false
+  }
+  return !isNaN(date.getTime())
+}
 
 export type DatePickerProps = {
   value?: Date
@@ -25,10 +41,10 @@ export type DatePickerProps = {
 export function DatePicker({
   value,
   onChange,
-  placeholder = 'Pick a date',
+  placeholder = 'Select date',
   disabled = false,
   className,
-  align = 'start',
+  align = 'end',
   side = 'bottom',
   fromDate,
   toDate,
@@ -36,76 +52,85 @@ export function DatePicker({
   disabledDays,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
+  const [month, setMonth] = React.useState<Date | undefined>(value)
+  const [inputValue, setInputValue] = React.useState(formatDate(value))
+
+  // Sync input value when value prop changes
+  React.useEffect(() => {
+    setInputValue(formatDate(value))
+    if (value) {
+      setMonth(value)
+    }
+  }, [value])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setInputValue(val)
+
+    // Try to parse the input as a date
+    const date = new Date(val)
+    if (isValidDate(date)) {
+      onChange?.(date)
+      setMonth(date)
+    }
+  }
 
   const handleSelect = (date: Date | undefined) => {
     onChange?.(date)
+    setInputValue(formatDate(date))
+    if (date) {
+      setMonth(date)
+    }
     setOpen(false)
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !value && 'text-muted-foreground',
-            'bg-background hover:bg-accent hover:text-accent-foreground',
-            'min-w-[150px] max-w-[200px] border-input',
-            className
-          )}
-          disabled={disabled}
+    <div className={cn('relative flex', className)}>
+      <Input
+        value={inputValue}
+        placeholder={placeholder}
+        className="pr-10"
+        disabled={disabled}
+        onChange={handleInputChange}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setOpen(true)
+          }
+        }}
+      />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            disabled={disabled}
+            className="absolute right-2 top-1/2 size-6 -translate-y-1/2 p-0"
+          >
+            <CalendarIcon className="size-3.5" />
+            <span className="sr-only">Select date</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-auto overflow-hidden p-0"
+          align={align}
+          alignOffset={-8}
+          sideOffset={10}
         >
-          <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
-          <span className="truncate">{value ? format(value, 'MM/dd/yyyy') : placeholder}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align={align} side={side} sideOffset={5}>
-        <DayPicker
-          mode="single"
-          selected={value}
-          onSelect={handleSelect}
-          disabled={disabledDays || disabledDates}
-          fromDate={fromDate}
-          toDate={toDate}
-          defaultMonth={value || new Date()}
-          showOutsideDays={false}
-          initialFocus
-          className="rounded-md border p-3"
-          classNames={{
-            months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
-            month: 'space-y-4',
-            caption: 'flex justify-center pt-1 relative items-center',
-            caption_label: 'text-sm font-medium',
-            nav: 'space-x-1 flex items-center',
-            nav_button: cn(
-              'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-              'hover:bg-accent hover:text-accent-foreground',
-              'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
-            ),
-            nav_button_previous: 'absolute left-1 top-1',
-            nav_button_next: 'absolute right-1 top-1',
-            table: 'w-full border-collapse space-y-1',
-            head_row: 'flex',
-            head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
-            row: 'flex w-full mt-2',
-            cell: 'text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
-            day: cn(
-              'inline-flex items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-              'hover:bg-accent hover:text-accent-foreground',
-              'h-9 w-9 p-0 aria-selected:opacity-100'
-            ),
-            day_selected:
-              'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
-            day_today: 'bg-accent text-accent-foreground',
-            day_outside: 'text-muted-foreground opacity-50',
-            day_disabled: 'text-muted-foreground opacity-50',
-            day_range_middle: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
-            day_hidden: 'invisible',
-          }}
-        />
-      </PopoverContent>
-    </Popover>
+          <Calendar
+            mode="single"
+            selected={value}
+            captionLayout="dropdown"
+            month={month}
+            onMonthChange={setMonth}
+            onSelect={handleSelect}
+            disabled={disabledDays || disabledDates}
+            fromDate={fromDate}
+            toDate={toDate}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }
 
@@ -132,9 +157,7 @@ export function DateRangePicker({
   const [open, setOpen] = React.useState(false)
 
   const handleSelect = (range: any) => {
-    // Convert to expected format
-    const formattedRange = range ? { from: range.from, to: range.to || range.from } : undefined
-    onChange?.(formattedRange)
+    onChange?.(range)
     if (range?.from && range?.to) {
       setOpen(false)
     }
@@ -144,18 +167,15 @@ export function DateRangePicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          id="date"
           variant="outline"
           className={cn(
             'w-full justify-start text-left font-normal',
             !value && 'text-muted-foreground',
-            'bg-background hover:bg-accent hover:text-accent-foreground',
-            'border-input',
             className
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon />
           {value?.from ? (
             value.to ? (
               <>
@@ -170,45 +190,12 @@ export function DateRangePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align={align}>
-        <DayPicker
-          initialFocus
+        <Calendar
           mode="range"
-          defaultMonth={value?.from}
           selected={value}
           onSelect={handleSelect}
           numberOfMonths={numberOfMonths}
-          className="rounded-md border"
-          classNames={{
-            months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
-            month: 'space-y-4',
-            caption: 'flex justify-center pt-1 relative items-center',
-            caption_label: 'text-sm font-medium',
-            nav: 'space-x-1 flex items-center',
-            nav_button: cn(
-              'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-              'hover:bg-accent hover:text-accent-foreground',
-              'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
-            ),
-            nav_button_previous: 'absolute left-1 top-1',
-            nav_button_next: 'absolute right-1 top-1',
-            table: 'w-full border-collapse space-y-1',
-            head_row: 'flex',
-            head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
-            row: 'flex w-full mt-2',
-            cell: 'text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
-            day: cn(
-              'inline-flex items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-              'hover:bg-accent hover:text-accent-foreground',
-              'h-9 w-9 p-0 aria-selected:opacity-100'
-            ),
-            day_selected:
-              'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
-            day_today: 'bg-accent text-accent-foreground',
-            day_outside: 'text-muted-foreground opacity-50',
-            day_disabled: 'text-muted-foreground opacity-50',
-            day_range_middle: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
-            day_hidden: 'invisible',
-          }}
+          initialFocus
         />
       </PopoverContent>
     </Popover>

@@ -1,16 +1,26 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import {
   Mail,
   Lock,
@@ -26,53 +36,105 @@ import {
   Award,
 } from 'lucide-react'
 
-export default function LoginPage() {
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+})
+
+const magicLinkSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
+type MagicLinkFormData = z.infer<typeof magicLinkSchema>
+
+function LoginForm() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [authMode, setAuthMode] = useState<'password' | 'magic'>('password')
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Get redirect URL from query params
+  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+
+  // Password form
+  const passwordForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  })
+
+  // Magic link form
+  const magicForm = useForm<MagicLinkFormData>({
+    resolver: zodResolver(magicLinkSchema),
+    defaultValues: {
+      email: '',
+    },
+  })
+
+  // Show message if redirected for authentication
+  useEffect(() => {
+    if (searchParams.get('redirectTo')) {
+      setMessage('Please sign in to continue')
+    }
+  }, [searchParams])
+
+  const handleEmailLogin = async (data: LoginFormData) => {
     setLoading(true)
     setError(null)
     setMessage(null)
 
-    const supabase = createClient()
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const supabase = createClient()
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      })
 
-    if (error) {
-      setError(error.message)
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      if (authData.user) {
+        // Redirect to intended destination or dashboard
+        router.push(redirectTo)
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(
+        'Failed to connect to authentication service. Please check your internet connection and try again.'
+      )
       setLoading(false)
-      return
-    }
-
-    if (data.user) {
-      router.push('/dashboard')
     }
   }
 
-  const handleMagicLink = async () => {
-    if (!email) {
-      setError('Please enter your email address')
-      return
-    }
-
+  const handleMagicLink = async (data: MagicLinkFormData) => {
     setLoading(true)
     setError(null)
     setMessage(null)
 
     const supabase = createClient()
-    const redirectUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+
+    // Include redirect parameter in callback URL
+    const callbackUrl = new URL('/auth/callback', baseUrl)
+    if (redirectTo !== '/dashboard') {
+      callbackUrl.searchParams.set('next', redirectTo)
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: data.email,
       options: {
-        emailRedirectTo: `${redirectUrl}/auth/callback`,
+        emailRedirectTo: callbackUrl.toString(),
+        data: {
+          redirect_to: redirectTo,
+        },
       },
     })
 
@@ -83,7 +145,9 @@ export default function LoginPage() {
       return
     }
 
-    setMessage('Check your email for the magic link!')
+    setMessage(
+      `Magic link sent to ${data.email}! Check your inbox and click the link to sign in. The link will automatically log you in and take you to your dashboard.`
+    )
   }
 
   const features = [
@@ -122,7 +186,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Platform info (60%) */}
-      <div className="hidden flex-col justify-between bg-gradient-to-br from-primary/10 via-primary/5 to-background p-12 lg:flex lg:w-3/5">
+      <div className="from-primary/10 via-primary/5 hidden flex-col justify-between bg-gradient-to-br to-background p-12 lg:flex lg:w-3/5">
         <div>
           {/* Logo and Brand */}
           <div className="mb-12 flex items-center gap-3">
@@ -153,7 +217,7 @@ export default function LoginPage() {
             {features.map((feature, index) => (
               <div key={index} className="flex gap-3">
                 <div className="flex-shrink-0">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
                     <feature.icon className="h-5 w-5 text-primary" />
                   </div>
                 </div>
@@ -167,7 +231,7 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom testimonial or stats */}
-        <div className="mt-12 rounded-xl border bg-background/50 p-6 backdrop-blur">
+        <div className="bg-background/50 mt-12 rounded-xl border p-6 backdrop-blur">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <CheckCircle className="h-6 w-6 text-green-500" />
@@ -205,80 +269,161 @@ export default function LoginPage() {
               <CardDescription>Enter your credentials to access your dashboard</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                {/* Email Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={loading}
+              {authMode === 'password' ? (
+                <Form {...passwordForm}>
+                  <form
+                    onSubmit={passwordForm.handleSubmit(handleEmailLogin)}
+                    className="space-y-4"
+                  >
+                    {/* Email Field */}
+                    <FormField
+                      control={passwordForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="email"
+                                placeholder="you@company.com"
+                                className="pl-10"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                </div>
 
-                {/* Password Field */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link
-                      href="/auth/reset-password"
-                      className="text-xs text-muted-foreground transition-colors hover:text-primary"
+                    {/* Password Field */}
+                    <FormField
+                      control={passwordForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Password</FormLabel>
+                            <Link
+                              href="/auth/reset-password"
+                              className="text-xs text-muted-foreground transition-colors hover:text-primary"
+                            >
+                              Forgot password?
+                            </Link>
+                          </div>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="password"
+                                placeholder="••••••••"
+                                className="pl-10"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Error/Success Messages */}
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+                    {message && (
+                      <Alert>
+                        <Mail className="h-4 w-4" />
+                        <AlertDescription>{message}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Sign In Button */}
+                    <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <LoadingSpinner size="sm" className="mr-2" />
+                          Signing in...
+                        </>
+                      ) : (
+                        <>
+                          Sign in with Password
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              ) : (
+                <Form {...magicForm}>
+                  <form onSubmit={magicForm.handleSubmit(handleMagicLink)} className="space-y-4">
+                    {/* Email Field */}
+                    <FormField
+                      control={magicForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="email"
+                                placeholder="you@company.com"
+                                className="pl-10"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Error/Success Messages */}
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+                    {message && (
+                      <Alert>
+                        <Mail className="h-4 w-4" />
+                        <AlertDescription>{message}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Send Magic Link Button */}
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      size="lg"
+                      disabled={loading || message !== null}
                     >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                {/* Error/Success Messages */}
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                {message && (
-                  <Alert>
-                    <Mail className="h-4 w-4" />
-                    <AlertDescription>{message}</AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Sign In Button */}
-                <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <LoadingSpinner size="sm" className="mr-2" />
-                      Signing in...
-                    </>
-                  ) : (
-                    <>
-                      Sign in
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                      {loading ? (
+                        <>
+                          <LoadingSpinner size="sm" className="mr-2" />
+                          Sending magic link...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Send Magic Link
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              )}
 
               {/* Divider */}
               <div className="my-6 flex items-center">
@@ -287,16 +432,29 @@ export default function LoginPage() {
                 <Separator className="flex-1" />
               </div>
 
-              {/* Magic Link Option */}
+              {/* Toggle Auth Mode */}
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={handleMagicLink}
+                onClick={() => {
+                  setAuthMode(authMode === 'password' ? 'magic' : 'password')
+                  setError(null)
+                  setMessage(null)
+                }}
                 disabled={loading}
                 type="button"
               >
-                <Mail className="mr-2 h-4 w-4" />
-                Send magic link
+                {authMode === 'password' ? (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Use magic link instead
+                  </>
+                ) : (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Use password instead
+                  </>
+                )}
               </Button>
 
               {/* Sign Up Link */}
@@ -326,5 +484,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   )
 }

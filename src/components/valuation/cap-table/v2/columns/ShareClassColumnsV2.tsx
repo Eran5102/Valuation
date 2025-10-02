@@ -211,7 +211,7 @@ export function createShareClassColumnsV2(
         return (
           <div className="flex items-center text-sm text-accent">
             <DollarSign className="mr-0.5 h-3 w-3" />
-            <span className="font-medium">{shareClass.pricePerShare.toFixed(2)}</span>
+            <span className="font-medium">{shareClass.pricePerShare.toFixed(4)}</span>
           </div>
         )
       },

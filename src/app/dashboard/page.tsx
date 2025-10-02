@@ -196,6 +196,8 @@ export default function Dashboard() {
         if (valuationsRes.ok) {
           const data = await valuationsRes.json()
           valuations = data.data || []
+          console.log('[Dashboard] Fetched valuations:', valuations)
+          console.log('[Dashboard] Current user ID:', user?.id)
         }
       } catch (err) {
         console.error('Error fetching valuations:', err)
@@ -222,9 +224,19 @@ export default function Dashboard() {
       }
 
       // Calculate real stats based on actual data
-      const myActiveValuations = valuations.filter(
-        (v: any) => v.assigned_appraiser === user?.id && v.status === 'in_progress'
-      ).length
+      console.log('[Dashboard] Filtering valuations with user ID:', user?.id)
+      const myActiveValuations = valuations.filter((v: any) => {
+        console.log(
+          '[Dashboard] Valuation:',
+          v.id,
+          'assigned_to:',
+          v.assigned_to,
+          'status:',
+          v.status
+        )
+        return v.assigned_to === user?.id && (v.status === 'in_progress' || v.status === 'draft')
+      }).length
+      console.log('[Dashboard] My active valuations count:', myActiveValuations)
 
       const myClients = companies.filter((c: any) => c.assigned_to === user?.id).length
 
@@ -267,7 +279,7 @@ export default function Dashboard() {
             client: company?.name || 'Unknown Client',
             timestamp: getRelativeTime(v.updated_at),
             status: v.status || 'draft',
-            user: v.assigned_appraiser === user?.id ? extractedFirstName : 'Team',
+            user: v.assigned_to === user?.id ? extractedFirstName : 'Team',
           })
         })
 
@@ -301,7 +313,7 @@ export default function Dashboard() {
             dueDate: new Date(v.next_review).toISOString().split('T')[0],
             priority: getDuePriority(v.next_review),
             type: 'valuation' as const,
-            assignedTo: v.assigned_appraiser === user?.id ? extractedFirstName : 'Team',
+            assignedTo: v.assigned_to === user?.id ? extractedFirstName : 'Team',
           }
         })
         .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())

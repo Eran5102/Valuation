@@ -6,7 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { PermissionsProvider } from '@/contexts/PermissionsContext'
 import { OrganizationProvider } from '@/contexts/OrganizationContext'
 import { ThemeProvider } from '@/providers/ThemeProvider'
-import { Toaster } from 'sonner'
+import { Toaster } from '@/components/ui/sonner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

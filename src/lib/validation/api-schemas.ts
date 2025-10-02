@@ -22,6 +22,8 @@ export const CreateCompanySchema = z.object({
   founded_date: z.string().datetime().optional(),
   employee_count: z.number().min(0).optional(),
   revenue: z.number().min(0).optional(),
+  assigned_to: z.string().uuid().nullable().optional(),
+  team_members: z.array(z.string().uuid()).optional(),
 })
 
 export const UpdateCompanySchema = CreateCompanySchema.partial()

@@ -252,7 +252,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     className="text-gray-200 hover:bg-gray-700 hover:text-white"
                   >
                     <Building2 className="mr-2 h-4 w-4" />
-                    <span className="font-medium">{currentOrganization?.name || 'My Organization'}</span>
+                    <span className="font-medium">
+                      {currentOrganization?.name || 'My Organization'}
+                    </span>
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -345,24 +347,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       Profile Settings
                     </Link>
                   </DropdownMenuItem>
-                  {(role === 'org_owner' || role === 'org_admin') && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/settings/team" className="cursor-pointer">
-                        <Users className="mr-2 h-4 w-4" />
-                        Team Management
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem asChild>
-                    <Link href="/settings/organization" className="cursor-pointer">
-                      <Building2 className="mr-2 h-4 w-4" />
-                      Organization Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings/billing" className="cursor-pointer">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Billing & Plan
+                    <Link href="/settings/preferences" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Preferences
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

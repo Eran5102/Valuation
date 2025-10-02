@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Select,
@@ -15,8 +14,20 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import AppLayout from '@/components/layout/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import {
   Building2,
   Save,
@@ -30,30 +41,50 @@ import {
   MapPin,
 } from 'lucide-react'
 
+const organizationSchema = z.object({
+  name: z.string().min(1, 'Organization name is required'),
+  website: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  email: z.string().email('Must be a valid email').optional().or(z.literal('')),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string(),
+  industry: z.string(),
+  size: z.string(),
+})
+
+type OrganizationFormData = z.infer<typeof organizationSchema>
+
 export default function OrganizationSettingsPage() {
   const router = useRouter()
-  const { organization, user } = useAuth()
+  const { user } = useAuth()
+  const { currentOrganization } = useOrganization()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const [formData, setFormData] = useState({
-    name: '',
-    website: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'United States',
-    industry: 'financial_services',
-    size: '1-10',
+  const form = useForm<OrganizationFormData>({
+    resolver: zodResolver(organizationSchema),
+    defaultValues: {
+      name: '',
+      website: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'United States',
+      industry: 'financial_services',
+      size: '1-10',
+    },
   })
 
   useEffect(() => {
-    if (organization) {
-      setFormData({
-        name: organization.name || '',
+    if (currentOrganization) {
+      form.reset({
+        name: currentOrganization.name || '',
         website: '',
         email: user?.email || '',
         phone: '',
@@ -66,21 +97,42 @@ export default function OrganizationSettingsPage() {
         size: '1-10',
       })
     }
-  }, [organization, user])
+  }, [currentOrganization, user, form])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (data: OrganizationFormData) => {
     setLoading(true)
     setMessage(null)
 
     try {
-      // In a real app, this would update the organization in Supabase
+      if (!currentOrganization?.id) {
+        setMessage({ type: 'error', text: 'No organization found' })
+        return
+      }
+
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+
+      // Update organization in Supabase
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          name: data.name,
+        })
+        .eq('id', currentOrganization.id)
+
+      if (error) {
+        console.error('Error updating organization:', error)
+        setMessage({ type: 'error', text: 'Failed to update organization settings' })
+        return
+      }
+
       setMessage({ type: 'success', text: 'Organization settings updated successfully!' })
 
       setTimeout(() => {
         setMessage(null)
       }, 3000)
     } catch (error) {
+      console.error('Error updating organization:', error)
       setMessage({ type: 'error', text: 'Failed to update organization settings' })
     } finally {
       setLoading(false)
@@ -120,197 +172,251 @@ export default function OrganizationSettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Organization Name</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Your organization name"
-                          required
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Organization Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your organization name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="website"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Website</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="url"
+                                    placeholder="https://www.example.com"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="website">Website</Label>
-                        <div className="relative">
-                          <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="website"
-                            type="url"
-                            value={formData.website}
-                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                            placeholder="https://www.example.com"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Contact Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            placeholder="contact@organization.com"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            placeholder="+1 (555) 000-0000"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-4">
-                      <h3 className="mb-3 flex items-center gap-2 font-medium">
-                        <MapPin className="h-4 w-4" />
-                        Address
-                      </h3>
-
-                      <div className="grid gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="address">Street Address</Label>
-                          <Input
-                            id="address"
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            placeholder="123 Main Street"
-                          />
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-3">
-                          <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Input
-                              id="city"
-                              value={formData.city}
-                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                              placeholder="San Francisco"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="state">State</Label>
-                            <Input
-                              id="state"
-                              value={formData.state}
-                              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                              placeholder="CA"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="zipCode">ZIP Code</Label>
-                            <Input
-                              id="zipCode"
-                              value={formData.zipCode}
-                              onChange={(e) =>
-                                setFormData({ ...formData, zipCode: e.target.value })
-                              }
-                              placeholder="94105"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-4">
-                      <h3 className="mb-3 flex items-center gap-2 font-medium">
-                        <Settings className="h-4 w-4" />
-                        Organization Details
-                      </h3>
 
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="industry">Industry</Label>
-                          <Select
-                            value={formData.industry}
-                            onValueChange={(value) => setFormData({ ...formData, industry: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="financial_services">Financial Services</SelectItem>
-                              <SelectItem value="consulting">Consulting</SelectItem>
-                              <SelectItem value="accounting">Accounting</SelectItem>
-                              <SelectItem value="legal">Legal</SelectItem>
-                              <SelectItem value="investment">Investment Banking</SelectItem>
-                              <SelectItem value="corporate">Corporate</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Contact Email</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="email"
+                                    placeholder="contact@organization.com"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone Number</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="tel"
+                                    placeholder="+1 (555) 000-0000"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="size">Organization Size</Label>
-                          <Select
-                            value={formData.size}
-                            onValueChange={(value) => setFormData({ ...formData, size: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1-10">1-10 employees</SelectItem>
-                              <SelectItem value="11-50">11-50 employees</SelectItem>
-                              <SelectItem value="51-200">51-200 employees</SelectItem>
-                              <SelectItem value="201-500">201-500 employees</SelectItem>
-                              <SelectItem value="500+">500+ employees</SelectItem>
-                            </SelectContent>
-                          </Select>
+                      <div className="border-t pt-4">
+                        <h3 className="mb-3 flex items-center gap-2 font-medium">
+                          <MapPin className="h-4 w-4" />
+                          Address
+                        </h3>
+
+                        <div className="grid gap-4">
+                          <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Street Address</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="123 Main Street" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="grid gap-4 md:grid-cols-3">
+                            <FormField
+                              control={form.control}
+                              name="city"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>City</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="San Francisco" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="state"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>State</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="CA" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="zipCode"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ZIP Code</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="94105" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {message && (
-                      <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
-                        {message.type === 'error' ? (
-                          <AlertCircle className="h-4 w-4" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4" />
-                        )}
-                        <AlertDescription>{message.text}</AlertDescription>
-                      </Alert>
-                    )}
+                      <div className="border-t pt-4">
+                        <h3 className="mb-3 flex items-center gap-2 font-medium">
+                          <Settings className="h-4 w-4" />
+                          Organization Details
+                        </h3>
 
-                    <div className="flex justify-end gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => router.back()}
-                        disabled={loading}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={loading}>
-                        {loading ? (
-                          'Saving...'
-                        ) : (
-                          <>
-                            <Save className="mr-2 h-4 w-4" />
-                            Save Changes
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name="industry"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Industry</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="financial_services">
+                                      Financial Services
+                                    </SelectItem>
+                                    <SelectItem value="consulting">Consulting</SelectItem>
+                                    <SelectItem value="accounting">Accounting</SelectItem>
+                                    <SelectItem value="legal">Legal</SelectItem>
+                                    <SelectItem value="investment">Investment Banking</SelectItem>
+                                    <SelectItem value="corporate">Corporate</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="size"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Organization Size</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="1-10">1-10 employees</SelectItem>
+                                    <SelectItem value="11-50">11-50 employees</SelectItem>
+                                    <SelectItem value="51-200">51-200 employees</SelectItem>
+                                    <SelectItem value="201-500">201-500 employees</SelectItem>
+                                    <SelectItem value="500+">500+ employees</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      {message && (
+                        <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
+                          {message.type === 'error' ? (
+                            <AlertCircle className="h-4 w-4" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                          <AlertDescription>{message.text}</AlertDescription>
+                        </Alert>
+                      )}
+
+                      <div className="flex justify-end gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => router.back()}
+                          disabled={loading}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                          {loading ? (
+                            'Saving...'
+                          ) : (
+                            <>
+                              <Save className="mr-2 h-4 w-4" />
+                              Save Changes
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
                 </CardContent>
               </Card>
             </TabsContent>

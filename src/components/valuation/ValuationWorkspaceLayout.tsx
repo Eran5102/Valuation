@@ -111,12 +111,6 @@ const valuationNavigation = {
       icon: FileText,
       description: 'Generate valuation report',
     },
-    {
-      name: 'Settings',
-      href: 'settings',
-      icon: Settings,
-      description: 'Valuation settings and assumptions',
-    },
   ],
   purchase_price: [
     {
@@ -282,16 +276,11 @@ export default function ValuationWorkspaceLayout({
             })
           }
         } else if (method.category === 'market' && method.route) {
-          // Special handling for OPM Backsolve - put it at the root level
-          if (method.id === 'opm_backsolve') {
-            // This will be added directly to dynamicNav later
-          } else {
-            enterpriseSubmenu.push({
-              name: method.name,
-              href: `enterprise/${method.route}`,
-              icon: BarChart3,
-            })
-          }
+          enterpriseSubmenu.push({
+            name: method.name,
+            href: `enterprise/${method.route}`,
+            icon: BarChart3,
+          })
         } else if (method.category === 'asset' && method.route) {
           enterpriseSubmenu.push({
             name: method.name,
@@ -330,17 +319,6 @@ export default function ValuationWorkspaceLayout({
         icon: TrendingUp,
         description: 'Selected valuation methodologies',
         submenu: enterpriseSubmenu,
-      })
-    }
-
-    // Add OPM Backsolve to main nav if selected (it's now under Market Approach)
-    const opmBacksolve = enabledMethodologies.find((m) => m.id === 'opm_backsolve')
-    if (opmBacksolve && opmBacksolve.enabled) {
-      dynamicNav.push({
-        name: 'OPM Backsolve',
-        href: 'allocation/opm',
-        icon: Calculator,
-        description: 'Option Pricing Model backsolve from recent transaction',
       })
     }
 
@@ -515,12 +493,14 @@ export default function ValuationWorkspaceLayout({
                     {valuationData.status.replace('_', ' ')}
                   </Badge>
                   <span className="text-sm text-gray-400">
-                    {valuationData.valuation_date ? new Date(valuationData.valuation_date).toLocaleDateString() : 'No date'}
+                    {valuationData.valuation_date
+                      ? new Date(valuationData.valuation_date).toLocaleDateString()
+                      : 'No date'}
                   </span>
                 </div>
 
                 {valuationData.fair_market_value && (
-                  <div className="bg-primary/10 rounded-lg p-2 border border-primary/20">
+                  <div className="bg-primary/10 border-primary/20 rounded-lg border p-2">
                     <p className="text-xs text-gray-400">Fair Market Value</p>
                     <p className="text-lg font-semibold text-primary">
                       ${valuationData.fair_market_value.toLocaleString()}
@@ -627,7 +607,9 @@ export default function ValuationWorkspaceLayout({
                     className="text-gray-200 hover:bg-gray-700 hover:text-white"
                   >
                     <Building2 className="mr-2 h-4 w-4" />
-                    <span className="font-medium">{currentOrganization?.name || 'My Organization'}</span>
+                    <span className="font-medium">
+                      {currentOrganization?.name || 'My Organization'}
+                    </span>
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

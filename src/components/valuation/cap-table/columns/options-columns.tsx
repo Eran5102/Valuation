@@ -13,6 +13,45 @@ export function createOptionsColumns(
   deleteOption: (id: string) => void
 ): ColumnDef<OptionsWarrants>[] {
   return [
+    // Actions column - moved to beginning to match Share Classes
+    {
+      id: 'actions',
+      header: 'Actions',
+      size: 120,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const option = row.original
+        const isEditing = editingRows.has(option.id)
+
+        return (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => toggleRowEdit(option.id)}
+              variant="ghost"
+              size="sm"
+              className="hover:bg-primary/10 h-8 w-8 p-0"
+              title={isEditing ? 'Save' : 'Edit'}
+            >
+              {isEditing ? (
+                <Save className="h-3.5 w-3.5 text-primary" />
+              ) : (
+                <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+            </Button>
+            <Button
+              onClick={() => deleteOption(option.id)}
+              variant="ghost"
+              size="sm"
+              className="hover:bg-destructive/10 h-8 w-8 p-0"
+              title="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </div>
+        )
+      },
+    },
+
     // Type column
     {
       id: 'type',
@@ -29,7 +68,7 @@ export function createOptionsColumns(
             <select
               defaultValue={option.type}
               onBlur={(e) => updateOption(option.id, 'type', e.target.value as OptionsType)}
-              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
+              className="focus:ring-primary/50 w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2"
             >
               <option value="Options">Options</option>
               <option value="Warrants">Warrants</option>
@@ -71,7 +110,7 @@ export function createOptionsColumns(
               type="number"
               defaultValue={option.numOptions}
               onBlur={(e) => updateOption(option.id, 'numOptions', parseFloat(e.target.value) || 0)}
-              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
+              className="focus:ring-primary/50 w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2"
               placeholder="0"
               min="0"
               step="1"
@@ -102,7 +141,7 @@ export function createOptionsColumns(
               onBlur={(e) =>
                 updateOption(option.id, 'exercisePrice', parseFloat(e.target.value) || 0)
               }
-              className="w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2 focus:ring-primary/50"
+              className="focus:ring-primary/50 w-full rounded border px-2 py-1 text-sm focus:border-primary focus:ring-2"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -110,46 +149,7 @@ export function createOptionsColumns(
           )
         }
 
-        return <span className="font-medium">{formatCurrency(option.exercisePrice)}</span>
-      },
-    },
-
-    // Actions column
-    {
-      id: 'actions',
-      header: 'Actions',
-      size: 120,
-      enableSorting: false,
-      cell: ({ row }) => {
-        const option = row.original
-        const isEditing = editingRows.has(option.id)
-
-        return (
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => toggleRowEdit(option.id)}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 hover:bg-primary/10"
-              title={isEditing ? 'Save' : 'Edit'}
-            >
-              {isEditing ? (
-                <Save className="h-4 w-4 text-green-600" />
-              ) : (
-                <Edit3 className="h-4 w-4 text-primary" />
-              )}
-            </Button>
-            <Button
-              onClick={() => deleteOption(option.id)}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 hover:bg-destructive/10"
-              title="Delete"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-        )
+        return <span className="font-medium">${option.exercisePrice.toFixed(4)}</span>
       },
     },
   ]

@@ -11,8 +11,6 @@ import {
   Activity,
   CreditCard,
   Search,
-  ChevronDown,
-  ChevronUp,
   Save,
   Check,
   AlertCircle,
@@ -41,10 +39,17 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { cn } from '@/lib/utils'
 import { ValuationMethodologySelector } from './ValuationMethodologySelector'
 import { RiskFreeRateInput } from './RiskFreeRateInput'
 import { VolatilityInput } from './VolatilityInput'
+import { DatePicker } from '@/components/ui/date-picker'
 import { useMethodologyStore } from '@/hooks/useMethodologyStore'
 import { toast } from 'sonner'
 import { saveAssumptions, getAssumptions } from '@/app/valuations/[id]/assumptions/actions'
@@ -102,7 +107,6 @@ export default function ValuationAssumptionsConsolidated({
 }: ValuationAssumptionsProps) {
   const { methodologies } = useMethodologyStore()
   const [assumptions, setAssumptions] = useState<Record<string, any>>({})
-  const [expandedSections, setExpandedSections] = useState<string[]>([]) // All sections closed by default
   const [managementTeam, setManagementTeam] = useState<TeamMember[]>([])
   const [keyInvestors, setKeyInvestors] = useState<Investor[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -218,8 +222,7 @@ export default function ValuationAssumptionsConsolidated({
                   : data.management_team
               setManagementTeam(team)
               formattedAssumptions['company_profile.management_team'] = team
-            } catch (e) {
-            }
+            } catch (e) {}
           }
 
           if (data.key_investors) {
@@ -230,8 +233,7 @@ export default function ValuationAssumptionsConsolidated({
                   : data.key_investors
               setKeyInvestors(investors)
               formattedAssumptions['company_profile.key_investors'] = investors
-            } catch (e) {
-            }
+            } catch (e) {}
           }
 
           setAssumptions(formattedAssumptions)
@@ -572,7 +574,11 @@ export default function ValuationAssumptionsConsolidated({
   }
 
   // Handle field value changes
-  const handleFieldChange = (sectionId: string, fieldId: string, value: string | number | any[]) => {
+  const handleFieldChange = (
+    sectionId: string,
+    fieldId: string,
+    value: string | number | any[]
+  ) => {
     setAssumptions((prev) => ({
       ...prev,
       [`${sectionId}.${fieldId}`]: value,
@@ -723,12 +729,10 @@ export default function ValuationAssumptionsConsolidated({
         if (filterStatus === 'required') {
           filteredFields = filteredFields.filter((field) => field.required)
         } else if (filterStatus === 'incomplete') {
-          filteredFields = filteredFields.filter(
-            (field) => {
-              const value = assumptions[`${section.id}.${field.id}`]
-              return (value === undefined || value === null || value === '') && field.required
-            }
-          )
+          filteredFields = filteredFields.filter((field) => {
+            const value = assumptions[`${section.id}.${field.id}`]
+            return (value === undefined || value === null || value === '') && field.required
+          })
         }
 
         return { ...section, fields: filteredFields }
@@ -768,22 +772,12 @@ export default function ValuationAssumptionsConsolidated({
   const stats = getCompletionStats()
   const filteredSections = getFilteredSections()
 
-  // Toggle section expansion
-  const toggleSection = (sectionId: string) => {
-    setExpandedSections((prev) =>
-      prev.includes(sectionId) ? prev.filter((id) => id !== sectionId) : [...prev, sectionId]
-    )
-  }
-
   // Scroll to section
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(`section-${sectionId}`)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' })
       setActiveSection(sectionId)
-      if (!expandedSections.includes(sectionId)) {
-        toggleSection(sectionId)
-      }
       setTimeout(() => setActiveSection(null), 2000)
     }
   }
@@ -837,7 +831,10 @@ export default function ValuationAssumptionsConsolidated({
                 className="pl-9"
               />
             </div>
-            <Select value={filterStatus} onValueChange={(value: 'all' | 'required' | 'incomplete') => setFilterStatus(value)}>
+            <Select
+              value={filterStatus}
+              onValueChange={(value: 'all' | 'required' | 'incomplete') => setFilterStatus(value)}
+            >
               <SelectTrigger className="w-[180px]">
                 <Filter className="mr-2 h-4 w-4" />
                 <SelectValue />
@@ -852,328 +849,265 @@ export default function ValuationAssumptionsConsolidated({
         </div>
 
         {/* Sections */}
-        <div className="space-y-4">
+        <Accordion type="multiple" className="space-y-4">
           {filteredSections.map((section) => {
             const Icon = section.icon
-            const isExpanded = expandedSections.includes(section.id)
             const isActive = activeSection === section.id
 
             return (
-              <Card
+              <AccordionItem
                 key={section.id}
+                value={section.id}
                 id={`section-${section.id}`}
-                className={cn('transition-all', isActive && 'ring-2 ring-primary')}
+                className={cn(
+                  'rounded-lg border bg-card transition-all',
+                  isActive && 'ring-2 ring-primary'
+                )}
               >
-                <CardHeader className="cursor-pointer" onClick={() => toggleSection(section.id)}>
-                  <div className="flex items-center justify-between">
+                <AccordionTrigger className="px-6 hover:no-underline">
+                  <div className="mr-2 flex w-full items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Icon className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <CardTitle className="text-base">{section.name}</CardTitle>
+                      <div className="text-left">
+                        <div className="text-base font-semibold">{section.name}</div>
                         {section.description && (
-                          <CardDescription className="mt-1">{section.description}</CardDescription>
+                          <div className="mt-1 text-sm font-normal text-muted-foreground">
+                            {section.description}
+                          </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {section.id !== 'methodology' && (
-                        <Badge variant="outline">
-                          {
-                            section.fields.filter((f) => {
-                              const value = assumptions[`${section.id}.${f.id}`]
-                              return value !== undefined && value !== null && value !== ''
-                            }).length
-                          }
-                          /{section.fields.length}
-                        </Badge>
-                      )}
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </div>
+                    {section.id !== 'methodology' && (
+                      <Badge variant="outline" className="ml-2">
+                        {
+                          section.fields.filter((f) => {
+                            const value = assumptions[`${section.id}.${f.id}`]
+                            return value !== undefined && value !== null && value !== ''
+                          }).length
+                        }
+                        /{section.fields.length}
+                      </Badge>
+                    )}
                   </div>
-                </CardHeader>
+                </AccordionTrigger>
 
-                {isExpanded && (
-                  <CardContent className="pt-0">
-                    {section.id === 'methodology' ? (
-                      <ValuationMethodologySelector />
-                    ) : section.id === 'volatility' ? (
-                      <div className="space-y-4">
-                        {/* Two-column layout for Risk-Free Rate and Volatility */}
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                          {/* Risk-Free Rate Column */}
-                          <div className="space-y-2">
-                            <RiskFreeRateInput
-                              assumption={{
-                                id: 'risk_free_rate',
-                                name: 'Risk-Free Rate (%)',
-                                value: assumptions['volatility.risk_free_rate'] || 4.5,
-                                type: 'percentage',
-                                description: 'Current risk-free rate for option pricing',
-                                required: true,
-                              }}
-                              categoryId="volatility"
-                              onChange={(catId, assumptionId, value) =>
-                                handleFieldChange(catId, assumptionId, value)
-                              }
-                              valuationDate={assumptions['company.valuation_date']}
-                              timeToLiquidity={assumptions['volatility.time_to_liquidity'] || 3}
-                            />
-                          </div>
-
-                          {/* Volatility Column */}
-                          <div className="space-y-2">
-                            <VolatilityInput
-                              assumption={{
-                                id: 'equity_volatility',
-                                name: 'Equity Volatility (%)',
-                                value: assumptions['volatility.equity_volatility'] || 60,
-                                type: 'percentage',
-                                description: 'Expected volatility of equity',
-                              }}
-                              categoryId="volatility"
-                              onChange={(catId, assumptionId, value) =>
-                                handleFieldChange(catId, assumptionId, value)
-                              }
-                            />
-                          </div>
+                <AccordionContent className="px-6 pb-6">
+                  {section.id === 'methodology' ? (
+                    <ValuationMethodologySelector />
+                  ) : section.id === 'volatility' ? (
+                    <div className="space-y-4">
+                      {/* Two-column layout for Risk-Free Rate and Volatility */}
+                      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        {/* Risk-Free Rate Column */}
+                        <div className="space-y-2">
+                          <RiskFreeRateInput
+                            assumption={{
+                              id: 'risk_free_rate',
+                              name: 'Risk-Free Rate (%)',
+                              value: assumptions['volatility.risk_free_rate'] || 4.5,
+                              type: 'percentage',
+                              description: 'Current risk-free rate for option pricing',
+                              required: true,
+                            }}
+                            categoryId="volatility"
+                            onChange={(catId, assumptionId, value) =>
+                              handleFieldChange(catId, assumptionId, value)
+                            }
+                            valuationDate={assumptions['company.valuation_date']}
+                            timeToLiquidity={assumptions['volatility.time_to_liquidity'] || 3}
+                          />
                         </div>
 
-                        {/* Time to Liquidity - Full width below */}
-                        <div className="mt-4">
-                          <Label htmlFor="time_to_liquidity">
-                            Expected Time to Liquidity (Years)
-                          </Label>
-                          <p className="mb-2 text-xs text-muted-foreground">
-                            Expected time until a liquidity event (IPO, acquisition, etc.)
-                          </p>
-                          <Input
-                            id="time_to_liquidity"
-                            type="number"
-                            value={assumptions['volatility.time_to_liquidity'] || 3}
-                            onChange={(e) =>
-                              handleFieldChange(
-                                'volatility',
-                                'time_to_liquidity',
-                                parseFloat(e.target.value)
-                              )
+                        {/* Volatility Column */}
+                        <div className="space-y-2">
+                          <VolatilityInput
+                            assumption={{
+                              id: 'equity_volatility',
+                              name: 'Equity Volatility (%)',
+                              value: assumptions['volatility.equity_volatility'] || 60,
+                              type: 'percentage',
+                              description: 'Expected volatility of equity',
+                            }}
+                            categoryId="volatility"
+                            onChange={(catId, assumptionId, value) =>
+                              handleFieldChange(catId, assumptionId, value)
                             }
-                            className="max-w-xs"
-                            step="0.5"
-                            min="0.5"
-                            max="10"
                           />
                         </div>
                       </div>
-                    ) : section.id === 'company_profile' ? (
-                      <div className="space-y-4">
-                        {section.fields.map((field) => {
-                          // Handle special field types
-                          if (field.type === 'team') {
-                            return (
-                              <div key={field.id} className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <Label>{field.name}</Label>
-                                    {field.description && (
-                                      <p className="text-xs text-muted-foreground">
-                                        {field.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={addTeamMember}
-                                    className="gap-1"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                    Add Member
-                                  </Button>
-                                </div>
-                                <div className="space-y-2">
-                                  {managementTeam.map((member) => (
-                                    <div key={member.id} className="flex items-start gap-2">
-                                      <Input
-                                        placeholder="Name"
-                                        value={member.name}
-                                        onChange={(e) =>
-                                          updateTeamMember(member.id, 'name', e.target.value)
-                                        }
-                                        className="flex-1"
-                                      />
-                                      <Input
-                                        placeholder="Title"
-                                        value={member.title}
-                                        onChange={(e) =>
-                                          updateTeamMember(member.id, 'title', e.target.value)
-                                        }
-                                        className="flex-1"
-                                      />
-                                      <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() => removeTeamMember(member.id)}
-                                        className="h-9 w-9"
-                                      >
-                                        <X className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                  {managementTeam.length === 0 && (
-                                    <div className="py-2 text-sm text-muted-foreground">
-                                      No team members added yet. Click "Add Member" to start.
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
+
+                      {/* Time to Liquidity - Full width below */}
+                      <div className="mt-4">
+                        <Label htmlFor="time_to_liquidity">
+                          Expected Time to Liquidity (Years)
+                        </Label>
+                        <p className="mb-2 text-xs text-muted-foreground">
+                          Expected time until a liquidity event (IPO, acquisition, etc.)
+                        </p>
+                        <Input
+                          id="time_to_liquidity"
+                          type="number"
+                          value={assumptions['volatility.time_to_liquidity'] || 3}
+                          onChange={(e) =>
+                            handleFieldChange(
+                              'volatility',
+                              'time_to_liquidity',
+                              parseFloat(e.target.value)
                             )
                           }
-
-                          if (field.type === 'investors') {
-                            return (
-                              <div key={field.id} className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <Label>{field.name}</Label>
-                                    {field.description && (
-                                      <p className="text-xs text-muted-foreground">
-                                        {field.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={addInvestor}
-                                    className="gap-1"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                    Add Investor
-                                  </Button>
-                                </div>
-                                <div className="space-y-2">
-                                  {keyInvestors.map((investor) => (
-                                    <div key={investor.id} className="flex items-start gap-2">
-                                      <Input
-                                        placeholder="Investor Name"
-                                        value={investor.name}
-                                        onChange={(e) =>
-                                          updateInvestor(investor.id, 'name', e.target.value)
-                                        }
-                                        className="flex-1"
-                                      />
-                                      <Select
-                                        value={investor.type}
-                                        onValueChange={(value) =>
-                                          updateInvestor(investor.id, 'type', value)
-                                        }
-                                      >
-                                        <SelectTrigger className="w-[140px]">
-                                          <SelectValue placeholder="Type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="VC">VC</SelectItem>
-                                          <SelectItem value="Angel">Angel</SelectItem>
-                                          <SelectItem value="Strategic">Strategic</SelectItem>
-                                          <SelectItem value="PE">Private Equity</SelectItem>
-                                          <SelectItem value="Family Office">
-                                            Family Office
-                                          </SelectItem>
-                                          <SelectItem value="Other">Other</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() => removeInvestor(investor.id)}
-                                        className="h-9 w-9"
-                                      >
-                                        <X className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                  {keyInvestors.length === 0 && (
-                                    <div className="py-2 text-sm text-muted-foreground">
-                                      No investors added yet. Click "Add Investor" to start.
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                          }
-
-                          // Regular fields
+                          className="max-w-xs"
+                          step="0.5"
+                          min="0.5"
+                          max="10"
+                        />
+                      </div>
+                    </div>
+                  ) : section.id === 'company_profile' ? (
+                    <div className="space-y-4">
+                      {section.fields.map((field) => {
+                        // Handle special field types
+                        if (field.type === 'team') {
                           return (
-                            <div
-                              key={field.id}
-                              className={field.type === 'textarea' ? 'md:col-span-2' : ''}
-                            >
-                              <Label htmlFor={field.id}>
-                                {field.name}
-                                {field.required && <span className="ml-1 text-red-500">*</span>}
-                              </Label>
-                              {field.description && (
-                                <p className="text-xs text-muted-foreground">{field.description}</p>
-                              )}
-                              {field.type === 'select' ? (
-                                <Select
-                                  value={assumptions[`${section.id}.${field.id}`] || field.value}
-                                  onValueChange={(value) =>
-                                    handleFieldChange(section.id, field.id, value)
-                                  }
+                            <div key={field.id} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <Label>{field.name}</Label>
+                                  {field.description && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {field.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={addTeamMember}
+                                  className="gap-1"
                                 >
-                                  <SelectTrigger id={field.id} className="mt-1">
-                                    <SelectValue
-                                      placeholder={`Select ${field.name.toLowerCase()}`}
+                                  <Plus className="h-3 w-3" />
+                                  Add Member
+                                </Button>
+                              </div>
+                              <div className="space-y-2">
+                                {managementTeam.map((member) => (
+                                  <div key={member.id} className="flex items-start gap-2">
+                                    <Input
+                                      placeholder="Name"
+                                      value={member.name}
+                                      onChange={(e) =>
+                                        updateTeamMember(member.id, 'name', e.target.value)
+                                      }
+                                      className="flex-1"
                                     />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {field.options?.map((option) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : field.type === 'textarea' ? (
-                                <textarea
-                                  id={field.id}
-                                  value={assumptions[`${section.id}.${field.id}`] || field.value}
-                                  onChange={(e) =>
-                                    handleFieldChange(section.id, field.id, e.target.value)
-                                  }
-                                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                  rows={3}
-                                  placeholder={field.placeholder}
-                                />
-                              ) : (
-                                <Input
-                                  id={field.id}
-                                  type={field.type === 'percentage' ? 'number' : field.type}
-                                  value={assumptions[`${section.id}.${field.id}`] || field.value}
-                                  onChange={(e) =>
-                                    handleFieldChange(section.id, field.id, e.target.value)
-                                  }
-                                  className="mt-1"
-                                  placeholder={field.placeholder}
-                                />
-                              )}
+                                    <Input
+                                      placeholder="Title"
+                                      value={member.title}
+                                      onChange={(e) =>
+                                        updateTeamMember(member.id, 'title', e.target.value)
+                                      }
+                                      className="flex-1"
+                                    />
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => removeTeamMember(member.id)}
+                                      className="h-9 w-9"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                                {managementTeam.length === 0 && (
+                                  <div className="py-2 text-sm text-muted-foreground">
+                                    No team members added yet. Click "Add Member" to start.
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )
-                        })}
-                      </div>
-                    ) : (
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {section.fields.map((field) => (
-                          <div key={field.id}>
+                        }
+
+                        if (field.type === 'investors') {
+                          return (
+                            <div key={field.id} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <Label>{field.name}</Label>
+                                  {field.description && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {field.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={addInvestor}
+                                  className="gap-1"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  Add Investor
+                                </Button>
+                              </div>
+                              <div className="space-y-2">
+                                {keyInvestors.map((investor) => (
+                                  <div key={investor.id} className="flex items-start gap-2">
+                                    <Input
+                                      placeholder="Investor Name"
+                                      value={investor.name}
+                                      onChange={(e) =>
+                                        updateInvestor(investor.id, 'name', e.target.value)
+                                      }
+                                      className="flex-1"
+                                    />
+                                    <Select
+                                      value={investor.type}
+                                      onValueChange={(value) =>
+                                        updateInvestor(investor.id, 'type', value)
+                                      }
+                                    >
+                                      <SelectTrigger className="w-[140px]">
+                                        <SelectValue placeholder="Type" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="VC">VC</SelectItem>
+                                        <SelectItem value="Angel">Angel</SelectItem>
+                                        <SelectItem value="Strategic">Strategic</SelectItem>
+                                        <SelectItem value="PE">Private Equity</SelectItem>
+                                        <SelectItem value="Family Office">Family Office</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => removeInvestor(investor.id)}
+                                      className="h-9 w-9"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                                {keyInvestors.length === 0 && (
+                                  <div className="py-2 text-sm text-muted-foreground">
+                                    No investors added yet. Click "Add Investor" to start.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        }
+
+                        // Regular fields
+                        return (
+                          <div
+                            key={field.id}
+                            className={field.type === 'textarea' ? 'md:col-span-2' : ''}
+                          >
                             <Label htmlFor={field.id}>
                               {field.name}
                               {field.required && <span className="ml-1 text-red-500">*</span>}
@@ -1210,6 +1144,23 @@ export default function ValuationAssumptionsConsolidated({
                                 rows={3}
                                 placeholder={field.placeholder}
                               />
+                            ) : field.type === 'date' ? (
+                              <DatePicker
+                                value={
+                                  assumptions[`${section.id}.${field.id}`]
+                                    ? new Date(assumptions[`${section.id}.${field.id}`])
+                                    : undefined
+                                }
+                                onChange={(date) =>
+                                  handleFieldChange(
+                                    section.id,
+                                    field.id,
+                                    date?.toISOString().split('T')[0] || ''
+                                  )
+                                }
+                                placeholder={field.placeholder || 'Select date'}
+                                className="mt-1"
+                              />
                             ) : (
                               <Input
                                 id={field.id}
@@ -1223,15 +1174,87 @@ export default function ValuationAssumptionsConsolidated({
                               />
                             )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                )}
-              </Card>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {section.fields.map((field) => (
+                        <div key={field.id}>
+                          <Label htmlFor={field.id}>
+                            {field.name}
+                            {field.required && <span className="ml-1 text-red-500">*</span>}
+                          </Label>
+                          {field.description && (
+                            <p className="text-xs text-muted-foreground">{field.description}</p>
+                          )}
+                          {field.type === 'select' ? (
+                            <Select
+                              value={assumptions[`${section.id}.${field.id}`] || field.value}
+                              onValueChange={(value) =>
+                                handleFieldChange(section.id, field.id, value)
+                              }
+                            >
+                              <SelectTrigger id={field.id} className="mt-1">
+                                <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {field.options?.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : field.type === 'textarea' ? (
+                            <textarea
+                              id={field.id}
+                              value={assumptions[`${section.id}.${field.id}`] || field.value}
+                              onChange={(e) =>
+                                handleFieldChange(section.id, field.id, e.target.value)
+                              }
+                              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              rows={3}
+                              placeholder={field.placeholder}
+                            />
+                          ) : field.type === 'date' ? (
+                            <DatePicker
+                              value={
+                                assumptions[`${section.id}.${field.id}`]
+                                  ? new Date(assumptions[`${section.id}.${field.id}`])
+                                  : undefined
+                              }
+                              onChange={(date) =>
+                                handleFieldChange(
+                                  section.id,
+                                  field.id,
+                                  date?.toISOString().split('T')[0] || ''
+                                )
+                              }
+                              placeholder={field.placeholder || 'Select date'}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <Input
+                              id={field.id}
+                              type={field.type === 'percentage' ? 'number' : field.type}
+                              value={assumptions[`${section.id}.${field.id}`] || field.value}
+                              onChange={(e) =>
+                                handleFieldChange(section.id, field.id, e.target.value)
+                              }
+                              className="mt-1"
+                              placeholder={field.placeholder}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
             )
           })}
-        </div>
+        </Accordion>
       </div>
 
       {/* Right Sidebar */}
