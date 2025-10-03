@@ -53,6 +53,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { useMethodologyStore } from '@/hooks/useMethodologyStore'
 import { toast } from 'sonner'
 import { saveAssumptions, getAssumptions } from '@/app/valuations/[id]/assumptions/actions'
+import { formatAssumptionsForDatabase } from './assumptions/data-mapping'
 
 interface TeamMember {
   id: string
@@ -654,57 +655,30 @@ export default function ValuationAssumptionsConsolidated({
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      // Convert nested form structure back to flat database structure
-      const dataToSave: any = {}
+      console.log('[ValuationAssumptionsConsolidated] Starting save with assumptions:', assumptions)
 
-      // Extract company section
-      Object.entries(assumptions).forEach(([key, value]) => {
-        if (key.startsWith('company.')) {
-          const fieldName = key.replace('company.', '')
-          dataToSave[fieldName] = value
-        } else if (key.startsWith('company_profile.')) {
-          const fieldName = key.replace('company_profile.', '')
-          // Handle special fields
-          if (fieldName === 'management_team' || fieldName === 'key_investors') {
-            dataToSave[fieldName] = JSON.stringify(value)
-          } else {
-            dataToSave[fieldName] = value
-          }
-        } else if (key.startsWith('valuation_details.')) {
-          const fieldName = key.replace('valuation_details.', '')
-          dataToSave[fieldName] = value
-        } else if (key.startsWith('designee.')) {
-          const fieldName = key.replace('designee.', '')
-          dataToSave[fieldName] = value
-        } else if (key.startsWith('appraiser.')) {
-          const fieldName = key.replace('appraiser.', '')
-          dataToSave[fieldName] = value
-        } else if (key.startsWith('analysis_periods.')) {
-          const fieldName = key.replace('analysis_periods.', '')
-          dataToSave[fieldName] = typeof value === 'string' ? parseInt(value) : value
-        } else if (key.startsWith('volatility.')) {
-          const fieldName = key.replace('volatility.', '')
-          dataToSave[fieldName] = typeof value === 'string' ? parseFloat(value) : value
-        } else if (key.startsWith('recent_transactions.')) {
-          const fieldName = key.replace('recent_transactions.', '')
-          if (fieldName === 'last_financing_amount' || fieldName === 'last_financing_valuation') {
-            dataToSave[fieldName] = typeof value === 'string' ? parseFloat(value) : value
-          } else {
-            dataToSave[fieldName] = value
-          }
-        }
-      })
+      // Use centralized data mapping function
+      const dataToSave = formatAssumptionsForDatabase(assumptions)
+
+      console.log('[ValuationAssumptionsConsolidated] Data prepared for save:', dataToSave)
 
       const result = await saveAssumptions(valuationId, dataToSave)
+
+      console.log('[ValuationAssumptionsConsolidated] Save result:', result)
 
       if (result.success) {
         toast.success('Assumptions saved successfully')
         setHasChanges(false)
       } else {
-        throw new Error(result.error || 'Failed to save assumptions')
+        const errorMessage = result.error || 'Failed to save assumptions'
+        console.error('[ValuationAssumptionsConsolidated] Save failed:', errorMessage)
+        toast.error(`Failed to save: ${errorMessage}`)
+        throw new Error(errorMessage)
       }
     } catch (error) {
-      toast.error('Failed to save assumptions')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('[ValuationAssumptionsConsolidated] Exception during save:', error)
+      toast.error(`Failed to save assumptions: ${errorMessage}`)
     } finally {
       setIsSaving(false)
     }
@@ -913,7 +887,7 @@ export default function ValuationAssumptionsConsolidated({
                             onChange={(catId, assumptionId, value) =>
                               handleFieldChange(catId, assumptionId, value)
                             }
-                            valuationDate={assumptions['company.valuation_date']}
+                            valuationDate={assumptions['valuation_details.valuation_date']}
                             timeToLiquidity={assumptions['volatility.time_to_liquidity'] || 3}
                           />
                         </div>

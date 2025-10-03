@@ -74,21 +74,49 @@ export async function getAssumptions(valuationId: string) {
 }
 
 export async function saveAssumptions(valuationId: string, assumptions: ConsolidatedAssumptions) {
-  const supabase = await createServerClient()
+  try {
+    console.log('[actions] saveAssumptions called with valuationId:', valuationId)
+    console.log('[actions] Assumptions field count:', Object.keys(assumptions).length)
+    console.log('[actions] Assumptions data:', assumptions)
 
-  // Upsert assumptions
-  const { error } = await supabase.from('valuation_assumptions').upsert({
-    valuation_id: valuationId,
-    ...assumptions,
-    updated_at: new Date().toISOString(),
-  })
+    const supabase = await createServerClient()
 
-  if (error) {
-    return { success: false, error: error.message }
+    const dataToUpsert = {
+      valuation_id: valuationId,
+      ...assumptions,
+      updated_at: new Date().toISOString(),
+    }
+
+    console.log('[actions] Data to upsert:', dataToUpsert)
+
+    // Upsert assumptions
+    const { data, error } = await supabase
+      .from('valuation_assumptions')
+      .upsert(dataToUpsert, { onConflict: 'valuation_id' })
+      .select()
+
+    if (error) {
+      console.error('[actions] Database error:', error)
+      console.error('[actions] Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      })
+      return { success: false, error: error.message }
+    }
+
+    console.log('[actions] Save successful, returned data:', data)
+
+    revalidatePath(`/valuations/${valuationId}/assumptions`)
+    return { success: true, data }
+  } catch (error) {
+    console.error('[actions] Exception in saveAssumptions:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    }
   }
-
-  revalidatePath(`/valuations/${valuationId}/assumptions`)
-  return { success: true }
 }
 
 export async function getValuationData(valuationId: string) {
