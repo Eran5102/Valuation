@@ -233,9 +233,10 @@ export function useUnifiedCapTable(
       pik: false,
     }
 
+    // Add new row at the top (beginning) of the array
     const enhancedShareClasses = enhanceShareClassesWithCalculations([
-      ...shareClasses,
       newShareClass,
+      ...shareClasses,
     ])
     setShareClasses(enhancedShareClasses)
 
@@ -259,6 +260,7 @@ export function useUnifiedCapTable(
   }, [])
 
   const handleShareClassReorder = useCallback((fromIndex: number, toIndex: number) => {
+    setHasChanges(true) // Mark as changed to trigger auto-save
     setShareClasses((prev) => {
       const newShareClasses = [...prev]
       const [movedShareClass] = newShareClasses.splice(fromIndex, 1)

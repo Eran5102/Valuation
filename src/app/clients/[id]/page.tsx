@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/layout/AppLayout'
-import { getStatusColor, formatDate } from '@/lib/utils'
+import { getStatusColor, formatDate, formatCurrency } from '@/lib/utils'
 import { StatusSelector } from '@/components/ui/status-selector'
 
 interface Client {
@@ -34,17 +34,30 @@ interface Client {
   updatedAt?: string
 }
 
+interface Valuation {
+  id: string
+  title: string
+  valuation_date: string
+  status: string
+  equity_value?: number
+  common_share_price?: number
+  created_at: string
+}
+
 export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
   const clientId = params.id as string
   const [client, setClient] = useState<Client | null>(null)
+  const [valuations, setValuations] = useState<Valuation[]>([])
   const [loading, setLoading] = useState(true)
+  const [valuationsLoading, setValuationsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (clientId) {
       fetchClient()
+      fetchValuations()
     }
   }, [clientId])
 
@@ -76,6 +89,23 @@ export default function ClientDetailPage() {
       setError('Failed to fetch client details')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchValuations = async () => {
+    try {
+      setValuationsLoading(true)
+      const response = await fetch(`/api/valuations?company_id=${clientId}`)
+      if (response.ok) {
+        const data = await response.json()
+        // API might return { data: [...] } or just [...]
+        setValuations(Array.isArray(data) ? data : data?.data || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch valuations:', error)
+      setValuations([])
+    } finally {
+      setValuationsLoading(false)
     }
   }
 
@@ -150,7 +180,7 @@ export default function ClientDetailPage() {
               Back to Clients
             </Button>
             <div className="flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
                 <Building2 className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -261,6 +291,76 @@ export default function ClientDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Valuations */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Calculator className="mr-2 h-5 w-5" />
+                Valuations
+              </div>
+              <Link href={`/valuations/new?client=${client.id}`}>
+                <Button size="sm">Create New</Button>
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {valuationsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-sm text-muted-foreground">Loading valuations...</div>
+              </div>
+            ) : valuations.length === 0 ? (
+              <div className="py-8 text-center">
+                <Calculator className="text-muted-foreground/50 mx-auto h-12 w-12" />
+                <p className="mt-2 text-sm text-muted-foreground">No valuations yet</p>
+                <Link href={`/valuations/new?client=${client.id}`}>
+                  <Button variant="outline" size="sm" className="mt-4">
+                    Create First Valuation
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {valuations.map((valuation) => (
+                  <Link key={valuation.id} href={`/valuations/${valuation.id}`} className="block">
+                    <div className="group rounded-lg border p-4 transition-all hover:border-primary hover:shadow-sm">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium transition-colors group-hover:text-primary">
+                            {valuation.title}
+                          </h4>
+                          <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+                            <span className="flex items-center">
+                              <Calendar className="mr-1 h-3 w-3" />
+                              {formatDate(valuation.valuation_date)}
+                            </span>
+                            {valuation.equity_value && (
+                              <span>Equity Value: {formatCurrency(valuation.equity_value)}</span>
+                            )}
+                            {valuation.common_share_price && (
+                              <span>
+                                Share Price: {formatCurrency(valuation.common_share_price)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <Badge variant={getStatusColor(valuation.status)}>{valuation.status}</Badge>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+                {valuations.length > 0 && (
+                  <Link href={`/valuations?client=${client.id}`}>
+                    <Button variant="outline" className="w-full">
+                      View All Valuations ({valuations.length})
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Quick Actions */}
         <Card>

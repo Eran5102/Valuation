@@ -24,11 +24,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Get share classes from the share_classes table
+    // Sort by round_date descending (latest date first, earliest last)
     const { data: dbShareClasses, error: shareError } = await supabase
       .from('share_classes')
       .select('*')
       .eq('valuation_id', id)
-      .order('seniority', { ascending: false })
+      .order('round_date', { ascending: false })
 
     if (shareError) {
       return NextResponse.json({ error: 'Failed to fetch share classes' }, { status: 500 })

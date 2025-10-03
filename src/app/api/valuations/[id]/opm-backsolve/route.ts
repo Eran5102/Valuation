@@ -5,6 +5,7 @@ import {
   BlackScholesParams,
   BreakpointData,
 } from '@/lib/services/opmBacksolve/opmCalculator'
+import { AssumptionsExtractor } from '@/lib/services/shared/AssumptionsExtractor'
 
 // OPM Backsolve API endpoints
 // POST /api/valuations/[id]/opm-backsolve - Calculate OPM backsolve
@@ -41,37 +42,19 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     const breakpointsData = await breakpointsResponse.json()
 
-    // Extract assumptions from valuation
-    const assumptions = valuation.assumptions || []
-
-    // Find the required assumptions - searching through all categories
-    let volatility = 0.6 // Default 60%
-    let riskFreeRate = 0.045 // Default 4.5%
-    let timeToLiquidity = 3 // Default 3 years
-
-    if (Array.isArray(assumptions)) {
-      assumptions.forEach((category: any) => {
-        if (category.assumptions && Array.isArray(category.assumptions)) {
-          category.assumptions.forEach((assumption: any) => {
-            if (assumption.id === 'equity_volatility' && assumption.value) {
-              volatility = parseFloat(assumption.value) / 100
-            } else if (assumption.id === 'risk_free_rate' && assumption.value) {
-              riskFreeRate = parseFloat(assumption.value) / 100
-            } else if (assumption.id === 'time_to_liquidity' && assumption.value) {
-              timeToLiquidity = parseFloat(assumption.value)
-            }
-          })
-        }
-      })
-    }
+    // Extract assumptions from valuation using centralized utility
+    const extractedParams = AssumptionsExtractor.extractBlackScholesParams(valuation.assumptions)
 
     // Get parameters from request body (can override defaults)
     const params: BlackScholesParams = {
       companyValue: body.companyValue || 0,
-      volatility: body.volatility !== undefined ? body.volatility : volatility,
-      riskFreeRate: body.riskFreeRate !== undefined ? body.riskFreeRate : riskFreeRate,
-      timeToLiquidity: body.timeToLiquidity !== undefined ? body.timeToLiquidity : timeToLiquidity,
-      dividendYield: body.dividendYield || 0,
+      volatility: body.volatility !== undefined ? body.volatility : extractedParams.volatility,
+      riskFreeRate:
+        body.riskFreeRate !== undefined ? body.riskFreeRate : extractedParams.riskFreeRate,
+      timeToLiquidity:
+        body.timeToLiquidity !== undefined ? body.timeToLiquidity : extractedParams.timeToLiquidity,
+      dividendYield:
+        body.dividendYield !== undefined ? body.dividendYield : extractedParams.dividendYield,
     }
 
     // Transform breakpoints data for OPM calculator
@@ -190,40 +173,18 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       .eq('id', idParam)
       .single()
 
-    // Default values
-    let volatility = 0.6 // Default 60%
-    let riskFreeRate = 0.045 // Default 4.5%
-    let timeToLiquidity = 3 // Default 3 years
-
-    // Extract from assumptions if valuation exists
-    if (valuation && valuation.assumptions) {
-      const assumptions = valuation.assumptions || []
-
-      if (Array.isArray(assumptions)) {
-        assumptions.forEach((category: any) => {
-          if (category.assumptions && Array.isArray(category.assumptions)) {
-            category.assumptions.forEach((assumption: any) => {
-              if (assumption.id === 'equity_volatility' && assumption.value) {
-                volatility = parseFloat(assumption.value) / 100
-              } else if (assumption.id === 'risk_free_rate' && assumption.value) {
-                riskFreeRate = parseFloat(assumption.value) / 100
-              } else if (assumption.id === 'time_to_liquidity' && assumption.value) {
-                timeToLiquidity = parseFloat(assumption.value)
-              }
-            })
-          }
-        })
-      }
-    }
+    // Extract parameters from assumptions using centralized utility
+    const extractedParams = AssumptionsExtractor.extractBlackScholesParams(valuation?.assumptions)
 
     return NextResponse.json({
       success: true,
       data: {
         savedParameters: valuation?.opm_parameters || null,
         defaults: {
-          volatility,
-          riskFreeRate,
-          timeToLiquidity,
+          volatility: extractedParams.volatility,
+          riskFreeRate: extractedParams.riskFreeRate,
+          timeToLiquidity: extractedParams.timeToLiquidity,
+          dividendYield: extractedParams.dividendYield,
         },
         valuation_id: idParam,
       },

@@ -4,8 +4,10 @@ import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { OPMMainPanel } from '@/components/valuation/opm/OPMMainPanel'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Calculator } from 'lucide-react'
 
-export default function OPMPage() {
+export default function OPMBacksolvePage() {
   const params = useParams()
   const valuationId = params?.id as string
   const [assumptions, setAssumptions] = useState<any>(null)
@@ -40,7 +42,22 @@ export default function OPMPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-6 w-6" />
+            OPM Backsolve - Option Pricing Model
+          </CardTitle>
+          <CardDescription>
+            Calculate enterprise value using Black-Scholes option pricing methodology with single
+            scenario or hybrid PWERM analysis
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Main OPM Panel with Single/Hybrid Tabs */}
       <OPMMainPanel valuationId={valuationId} assumptions={assumptions} />
     </div>
   )

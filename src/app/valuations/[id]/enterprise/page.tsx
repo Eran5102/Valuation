@@ -27,14 +27,19 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { OPMMainPanel } from '@/components/valuation/opm/OPMMainPanel'
+import { useParams } from 'next/navigation'
 
 export default function EnterpriseValuationPage() {
+  const params = useParams()
+  const valuationId = params?.id as string
   const { valuation, updateMethodologies, updateAssumptions, loading } = useValuationWorkspace()
   const [activeApproach, setActiveApproach] = useState('market')
   const [selectedMethods, setSelectedMethods] = useState({
     market: valuation?.methodologies?.enterprise?.market || false,
     income: valuation?.methodologies?.enterprise?.income || false,
     asset: valuation?.methodologies?.enterprise?.asset || false,
+    opm: valuation?.methodologies?.enterprise?.opm || false,
   })
 
   // Market approach data
@@ -57,7 +62,7 @@ export default function EnterpriseValuationPage() {
     adjustments: 0,
   })
 
-  const handleMethodToggle = (method: 'market' | 'income' | 'asset') => {
+  const handleMethodToggle = (method: 'market' | 'income' | 'asset' | 'opm') => {
     const newMethods = {
       ...selectedMethods,
       [method]: !selectedMethods[method],
@@ -121,12 +126,12 @@ export default function EnterpriseValuationPage() {
           <CardDescription>Select which approaches to use for enterprise valuation</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div
               className={`relative cursor-pointer rounded-lg border p-4 transition-all ${
                 selectedMethods.market
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
+                  ? 'bg-primary/5 border-primary'
+                  : 'hover:border-primary/50 border-border'
               }`}
               onClick={() => handleMethodToggle('market')}
             >
@@ -156,8 +161,8 @@ export default function EnterpriseValuationPage() {
             <div
               className={`relative cursor-pointer rounded-lg border p-4 transition-all ${
                 selectedMethods.income
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
+                  ? 'bg-primary/5 border-primary'
+                  : 'hover:border-primary/50 border-border'
               }`}
               onClick={() => handleMethodToggle('income')}
             >
@@ -187,8 +192,8 @@ export default function EnterpriseValuationPage() {
             <div
               className={`relative cursor-pointer rounded-lg border p-4 transition-all ${
                 selectedMethods.asset
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
+                  ? 'bg-primary/5 border-primary'
+                  : 'hover:border-primary/50 border-border'
               }`}
               onClick={() => handleMethodToggle('asset')}
             >
@@ -209,6 +214,37 @@ export default function EnterpriseValuationPage() {
                 />
               </div>
               {selectedMethods.asset && (
+                <Badge className="absolute -top-2 right-2" variant="default">
+                  Active
+                </Badge>
+              )}
+            </div>
+
+            <div
+              className={`relative cursor-pointer rounded-lg border p-4 transition-all ${
+                selectedMethods.opm
+                  ? 'bg-primary/5 border-primary'
+                  : 'hover:border-primary/50 border-border'
+              }`}
+              onClick={() => handleMethodToggle('opm')}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                    <Calculator className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">OPM Backsolve</h3>
+                    <p className="text-sm text-muted-foreground">Option pricing model valuation</p>
+                  </div>
+                </div>
+                <Checkbox
+                  checked={selectedMethods.opm}
+                  onCheckedChange={() => {}}
+                  className="mt-1"
+                />
+              </div>
+              {selectedMethods.opm && (
                 <Badge className="absolute -top-2 right-2" variant="default">
                   Active
                 </Badge>
@@ -244,6 +280,14 @@ export default function EnterpriseValuationPage() {
           >
             <FileSpreadsheet className="h-4 w-4" />
             Asset
+          </TabsTrigger>
+          <TabsTrigger
+            value="opm"
+            disabled={!selectedMethods.opm}
+            className="flex items-center gap-2"
+          >
+            <Calculator className="h-4 w-4" />
+            OPM
           </TabsTrigger>
         </TabsList>
 
@@ -442,6 +486,20 @@ export default function EnterpriseValuationPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="opm">
+          <Card>
+            <CardHeader>
+              <CardTitle>OPM Backsolve - Option Pricing Model</CardTitle>
+              <CardDescription>
+                Calculate enterprise value using Black-Scholes option pricing methodology
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <OPMMainPanel valuationId={valuationId} assumptions={valuation?.assumptions} />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Results Summary */}
@@ -452,7 +510,7 @@ export default function EnterpriseValuationPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="rounded-lg bg-primary/5 p-4">
+            <div className="bg-primary/5 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Calculated Enterprise Value</p>
@@ -460,7 +518,7 @@ export default function EnterpriseValuationPage() {
                     {formatCurrency(enterpriseValue)}
                   </p>
                 </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
                   <Calculator className="h-6 w-6 text-primary" />
                 </div>
               </div>
@@ -485,6 +543,12 @@ export default function EnterpriseValuationPage() {
                   <Badge variant="secondary">
                     <FileSpreadsheet className="mr-1 h-3 w-3" />
                     Asset Approach
+                  </Badge>
+                )}
+                {selectedMethods.opm && (
+                  <Badge variant="secondary">
+                    <Calculator className="mr-1 h-3 w-3" />
+                    OPM Backsolve
                   </Badge>
                 )}
               </div>

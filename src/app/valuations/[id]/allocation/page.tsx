@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { useValuationWorkspace } from '@/contexts/ValuationWorkspaceContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -113,6 +114,9 @@ const allocationMethods: AllocationMethod[] = [
 ]
 
 export default function EquityAllocationPage() {
+  const params = useParams()
+  const router = useRouter()
+  const valuationId = params?.id as string
   const { valuation, updateMethodologies } = useValuationWorkspace()
   const [selectedMethod, setSelectedMethod] = useState<'opm' | 'pwerm' | 'cvm' | 'hybrid'>(
     valuation?.methodologies?.allocation?.method || 'opm'
@@ -182,8 +186,8 @@ export default function EquityAllocationPage() {
                       className={cn(
                         'flex cursor-pointer rounded-lg border p-4 transition-all',
                         isSelected
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-border hover:border-primary/50'
+                          ? 'bg-primary/5 border-primary shadow-sm'
+                          : 'hover:border-primary/50 border-border'
                       )}
                     >
                       <RadioGroupItem value={method.id} id={method.id} className="sr-only" />
@@ -262,7 +266,7 @@ export default function EquityAllocationPage() {
 
             {/* Special configuration for Hybrid method */}
             {selectedMethod === 'hybrid' && (
-              <div className="mt-4 rounded-lg border bg-muted/30 p-4">
+              <div className="bg-muted/30 mt-4 rounded-lg border p-4">
                 <h4 className="mb-2 font-medium">Hybrid Method Components</h4>
                 <p className="text-sm text-muted-foreground">
                   The hybrid method typically combines OPM for long-term scenarios with PWERM for
@@ -301,7 +305,9 @@ export default function EquityAllocationPage() {
                 Set up the specific parameters and assumptions for your selected method
               </p>
             </div>
-            <Button>
+            <Button
+              onClick={() => router.push(`/valuations/${valuationId}/allocation/${selectedMethod}`)}
+            >
               Continue to Configuration
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

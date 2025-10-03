@@ -13,6 +13,9 @@ import {
   RotateCcw,
   X,
   TrendingUp,
+  Clock,
+  Database,
+  Sparkles,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -86,15 +89,36 @@ const BREAKPOINT_TYPES = {
   },
 }
 
+interface Participant {
+  securityName: string
+  securityType: string
+  participatingShares: number
+  participationPercentage: number
+  rvpsAtBreakpoint: number
+  cumulativeRVPS: number
+  sectionValue: number
+  cumulativeValue: number
+  participationStatus: string
+  participationNotes: string
+}
+
 interface Breakpoint {
   breakpointType: string
+  breakpointOrder: number
+  rangeFrom: number
+  rangeTo: number | null
   exitValue: number
+  isOpenEnded: boolean
   affectedSecurities: string[]
   calculationMethod: string
   priorityOrder: number
   explanation: string
   mathematicalDerivation: string
   dependencies: string[]
+  totalParticipatingShares: number
+  sectionRVPS: number
+  redemptionValuePerShare: number
+  participants: Participant[]
 }
 
 interface ValidationResult {
@@ -132,6 +156,30 @@ interface BreakpointAnalysisData {
     iterationsUsed: Record<string, number>
     cacheHits: number
   }
+  // Persistence metadata
+  from_cache?: boolean
+  analysis_timestamp?: string
+  saved_to_database?: boolean
+}
+
+// V3 API Response Format
+interface V3BreakpointResponse {
+  success: boolean
+  version: 'v3'
+  data: any[] // RangeBasedBreakpoint[]
+  validation: {
+    capTable: any
+    breakpoints: any
+    consistency: any
+  }
+  metadata: {
+    totalBreakpoints: number
+    breakpointTypes: Record<string, number>
+    executionOrder: string[]
+  }
+  errors: string[]
+  warnings: string[]
+  from_cache: boolean
 }
 
 export default function BreakpointsAnalysis({
@@ -165,13 +213,33 @@ export default function BreakpointsAnalysis({
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const result = await response.json()
+      const result: V3BreakpointResponse = await response.json()
+
+      console.log(`[Breakpoints UI] Received ${result.data?.length || 0} breakpoints from API`)
+      console.log(`[Breakpoints UI] Analysis success:`, result.success)
 
       if (result.success) {
-        setAnalysisData(result.data)
+        // Transform V3 response to component format
+        const transformedData = transformV3Response(result)
+        console.log(
+          `[Breakpoints UI] Transformed to ${transformedData.sortedBreakpoints.length} breakpoints`
+        )
+        setAnalysisData(transformedData)
         setAnalysisComplete(true)
       } else {
-        throw new Error(result.error || 'Analysis failed')
+        // Log detailed error information
+        console.error('[Breakpoints UI] Analysis failed with errors:', result.errors)
+        console.error('[Breakpoints UI] Validation results:', result.validation)
+
+        // Create detailed error message
+        const errorDetails = [
+          ...result.errors,
+          ...(result.validation?.consistency?.tests
+            ?.filter((t: any) => !t.passed && t.severity === 'error')
+            .map((t: any) => `  - ${t.message}`) || []),
+        ].join('\n')
+
+        throw new Error(errorDetails || 'Analysis failed')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to run analysis')
@@ -181,19 +249,84 @@ export default function BreakpointsAnalysis({
     }
   }
 
+  const transformV3Response = (result: V3BreakpointResponse): BreakpointAnalysisData => {
+    // Transform V3 range-based breakpoints to component format
+    const sortedBreakpoints = result.data
+      .map((bp: any, index: number) => ({
+        breakpointType: bp.breakpointType || 'liquidation_preference',
+        breakpointOrder: bp.breakpointOrder || index + 1,
+        rangeFrom: parseFloat(bp.rangeFrom) || 0,
+        rangeTo: bp.rangeTo ? parseFloat(bp.rangeTo) : null,
+        exitValue: parseFloat(bp.rangeFrom) || 0,
+        isOpenEnded: bp.isOpenEnded || false,
+        affectedSecurities: bp.affectedSecurities || [],
+        calculationMethod: bp.calculationMethod || '',
+        priorityOrder: bp.priorityOrder || 0,
+        explanation: bp.explanation || '',
+        mathematicalDerivation: bp.mathematicalDerivation || '',
+        dependencies: bp.dependencies || [],
+        totalParticipatingShares: parseFloat(bp.totalParticipatingShares) || 0,
+        sectionRVPS: parseFloat(bp.sectionRVPS) || 0,
+        redemptionValuePerShare: parseFloat(bp.redemptionValuePerShare) || 0,
+        participants: (bp.participants || []).map((p: any) => ({
+          securityName: p.securityName,
+          securityType: p.securityType,
+          participatingShares: parseFloat(p.participatingShares) || 0,
+          participationPercentage: parseFloat(p.participationPercentage) || 0,
+          rvpsAtBreakpoint: parseFloat(p.rvpsAtBreakpoint) || 0,
+          cumulativeRVPS: parseFloat(p.cumulativeRVPS) || 0,
+          sectionValue: parseFloat(p.sectionValue) || 0,
+          cumulativeValue: parseFloat(p.cumulativeValue) || 0,
+          participationStatus: p.participationStatus || 'active',
+          participationNotes: p.participationNotes || '',
+        })),
+      }))
+      .sort((a, b) => a.breakpointOrder - b.breakpointOrder) // Sort by breakpoint order
+
+    return {
+      totalBreakpoints: result.metadata.totalBreakpoints,
+      breakpointsByType: result.metadata.breakpointTypes,
+      sortedBreakpoints,
+      criticalValues: [],
+      auditSummary: '',
+      validationResults: [],
+      performanceMetrics: {
+        analysisTimeMs: 0,
+        iterationsUsed: {},
+        cacheHits: 0,
+      },
+      from_cache: result.from_cache,
+    }
+  }
+
   // Load existing analysis on component mount
   useEffect(() => {
     const loadExistingAnalysis = async () => {
       try {
         const response = await fetch(`/api/valuations/${valuationId}/breakpoints`)
         if (response.ok) {
-          const result = await response.json()
+          const result: V3BreakpointResponse = await response.json()
+          console.log(
+            `[Breakpoints UI Load] Received ${result.data?.length || 0} breakpoints from API`
+          )
+          console.log(`[Breakpoints UI Load] Analysis success:`, result.success)
+
           if (result.success && result.data) {
-            setAnalysisData(result.data)
+            // Transform V3 response
+            const transformedData = transformV3Response(result)
+            console.log(
+              `[Breakpoints UI Load] Transformed to ${transformedData.sortedBreakpoints.length} breakpoints`
+            )
+            setAnalysisData(transformedData)
             setAnalysisComplete(true)
+          } else if (!result.success) {
+            // Log error details for failed analysis on load
+            console.error('[Breakpoints UI Load] Analysis failed:', result.errors)
+            console.error('[Breakpoints UI Load] Validation:', result.validation)
           }
         }
       } catch (err) {
+        // Silently fail - analysis just won't be loaded
       }
     }
 
@@ -203,27 +336,47 @@ export default function BreakpointsAnalysis({
   }, [valuationId])
 
   // Helper function to get breakpoint type configuration
-  const getBreakpointTypeConfig = (breakpointType: string) => {
+  const getBreakpointTypeConfig = (breakpointType: string | undefined) => {
+    if (!breakpointType) return BREAKPOINT_TYPES.liquidation_preference // fallback for undefined
+
+    // Direct match first (V3 returns exact enum values)
+    if (breakpointType === 'liquidation_preference') return BREAKPOINT_TYPES.liquidation_preference
+    if (breakpointType === 'pro_rata_distribution') return BREAKPOINT_TYPES.pro_rata_distribution
+    if (breakpointType === 'option_exercise') return BREAKPOINT_TYPES.option_exercise
+    if (breakpointType === 'participation_cap') return BREAKPOINT_TYPES.participation_cap
+    if (breakpointType === 'voluntary_conversion') return BREAKPOINT_TYPES.voluntary_conversion
+
+    // Fallback to substring matching for legacy formats
     if (breakpointType.includes('liquidation')) return BREAKPOINT_TYPES.liquidation_preference
     if (breakpointType.includes('pro_rata')) return BREAKPOINT_TYPES.pro_rata_distribution
     if (breakpointType.includes('option')) return BREAKPOINT_TYPES.option_exercise
     if (breakpointType.includes('participation')) return BREAKPOINT_TYPES.participation_cap
     if (breakpointType.includes('conversion')) return BREAKPOINT_TYPES.voluntary_conversion
-    return BREAKPOINT_TYPES.liquidation_preference // fallback
+
+    return BREAKPOINT_TYPES.liquidation_preference // final fallback
   }
 
-  // Transform breakpoints into waterfall ranges with proper range calculations
+  // Transform breakpoints into waterfall ranges using V3 data directly
   const waterfallRanges = analysisData?.sortedBreakpoints
     ? analysisData.sortedBreakpoints.map((breakpoint, index, array) => {
-        const rangeStart = index === 0 ? 0 : array[index - 1].exitValue
-        const rangeEnd = index === array.length - 1 ? null : array[index + 1]?.exitValue
+        // Use V3's rangeFrom and rangeTo instead of recalculating
+        const rangeStart = breakpoint.rangeFrom
+        const rangeEnd = breakpoint.rangeTo
+        const isLastRange = breakpoint.isOpenEnded || breakpoint.rangeTo === null
+
+        // Map V3 participants to display format
+        const participatingShares = (breakpoint.participants || []).map((p: Participant) => ({
+          name: p.securityName,
+          shares: p.participatingShares,
+          percentage: `${(p.participationPercentage * 100).toFixed(2)}%`,
+        }))
 
         return {
           ...breakpoint,
           rangeStart,
           rangeEnd,
-          isLastRange: index === array.length - 1,
-          participatingShares: calculateParticipatingShares(breakpoint, capTableConfig),
+          isLastRange,
+          participatingShares,
         }
       })
     : []
@@ -379,7 +532,7 @@ export default function BreakpointsAnalysis({
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="link" size="sm" className="p-0 text-primary hover:text-primary/80">
+          <Button variant="link" size="sm" className="hover:text-primary/80 p-0 text-primary">
             View Details
           </Button>
         </DialogTrigger>
@@ -433,7 +586,7 @@ export default function BreakpointsAnalysis({
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="border-t bg-muted/30">
+                <tfoot className="bg-muted/30 border-t">
                   <tr className="text-sm font-medium">
                     <td className="p-3">Total</td>
                     <td className="p-3 text-right font-mono">
@@ -515,13 +668,15 @@ export default function BreakpointsAnalysis({
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-foreground">
-                {range.breakpointType.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                {range.breakpointType
+                  ? range.breakpointType.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+                  : 'Unknown Type'}
               </span>
               <span
                 className="max-w-48 truncate text-xs text-muted-foreground"
-                title={range.explanation}
+                title={range.explanation || ''}
               >
-                {range.explanation}
+                {range.explanation || ''}
               </span>
             </div>
           </div>
@@ -552,10 +707,7 @@ export default function BreakpointsAnalysis({
     {
       id: 'shares',
       header: 'Total Participating Shares',
-      accessorFn: (range) => {
-        const participatingShares = range.participatingShares || []
-        return participatingShares.reduce((total, participant) => total + participant.shares, 0)
-      },
+      accessorKey: 'totalParticipatingShares',
       cell: ({ getValue }) => (
         <span className="font-mono text-foreground">{formatNumber(getValue() as number)}</span>
       ),
@@ -583,7 +735,7 @@ export default function BreakpointsAnalysis({
   return (
     <TooltipProvider>
       <Card className="border-primary/20 bg-card">
-        <CardHeader className="border-b border-primary/20 bg-primary/5">
+        <CardHeader className="border-primary/20 bg-primary/5 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <BarChart3 className="h-6 w-6 text-primary" />
@@ -591,12 +743,6 @@ export default function BreakpointsAnalysis({
                 <CardTitle className="text-xl font-semibold text-foreground">
                   Breakpoints Analysis
                 </CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Current Exit Value:{' '}
-                  <span className="font-semibold text-foreground">
-                    {formatCurrency(currentExitValue)}
-                  </span>
-                </p>
               </div>
             </div>
             <Button onClick={runBreakpointAnalysis} disabled={loading} variant="outline" size="sm">
@@ -608,6 +754,78 @@ export default function BreakpointsAnalysis({
               {loading ? 'Refreshing...' : 'Refresh Analysis'}
             </Button>
           </div>
+
+          {/* Analysis Metadata */}
+          {analysisData && (
+            <div className="border-primary/10 mt-4 flex flex-wrap items-center gap-2 border-t pt-4">
+              {/* Cache Status Badge */}
+              {analysisData.from_cache !== undefined && (
+                <Badge
+                  variant={analysisData.from_cache ? 'secondary' : 'default'}
+                  className="flex items-center gap-1"
+                >
+                  {analysisData.from_cache ? (
+                    <>
+                      <Database className="h-3 w-3" />
+                      Loaded from Cache
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3 w-3" />
+                      Freshly Calculated
+                    </>
+                  )}
+                </Badge>
+              )}
+
+              {/* Timestamp */}
+              {analysisData.analysis_timestamp && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(analysisData.analysis_timestamp).toLocaleString()}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Analysis last run at this time</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Performance Metrics */}
+              {analysisData.performanceMetrics && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Activity className="h-3 w-3" />
+                      {analysisData.performanceMetrics.analysisTimeMs}ms
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="space-y-1 text-xs">
+                      <p>
+                        <strong>Analysis Time:</strong>{' '}
+                        {analysisData.performanceMetrics.analysisTimeMs}
+                        ms
+                      </p>
+                      {analysisData.performanceMetrics.cacheHits > 0 && (
+                        <p>
+                          <strong>Cache Hits:</strong> {analysisData.performanceMetrics.cacheHits}
+                        </p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Breakpoint Count */}
+              <Badge variant="outline">
+                {analysisData.totalBreakpoints} breakpoint
+                {analysisData.totalBreakpoints !== 1 ? 's' : ''}
+              </Badge>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           {analysisComplete && analysisData ? (

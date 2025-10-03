@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { OptimizedDataTable } from '@/components/ui/optimized-data-table'
-import { Calculator, TrendingUp, AlertCircle, DollarSign } from 'lucide-react'
+import { Calculator, TrendingUp, AlertCircle, DollarSign, Info } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { AssumptionsExtractor } from '@/lib/services/shared/AssumptionsExtractor'
 
 interface OPMBacksolveProps {
   valuationId: string
@@ -56,51 +57,39 @@ interface OPMAnalysisResult {
 }
 
 export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
-  // Helper function to get assumption values - handles array format (current structure)
-  const getAssumptionValue = (categoryId: string, assumptionId: string, defaultValue: number) => {
-    if (!assumptions) return defaultValue
-
-    // Handle array format (current data structure)
-    if (Array.isArray(assumptions)) {
-      // Search through all categories for the assumption
-      for (const category of assumptions) {
-        if (category.assumptions && Array.isArray(category.assumptions)) {
-          const assumption = category.assumptions.find((ass: any) => ass.id === assumptionId)
-          if (assumption && assumption.value !== undefined && assumption.value !== '') {
-            return parseFloat(assumption.value) || defaultValue
-          }
-        }
-      }
-    }
-
-    return defaultValue
-  }
-
   const [loading, setLoading] = useState(false)
   const [calculating, setCalculating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Extract Black-Scholes parameters from assumptions using centralized utility
+  const extractedParams = useMemo(() => {
+    return AssumptionsExtractor.extractBlackScholesParams(assumptions)
+  }, [assumptions])
+
+  // Get source info for display (shows if value from assumptions or default)
+  const sourceInfo = useMemo(() => {
+    return AssumptionsExtractor.getSourceInfo(assumptions)
+  }, [assumptions])
+
   const [parameters, setParameters] = useState<BlackScholesParams>({
     companyValue: 0,
-    volatility: getAssumptionValue('volatility_assumptions', 'equity_volatility', 60) / 100, // Convert from percentage
-    riskFreeRate: getAssumptionValue('discount_rates', 'risk_free_rate', 4.5) / 100, // Convert from percentage
-    timeToLiquidity: getAssumptionValue('volatility_assumptions', 'time_to_liquidity', 3.0),
-    dividendYield: 0,
+    volatility: extractedParams.volatility,
+    riskFreeRate: extractedParams.riskFreeRate,
+    timeToLiquidity: extractedParams.timeToLiquidity,
+    dividendYield: extractedParams.dividendYield,
   })
   const [analysisResult, setAnalysisResult] = useState<OPMAnalysisResult | null>(null)
 
   // Update parameters when assumptions change
   useEffect(() => {
-    const volatility = getAssumptionValue('volatility_assumptions', 'equity_volatility', 60) / 100
-    const riskFreeRate = getAssumptionValue('discount_rates', 'risk_free_rate', 4.5) / 100
-    const timeToLiquidity = getAssumptionValue('volatility_assumptions', 'time_to_liquidity', 3.0)
-
     setParameters((prev) => ({
       ...prev,
-      volatility: volatility,
-      riskFreeRate: riskFreeRate,
-      timeToLiquidity: timeToLiquidity,
+      volatility: extractedParams.volatility,
+      riskFreeRate: extractedParams.riskFreeRate,
+      timeToLiquidity: extractedParams.timeToLiquidity,
+      dividendYield: extractedParams.dividendYield,
     }))
-  }, [assumptions])
+  }, [extractedParams])
 
   const handleCalculate = async () => {
     if (!parameters.companyValue || parameters.companyValue <= 0) {
@@ -358,6 +347,19 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Show parameter source info */}
+          <Alert className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Parameters auto-populated from Assumptions page. You can override them below.
+              {sourceInfo.volatility.source === 'default' && ' (Using default volatility: 60%)'}
+              {sourceInfo.riskFreeRate.source === 'default' &&
+                ' (Using default risk-free rate: 4.5%)'}
+              {sourceInfo.timeToLiquidity.source === 'default' &&
+                ' (Using default time to liquidity: 3 years)'}
+            </AlertDescription>
+          </Alert>
+
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             <div>
               <Label htmlFor="companyValue">Company Value ($)</Label>
@@ -376,7 +378,12 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
               />
             </div>
             <div>
-              <Label htmlFor="volatility">Volatility (%)</Label>
+              <Label htmlFor="volatility">
+                Volatility (%)
+                {sourceInfo.volatility.source === 'assumptions' && (
+                  <span className="ml-1 text-xs text-muted-foreground">(from assumptions)</span>
+                )}
+              </Label>
               <Input
                 id="volatility"
                 type="number"
@@ -391,7 +398,12 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
               />
             </div>
             <div>
-              <Label htmlFor="riskFreeRate">Risk-Free Rate (%)</Label>
+              <Label htmlFor="riskFreeRate">
+                Risk-Free Rate (%)
+                {sourceInfo.riskFreeRate.source === 'assumptions' && (
+                  <span className="ml-1 text-xs text-muted-foreground">(from assumptions)</span>
+                )}
+              </Label>
               <Input
                 id="riskFreeRate"
                 type="number"
@@ -406,7 +418,12 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
               />
             </div>
             <div>
-              <Label htmlFor="timeToLiquidity">Time to Liquidity (Years)</Label>
+              <Label htmlFor="timeToLiquidity">
+                Time to Liquidity (Years)
+                {sourceInfo.timeToLiquidity.source === 'assumptions' && (
+                  <span className="ml-1 text-xs text-muted-foreground">(from assumptions)</span>
+                )}
+              </Label>
               <Input
                 id="timeToLiquidity"
                 type="number"
