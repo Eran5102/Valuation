@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
-import {
-  InviteMemberSchema,
-  validateRequest,
-} from '@/lib/validation/api-schemas'
+import { InviteMemberSchema, validateRequest } from '@/lib/validation/api-schemas'
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +23,7 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true)
       .single()
 
-    if (!membership || !['org_owner', 'org_admin'].includes(membership.role)) {
+    if (!membership || !['owner', 'admin'].includes(membership.role)) {
       return NextResponse.json([], { status: 200 }) // Return empty array if no permission
     }
 
@@ -71,7 +68,7 @@ export async function POST(request: NextRequest) {
       .eq('is_active', true)
       .single()
 
-    if (!membership || !['org_owner', 'org_admin'].includes(membership.role)) {
+    if (!membership || !['owner', 'admin'].includes(membership.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
