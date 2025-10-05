@@ -6,6 +6,7 @@ import { OPMMainPanel } from '@/components/valuation/opm/OPMMainPanel'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calculator } from 'lucide-react'
+import { getOPMAssumptions } from '../../allocation/opm/actions'
 
 export default function OPMBacksolvePage() {
   const params = useParams()
@@ -16,13 +17,16 @@ export default function OPMBacksolvePage() {
   useEffect(() => {
     async function fetchAssumptions() {
       try {
-        const response = await fetch(`/api/valuations/${valuationId}`)
-        if (response.ok) {
-          const data = await response.json()
-          setAssumptions(data.assumptions)
+        const result = await getOPMAssumptions(valuationId)
+        if (result.success) {
+          console.log('[OPMBacksolvePage] Loaded assumptions from:', result.source)
+          console.log('[OPMBacksolvePage] Assumptions data:', result.data)
+          setAssumptions(result.data)
+        } else {
+          console.error('[OPMBacksolvePage] Failed to load assumptions:', result.error)
         }
       } catch (error) {
-        console.error('Failed to fetch assumptions:', error)
+        console.error('[OPMBacksolvePage] Exception fetching assumptions:', error)
       } finally {
         setLoading(false)
       }

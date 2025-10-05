@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { OPMMainPanel } from '@/components/valuation/opm/OPMMainPanel'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { getOPMAssumptions } from './actions'
 
 export default function OPMPage() {
   const params = useParams()
@@ -14,13 +15,15 @@ export default function OPMPage() {
   useEffect(() => {
     async function fetchAssumptions() {
       try {
-        const response = await fetch(`/api/valuations/${valuationId}`)
-        if (response.ok) {
-          const data = await response.json()
-          setAssumptions(data.assumptions)
+        const result = await getOPMAssumptions(valuationId)
+        if (result.success) {
+          console.log('[OPMPage] Loaded assumptions from:', result.source)
+          setAssumptions(result.data)
+        } else {
+          console.error('[OPMPage] Failed to load assumptions:', result.error)
         }
       } catch (error) {
-        console.error('Failed to fetch assumptions:', error)
+        console.error('[OPMPage] Exception fetching assumptions:', error)
       } finally {
         setLoading(false)
       }

@@ -31,6 +31,15 @@ export function formatPercentage(value: number, decimals = 1): string {
   return `${value.toFixed(decimals)}%`
 }
 
+export function formatRVPS(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  }).format(value)
+}
+
 export function formatDate(date: string | Date): string {
   return new Date(date).toLocaleDateString('en-US')
 }

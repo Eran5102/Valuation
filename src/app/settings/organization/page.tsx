@@ -40,6 +40,7 @@ import {
   Phone,
   MapPin,
 } from 'lucide-react'
+import { TeamManagement } from '@/components/settings/TeamManagement'
 
 const organizationSchema = z.object({
   name: z.string().min(1, 'Organization name is required'),
@@ -435,17 +436,7 @@ export default function OrganizationSettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Team member management will be available in a future update. You'll be able
-                        to invite team members, manage roles, and set permissions.
-                      </AlertDescription>
-                    </Alert>
-
-                    <div className="text-sm text-muted-foreground">Current members: 1 (You)</div>
-                  </div>
+                  <TeamManagement />
                 </CardContent>
               </Card>
             </TabsContent>

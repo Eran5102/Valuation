@@ -17,64 +17,47 @@ export function OPMMainPanel({ valuationId, assumptions }: OPMMainPanelProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-6 w-6" />
-            Option Pricing Model (OPM)
-          </CardTitle>
-          <CardDescription>
-            Value equity securities using the Option Pricing Model with Black-Scholes calculations
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
       {/* Mode Selector */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'single' | 'hybrid')}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="single" className="flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            Single OPM
-          </TabsTrigger>
-          <TabsTrigger value="hybrid" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Hybrid PWERM
-          </TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardContent className="pt-6">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'single' | 'hybrid')}>
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="single" className="flex items-center gap-2">
+                <Calculator className="h-4 w-4" />
+                Single OPM
+              </TabsTrigger>
+              <TabsTrigger value="hybrid" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Hybrid PWERM
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="single" className="mt-6">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Single Scenario OPM</CardTitle>
-                <CardDescription>
+            <TabsContent value="single" className="mt-6 space-y-6">
+              <div className="bg-muted/30 rounded-lg border p-4">
+                <h3 className="text-lg font-semibold">Single Scenario OPM</h3>
+                <p className="text-sm text-muted-foreground">
                   Calculate equity allocation for a single enterprise value scenario using the
                   Black-Scholes option pricing model
-                </CardDescription>
-              </CardHeader>
-            </Card>
+                </p>
+              </div>
 
-            <OPMBacksolve valuationId={valuationId} assumptions={assumptions} />
-          </div>
-        </TabsContent>
+              <OPMBacksolve valuationId={valuationId} assumptions={assumptions} />
+            </TabsContent>
 
-        <TabsContent value="hybrid" className="mt-6">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Hybrid Scenario PWERM</CardTitle>
-                <CardDescription>
+            <TabsContent value="hybrid" className="mt-6 space-y-6">
+              <div className="bg-muted/30 rounded-lg border p-4">
+                <h3 className="text-lg font-semibold">Hybrid Scenario PWERM</h3>
+                <p className="text-sm text-muted-foreground">
                   Analyze multiple liquidity scenarios with probability-weighted expected return
                   method (PWERM) to calculate a weighted fair market value
-                </CardDescription>
-              </CardHeader>
-            </Card>
+                </p>
+              </div>
 
-            <HybridScenarioManager valuationId={valuationId} assumptions={assumptions} />
-          </div>
-        </TabsContent>
-      </Tabs>
+              <HybridScenarioManager valuationId={valuationId} assumptions={assumptions} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Educational Information */}
       <Card className="border-muted">

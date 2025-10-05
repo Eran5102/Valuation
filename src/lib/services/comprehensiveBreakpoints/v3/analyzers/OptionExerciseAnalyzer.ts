@@ -153,13 +153,42 @@ export class OptionExerciseAnalyzer {
       false // Don't include options yet
     )
 
-    // RVPS function: calculates cumulative RVPS at a given exit value
-    const rvpsFn = (exitValue: Decimal, totalShares: Decimal): Decimal => {
-      return this.rvpsTracker.calculateCumulativeRVPSAtExit(
+    // RVPS function: calculates cumulative RVPS for COMMON STOCK at a given exit value
+    // CRITICAL: Use UNDILUTED share count (baseParticipatingShares) to determine exercise point
+    // Options exercise when Common's RVPS (calculated WITHOUT options) reaches strike price
+    const rvpsFn = (exitValue: Decimal, totalSharesAfterExercise: Decimal): Decimal => {
+      // Get cumulative RVPS from all prior breakpoints (using their actual share counts)
+      const rvpsFromPriorBreakpoints = this.rvpsTracker.calculateCumulativeRVPSAtExit(
         'Common Stock',
         exitValue,
         priorBreakpoints
       )
+
+      // For the NEW segment (after last prior breakpoint), calculate Common's RVPS
+      // IMPORTANT: Use baseParticipatingShares (BEFORE option exercise), not diluted shares
+      const lastBreakpoint = priorBreakpoints[priorBreakpoints.length - 1]
+      const lastBreakpointEnd =
+        lastBreakpoint?.rangeTo || lastBreakpoint?.rangeFrom || DecimalHelpers.toDecimal(0)
+
+      if (exitValue.lte(lastBreakpointEnd)) {
+        // Exit value is within prior breakpoints, use existing calculation
+        return rvpsFromPriorBreakpoints
+      }
+
+      // Calculate incremental RVPS in the new segment using UNDILUTED share count
+      // This is Common's RVPS BEFORE options exercise
+      const incrementalValue = exitValue.minus(lastBreakpointEnd)
+      const incrementalRVPS = DecimalHelpers.safeDivide(incrementalValue, baseParticipatingShares)
+
+      // Total cumulative RVPS for Common = prior RVPS + incremental RVPS
+      const cumulativeRVPS = rvpsFromPriorBreakpoints.plus(incrementalRVPS)
+
+      // DIAGNOSTIC: Log the calculation
+      console.log(
+        `[Option Exercise RVPS] exitValue=${exitValue.toFixed(2)}, baseShares=${baseParticipatingShares.toString()}, incrementalValue=${incrementalValue.toFixed(2)}, incrementalRVPS=${incrementalRVPS.toFixed(4)}, cumulativeRVPS=${cumulativeRVPS.toFixed(4)}`
+      )
+
+      return cumulativeRVPS
     }
 
     // Solve using circular dependency solver

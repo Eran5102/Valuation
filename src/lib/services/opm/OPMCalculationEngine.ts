@@ -60,6 +60,7 @@ export interface OPMCalculationContext {
   blackScholesParams: OPMBlackScholesParams
   breakpoints: OPMBreakpoint[]
   totalShares: number // Total shares outstanding across all classes
+  shareClassTotals: Map<string, number> // Map of security class name -> total shares for that class
 }
 
 /**
@@ -122,7 +123,8 @@ export class OPMCalculationEngine {
     const securityAllocations = this.calculateSecurityAllocations(
       context.enterpriseValue,
       breakpointResults,
-      sortedBreakpoints
+      sortedBreakpoints,
+      context.shareClassTotals
     )
 
     // Step 5: Calculate total value distributed
@@ -224,7 +226,11 @@ export class OPMCalculationEngine {
   }
 
   /**
-   * Calculate Black-Scholes for each breakpoint
+   * Calculate Black-Scholes for each breakpoint (SIMPLIFIED - using incremental values)
+   *
+   * OPM distributes the INCREMENTAL option value between consecutive breakpoints.
+   * Strike price = breakpoint value (rangeFrom).
+   * We use 0.00001 instead of 0 for the first breakpoint to avoid mathematical issues.
    */
   private calculateBreakpoints(
     enterpriseValue: number,
@@ -232,55 +238,32 @@ export class OPMCalculationEngine {
     bsParams: OPMBlackScholesParams
   ): BreakpointCalculationResult[] {
     const results: BreakpointCalculationResult[] = []
-    let previousCallValue = enterpriseValue // Start with full EV
+    let previousCallValue = enterpriseValue // Start with full enterprise value
 
-    this.auditLogger.debug('OPM Breakpoints', 'Calculating breakpoints', {
+    this.auditLogger.debug('OPM Breakpoints', 'Calculating breakpoints (simplified)', {
       count: breakpoints.length,
       enterpriseValue,
     })
 
     for (let i = 0; i < breakpoints.length; i++) {
       const bp = breakpoints[i]
-      const isActive = enterpriseValue >= bp.value
 
-      this.auditLogger.debug('OPM Breakpoint', `Breakpoint ${i + 1}`, {
-        id: bp.id,
-        value: bp.value,
-        type: bp.type,
-        active: isActive,
-      })
-
-      if (!isActive) {
-        // Breakpoint not reached, no option value
-        results.push({
-          breakpointId: bp.id,
-          breakpointValue: bp.value,
-          breakpointType: bp.type,
-          active: false,
-          blackScholes: {
-            d1: 0,
-            d2: 0,
-            Nd1: 0,
-            Nd2: 0,
-            callValue: 0,
-          },
-          incrementalValue: 0,
-        })
-        previousCallValue = 0
-        continue
-      }
+      // Strike price is the breakpoint value (rangeFrom)
+      // Use 0.00001 if value is 0 to avoid division by zero
+      const strikePrice = bp.value === 0 ? 0.00001 : bp.value
 
       // Calculate Black-Scholes call option value
       const blackScholesResult = BlackScholesCalculator.calculateCall({
         companyValue: enterpriseValue,
-        strikePrice: bp.value,
+        strikePrice: strikePrice,
         timeToExpiration: bsParams.timeToLiquidity,
         volatility: bsParams.volatility,
         riskFreeRate: bsParams.riskFreeRate,
         dividendYield: bsParams.dividendYield,
       })
 
-      // Incremental value = current call value - previous call value
+      // INCREMENTAL value = previous call value - current call value
+      // This represents the value in THIS specific breakpoint range
       const incrementalValue = Math.max(0, previousCallValue - blackScholesResult.callValue)
 
       results.push({
@@ -299,11 +282,18 @@ export class OPMCalculationEngine {
       })
 
       this.auditLogger.debug('OPM Breakpoint Result', `Breakpoint ${i + 1}`, {
+        strikePrice,
         callValue: blackScholesResult.callValue,
+        previousCallValue,
         incrementalValue,
         d1: blackScholesResult.d1,
         d2: blackScholesResult.d2,
       })
+
+      // DIAGNOSTIC: Log to console for debugging
+      console.log(
+        `[OPM Engine] BP${i + 1}: strike=${strikePrice.toFixed(2)}, callValue=${blackScholesResult.callValue.toFixed(2)}, prevCall=${previousCallValue.toFixed(2)}, incremental=${incrementalValue.toFixed(2)}`
+      )
 
       previousCallValue = blackScholesResult.callValue
     }
@@ -312,15 +302,18 @@ export class OPMCalculationEngine {
   }
 
   /**
-   * Calculate security class allocations based on breakpoint results
+   * Calculate security class allocations based on breakpoint results (SIMPLIFIED)
+   *
+   * Takes share class totals from context to calculate proper PPS.
    */
   private calculateSecurityAllocations(
     enterpriseValue: number,
     breakpointResults: BreakpointCalculationResult[],
-    breakpoints: OPMBreakpoint[]
+    breakpoints: OPMBreakpoint[],
+    shareClassTotals: Map<string, number>
   ): SecurityClassAllocation[] {
     // Build map of security class -> total value
-    const allocationMap = new Map<string, { value: number; shares: number }>()
+    const allocationMap = new Map<string, number>()
 
     // Process each breakpoint's allocation
     for (let i = 0; i < breakpointResults.length; i++) {
@@ -331,36 +324,62 @@ export class OPMCalculationEngine {
         continue
       }
 
-      // Distribute incremental value according to breakpoint allocation
+      // Distribute Black-Scholes option value using V3 participation percentages
       for (const allocation of breakpoint.allocation) {
-        const current = allocationMap.get(allocation.securityClass) || { value: 0, shares: 0 }
-        allocationMap.set(allocation.securityClass, {
-          value: current.value + allocation.valueReceived,
-          shares: Math.max(current.shares, allocation.sharesReceived), // Use max shares
-        })
+        // participationPercentage from V3 is ALREADY in decimal format (0-1), NOT percentage (0-100)
+        // So we use it directly without dividing by 100
+        const participationRatio = allocation.participationPercentage
+        const distributedValue = result.incrementalValue * participationRatio
+
+        const current = allocationMap.get(allocation.securityClass) || 0
+        allocationMap.set(allocation.securityClass, current + distributedValue)
+
+        // DIAGNOSTIC: Log distribution
+        console.log(
+          `[OPM Engine] Distributing BP${i + 1}: ${allocation.securityClass} gets ${distributedValue.toFixed(2)} (${(participationRatio * 100).toFixed(2)}% of ${result.incrementalValue.toFixed(2)})`
+        )
       }
     }
 
     // Calculate total value distributed
     let totalValue = 0
-    for (const alloc of allocationMap.values()) {
-      totalValue += alloc.value
+    for (const value of allocationMap.values()) {
+      totalValue += value
     }
 
-    // Convert map to array with percentages
+    // Convert map to array with actual shares from shareClassTotals
     const allocations: SecurityClassAllocation[] = []
-    for (const [securityClass, alloc] of allocationMap.entries()) {
+    for (const [securityClass, value] of allocationMap.entries()) {
+      const totalShares = shareClassTotals.get(securityClass) || 0
+      const pps = totalShares > 0 ? value / totalShares : 0
+
       allocations.push({
         securityClass,
-        totalShares: alloc.shares,
-        totalValue: alloc.value,
-        valuePerShare: alloc.shares > 0 ? alloc.value / alloc.shares : 0,
-        percentOfTotal: totalValue > 0 ? (alloc.value / totalValue) * 100 : 0,
+        totalShares,
+        totalValue: value,
+        valuePerShare: pps,
+        percentOfTotal: totalValue > 0 ? (value / totalValue) * 100 : 0,
       })
+
+      // DIAGNOSTIC: Log final PPS
+      console.log(
+        `[OPM Engine] Final ${securityClass}: totalValue=${value.toFixed(2)}, shares=${totalShares}, PPS=${pps.toFixed(4)}`
+      )
     }
 
     // Sort by total value descending
     allocations.sort((a, b) => b.totalValue - a.totalValue)
+
+    this.auditLogger.debug('OPM Security Allocations', 'Calculated allocations', {
+      totalValue,
+      securityCount: allocations.length,
+      allocations: allocations.map((a) => ({
+        class: a.securityClass,
+        value: a.totalValue,
+        shares: a.totalShares,
+        pps: a.valuePerShare,
+      })),
+    })
 
     return allocations
   }

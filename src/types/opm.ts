@@ -65,7 +65,7 @@ export interface OPMBreakpoint {
   allocation: {
     securityClass: string
     sharesReceived: number
-    valueReceived: number
+    participationPercentage: number // Percentage (0-100) from V3 breakpoints
   }[]
 }
 
@@ -197,7 +197,13 @@ export interface HybridScenario {
   /** Probability weight (0-100 or 0-1 depending on format) */
   probability: number
 
-  /** Target FMV for this scenario */
+  /** Scenario mode: manual (user enters enterprise value) or backsolve (system solves for it) */
+  mode?: 'manual' | 'backsolve'
+
+  /** Enterprise value for manual mode scenarios */
+  enterpriseValue?: number
+
+  /** Target FMV for this scenario (legacy/backward compatibility) */
   targetFMV: number
 
   /** Scenario-specific parameters (optional - inherits from global if not provided) */

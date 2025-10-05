@@ -343,12 +343,36 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       `[Breakpoints V3] Analysis returned ${analysisResult.breakpoints.length} breakpoints`
     )
 
+    // DIAGNOSTIC: Log BP4 participants BEFORE serialization
+    if (analysisResult.breakpoints.length >= 4) {
+      console.log(
+        '[API BEFORE SERIALIZATION] BP4 participants:',
+        analysisResult.breakpoints[3].participants.map((p: any) => ({
+          name: p.securityName,
+          percentage: p.participationPercentage.toString(),
+        }))
+      )
+    }
+
     // Save to database
     const { data: userData } = await supabase.auth.getUser()
     await saveAnalysisV3(supabase, valuationId, analysisResult, userData?.user?.id || null)
 
     const serializedBreakpoints = serializeBreakpoints(analysisResult.breakpoints)
     console.log(`[Breakpoints V3] Serialized ${serializedBreakpoints.length} breakpoints`)
+
+    // DIAGNOSTIC: Log BP4 participants to verify percentages are being sent correctly
+    if (serializedBreakpoints.length >= 4) {
+      console.log(
+        '[Breakpoints V3 GET] BP4 participants:',
+        JSON.stringify(
+          serializedBreakpoints[3].participants.map((p: any) => ({
+            name: p.securityName,
+            percentage: p.participationPercentage,
+          }))
+        )
+      )
+    }
 
     return NextResponse.json({
       success: analysisResult.success,

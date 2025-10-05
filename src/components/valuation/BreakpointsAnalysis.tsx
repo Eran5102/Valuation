@@ -42,7 +42,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { CapTableConfig } from '@/types'
-import { formatCurrency, formatNumber } from '@/lib/utils'
+import { formatCurrency, formatNumber, formatRVPS } from '@/lib/utils'
 
 interface BreakpointsAnalysisProps {
   valuationId: string
@@ -364,7 +364,7 @@ export default function BreakpointsAnalysis({
         const rangeEnd = breakpoint.rangeTo
         const isLastRange = breakpoint.isOpenEnded || breakpoint.rangeTo === null
 
-        // Map V3 participants to display format
+        // Map V3 participants to display format for the table
         const participatingShares = (breakpoint.participants || []).map((p: Participant) => ({
           name: p.securityName,
           shares: p.participatingShares,
@@ -377,6 +377,8 @@ export default function BreakpointsAnalysis({
           rangeEnd,
           isLastRange,
           participatingShares,
+          // CRITICAL: Pass through V3 participants for RVPS popups
+          participants: breakpoint.participants,
         }
       })
     : []
@@ -467,51 +469,20 @@ export default function BreakpointsAnalysis({
     return participants
   }
 
-  // Calculate RVPS data for a specific range at a given exit value
+  // Get RVPS data directly from V3 breakpoint participants (NO RECALCULATION)
   function calculateRVPSData(range: any, exitValue: number, previousRanges: any[]): RVPSData[] {
-    const participants = range.participatingShares || []
-    const rangeStart = range.rangeStart || 0
-    const rangeEnd = range.rangeEnd || exitValue
+    // Use the participant data that V3 already calculated correctly
+    const participants = range.participants || []
 
-    // Calculate the proceeds distributed in this specific range
-    const rangeProceeds = Math.min(exitValue, rangeEnd) - rangeStart
-    const totalShares = participants.reduce((sum: number, p: any) => sum + p.shares, 0)
-
-    return participants.map((participant: any) => {
-      // Section RVPS: Value per share for this specific range
-      const sectionRVPS = totalShares > 0 ? rangeProceeds / totalShares : 0
-      const sectionValue = participant.shares * sectionRVPS
-
-      // Cumulative RVPS: Total value per share across all ranges up to this point
-      let cumulativeValue = sectionValue
-
-      // Add value from previous ranges where this participant was involved
-      previousRanges.forEach((prevRange) => {
-        const prevParticipant = prevRange.participatingShares?.find(
-          (p: any) => p.name === participant.name
-        )
-        if (prevParticipant) {
-          const prevRangeProceeds =
-            Math.min(exitValue, prevRange.rangeEnd || exitValue) - (prevRange.rangeStart || 0)
-          const prevTotalShares = prevRange.participatingShares.reduce(
-            (sum: number, p: any) => sum + p.shares,
-            0
-          )
-          const prevSectionRVPS = prevTotalShares > 0 ? prevRangeProceeds / prevTotalShares : 0
-          cumulativeValue += prevParticipant.shares * prevSectionRVPS
-        }
-      })
-
-      const cumulativeRVPS = participant.shares > 0 ? cumulativeValue / participant.shares : 0
-
+    return participants.map((participant: Participant) => {
       return {
-        securityName: participant.name,
-        sectionRVPS,
-        cumulativeRVPS,
-        shares: participant.shares,
-        percentage: participant.percentage,
-        sectionValue,
-        cumulativeValue,
+        securityName: participant.securityName,
+        sectionRVPS: participant.rvpsAtBreakpoint, // Section RVPS from V3
+        cumulativeRVPS: participant.cumulativeRVPS, // Cumulative RVPS from V3
+        shares: participant.participatingShares,
+        percentage: `${(participant.participationPercentage * 100).toFixed(2)}%`,
+        sectionValue: participant.sectionValue, // Section value from V3
+        cumulativeValue: participant.cumulativeValue, // Cumulative value from V3
       }
     })
   }
@@ -574,9 +545,7 @@ export default function BreakpointsAnalysis({
                       <td className="p-3 text-right font-mono">{formatNumber(data.shares)}</td>
                       <td className="p-3 text-right">{data.percentage}</td>
                       <td className="p-3 text-right font-mono">
-                        {formatCurrency(
-                          type === 'section' ? data.sectionRVPS : data.cumulativeRVPS
-                        )}
+                        {formatRVPS(type === 'section' ? data.sectionRVPS : data.cumulativeRVPS)}
                       </td>
                       <td className="p-3 text-right font-mono">
                         {formatCurrency(

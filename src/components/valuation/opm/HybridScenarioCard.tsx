@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import type { HybridScenario, OPMBlackScholesParams } from '@/types/opm'
 
@@ -137,20 +144,22 @@ export function HybridScenarioCard({
           </div>
 
           <div>
-            <Label htmlFor={`targetFMV_${scenario.id}`}>
-              Target FMV ($/share)
+            <Label htmlFor={`mode_${scenario.id}`}>
+              Mode
               <span className="ml-1 text-xs text-muted-foreground">*</span>
             </Label>
-            <Input
-              id={`targetFMV_${scenario.id}`}
-              type="number"
-              value={scenario.targetFMV || ''}
-              onChange={(e) => updateField('targetFMV', parseFloat(e.target.value) || 0)}
-              step="0.01"
-              min="0"
-              className="mt-1"
-              placeholder="Enter target FMV"
-            />
+            <Select
+              value={scenario.mode || 'manual'}
+              onValueChange={(value) => updateField('mode', value as 'manual' | 'backsolve')}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manual">Manual CV</SelectItem>
+                <SelectItem value="backsolve">Backsolve</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
@@ -173,6 +182,36 @@ export function HybridScenarioCard({
             </div>
           </div>
         </div>
+
+        {/* Enterprise Value (Manual Mode Only) */}
+        {scenario.mode === 'manual' && (
+          <div>
+            <Label htmlFor={`enterpriseValue_${scenario.id}`}>
+              Enterprise Value ($)
+              <span className="ml-1 text-xs text-muted-foreground">*</span>
+            </Label>
+            <Input
+              id={`enterpriseValue_${scenario.id}`}
+              type="number"
+              value={scenario.enterpriseValue || ''}
+              onChange={(e) => updateField('enterpriseValue', parseFloat(e.target.value) || 0)}
+              step="1000"
+              min="0"
+              className="mt-1"
+              placeholder="Enter company value"
+            />
+          </div>
+        )}
+
+        {/* Backsolve Mode Info */}
+        {scenario.mode === 'backsolve' && (
+          <div className="rounded-lg border bg-blue-50 p-3 dark:bg-blue-950">
+            <div className="text-sm text-blue-900 dark:text-blue-100">
+              <strong>Backsolve Mode:</strong> Enterprise value will be calculated to achieve the
+              weighted target FMV for the selected security
+            </div>
+          </div>
+        )}
 
         {/* Description */}
         {expanded && (

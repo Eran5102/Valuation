@@ -78,20 +78,22 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     // Transform breakpoints data for OPM
     const globalBreakpoints = breakpointsData.data.sortedBreakpoints.map(
       (bp: any, index: number) => {
-        // Extract allocation data
+        // V3 breakpoints have 'participants' array with securityName, participationPercentage
         const allocation =
-          bp.allocationsByRange?.map((alloc: any) => ({
-            securityClass: alloc.securityClass,
-            sharesReceived: alloc.sharesReceived || 0,
-            valueReceived: alloc.valueReceived || 0,
+          bp.participants?.map((participant: any) => ({
+            securityClass: participant.securityName,
+            sharesReceived: parseFloat(participant.participatingShares) || 0,
+            participationPercentage: parseFloat(participant.participationPercentage) || 0,
           })) || []
 
         return {
           id: `bp_${index}`,
-          value: bp.exitValue.toNumber ? bp.exitValue.toNumber() : bp.exitValue,
+          value: bp.exitValue?.toNumber
+            ? bp.exitValue.toNumber()
+            : parseFloat(bp.rangeFrom || bp.exitValue || '0'),
           type: bp.breakpointType,
           securityClass: bp.securityClass || 'unknown',
-          description: bp.description || `${bp.breakpointType} at ${bp.exitValue}`,
+          description: bp.description || `${bp.breakpointType} at ${bp.exitValue || bp.rangeFrom}`,
           allocation,
         }
       }
@@ -116,7 +118,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     // Create audit logger
     const auditLogger = new AuditTrailLogger()
-    auditLogger.startSession('Hybrid PWERM API')
+    auditLogger.start('Hybrid PWERM API')
 
     // Create orchestrator
     const orchestrator = new ScenarioOrchestrator(auditLogger)

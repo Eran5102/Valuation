@@ -2,12 +2,18 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { OptimizedDataTable } from '@/components/ui/optimized-data-table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Calculator, TrendingUp, AlertCircle, DollarSign, Info } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { AssumptionsExtractor } from '@/lib/services/shared/AssumptionsExtractor'
@@ -18,11 +24,18 @@ interface OPMBacksolveProps {
 }
 
 interface BlackScholesParams {
-  companyValue: number
   volatility: number
   riskFreeRate: number
   timeToLiquidity: number
   dividendYield: number
+}
+
+interface SecurityClass {
+  id: string
+  name: string
+  shareType: string
+  pricePerShare: number
+  sharesOutstanding: number
 }
 
 interface SecurityAllocation {
@@ -60,25 +73,31 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
   const [loading, setLoading] = useState(false)
   const [calculating, setCalculating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [securities, setSecurities] = useState<SecurityClass[]>([])
+  const [selectedSecurityId, setSelectedSecurityId] = useState<string>('')
+  const [analysisResult, setAnalysisResult] = useState<OPMAnalysisResult | null>(null)
 
   // Extract Black-Scholes parameters from assumptions using centralized utility
   const extractedParams = useMemo(() => {
-    return AssumptionsExtractor.extractBlackScholesParams(assumptions)
+    const params = AssumptionsExtractor.extractBlackScholesParams(assumptions)
+    console.log('[OPMBacksolve] Extracted params:', params)
+    console.log('[OPMBacksolve] Raw assumptions:', assumptions)
+    return params
   }, [assumptions])
 
   // Get source info for display (shows if value from assumptions or default)
   const sourceInfo = useMemo(() => {
-    return AssumptionsExtractor.getSourceInfo(assumptions)
+    const info = AssumptionsExtractor.getSourceInfo(assumptions)
+    console.log('[OPMBacksolve] Source info:', info)
+    return info
   }, [assumptions])
 
   const [parameters, setParameters] = useState<BlackScholesParams>({
-    companyValue: 0,
     volatility: extractedParams.volatility,
     riskFreeRate: extractedParams.riskFreeRate,
     timeToLiquidity: extractedParams.timeToLiquidity,
     dividendYield: extractedParams.dividendYield,
   })
-  const [analysisResult, setAnalysisResult] = useState<OPMAnalysisResult | null>(null)
 
   // Update parameters when assumptions change
   useEffect(() => {
@@ -91,9 +110,57 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
     }))
   }, [extractedParams])
 
-  const handleCalculate = async () => {
-    if (!parameters.companyValue || parameters.companyValue <= 0) {
-      setError('Please enter a valid company value')
+  // Fetch share classes from database
+  useEffect(() => {
+    async function fetchShareClasses() {
+      try {
+        console.log('[OPMBacksolve] Fetching share classes for valuation:', valuationId)
+        const response = await fetch(`/api/valuations/${valuationId}/share-classes`)
+        if (response.ok) {
+          const data = await response.json()
+          console.log('[OPMBacksolve] Share classes data:', data)
+
+          if (data.shareClasses && Array.isArray(data.shareClasses)) {
+            const securityClasses: SecurityClass[] = data.shareClasses.map((sc: any) => ({
+              id: sc.id,
+              name: sc.class_name,
+              shareType: sc.type,
+              pricePerShare: parseFloat(sc.price_per_share) || 0,
+              sharesOutstanding: parseFloat(sc.shares) || 0,
+            }))
+            console.log('[OPMBacksolve] Security classes extracted:', securityClasses)
+            setSecurities(securityClasses)
+
+            // Auto-select first security if none selected
+            if (securityClasses.length > 0 && !selectedSecurityId) {
+              console.log('[OPMBacksolve] Auto-selecting first security:', securityClasses[0].id)
+              setSelectedSecurityId(securityClasses[0].id)
+            }
+          } else {
+            console.warn('[OPMBacksolve] No share classes found')
+          }
+        } else {
+          console.error('[OPMBacksolve] Failed to fetch share classes:', response.status)
+        }
+      } catch (err) {
+        console.error('[OPMBacksolve] Failed to fetch share classes:', err)
+      }
+    }
+
+    if (valuationId) {
+      fetchShareClasses()
+    }
+  }, [valuationId])
+
+  // Auto-calculate when security is selected or parameters change
+  useEffect(() => {
+    if (selectedSecurityId) {
+      handleBacksolve()
+    }
+  }, [selectedSecurityId, parameters])
+
+  const handleBacksolve = async () => {
+    if (!selectedSecurityId) {
       return
     }
 
@@ -101,26 +168,28 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
     setError(null)
 
     try {
-      const response = await fetch(`/api/valuations/${valuationId}/opm-backsolve`, {
+      const response = await fetch(`/api/valuations/${valuationId}/opm-reverse-backsolve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parameters),
+        body: JSON.stringify({
+          securityClassId: selectedSecurityId,
+          ...parameters,
+        }),
       })
 
       if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(
-          `Failed to calculate OPM backsolve: ${response.status} ${response.statusText}`
-        )
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
       }
 
       const result = await response.json()
       if (result.success) {
         setAnalysisResult(result.data)
       } else {
-        setError(result.error || 'Calculation failed')
+        setError(result.error || 'Backsolve failed')
       }
     } catch (err) {
+      console.error('Backsolve error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setCalculating(false)
@@ -144,7 +213,12 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
 
   // Prepare table columns
   const columns = useMemo<ColumnDef<any>[]>(() => {
-    if (!analysisResult || !analysisResult.breakpointResults.length) return []
+    if (
+      !analysisResult ||
+      !analysisResult.breakpointResults ||
+      !analysisResult.breakpointResults.length
+    )
+      return []
 
     // Get all unique security names
     const allSecurities = new Set<string>()
@@ -336,6 +410,8 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
     )
   }
 
+  const selectedSecurity = securities.find((s) => s.id === selectedSecurityId)
+
   return (
     <div className="space-y-6">
       {/* Parameters Section */}
@@ -343,7 +419,7 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Black-Scholes Parameters
+            Reverse Backsolve Parameters
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -351,7 +427,8 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
           <Alert className="mb-4">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Parameters auto-populated from Assumptions page. You can override them below.
+              Select a security from your cap table. The system will automatically calculate the
+              enterprise value needed to produce that security's price per share.
               {sourceInfo.volatility.source === 'default' && ' (Using default volatility: 60%)'}
               {sourceInfo.riskFreeRate.source === 'default' &&
                 ' (Using default risk-free rate: 4.5%)'}
@@ -360,23 +437,29 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
             </AlertDescription>
           </Alert>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            <div>
-              <Label htmlFor="companyValue">Company Value ($)</Label>
-              <Input
-                id="companyValue"
-                type="number"
-                value={parameters.companyValue || ''}
-                onChange={(e) =>
-                  setParameters((prev) => ({
-                    ...prev,
-                    companyValue: parseFloat(e.target.value) || 0,
-                  }))
-                }
-                placeholder="Enter value"
-                className="mt-1"
-              />
-            </div>
+          <div className="mb-4">
+            <Label htmlFor="security">Target Security</Label>
+            <Select value={selectedSecurityId} onValueChange={setSelectedSecurityId}>
+              <SelectTrigger className="mt-1 max-w-md">
+                <SelectValue placeholder="Select a security" />
+              </SelectTrigger>
+              <SelectContent>
+                {securities.map((security) => (
+                  <SelectItem key={security.id} value={security.id}>
+                    {security.name} - ${security.pricePerShare.toFixed(4)}/share
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedSecurity && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                Target Price: ${selectedSecurity.pricePerShare.toFixed(4)} per share |{' '}
+                {selectedSecurity.sharesOutstanding.toLocaleString()} shares outstanding
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
               <Label htmlFor="volatility">
                 Volatility (%)
@@ -452,22 +535,14 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
                 className="mt-1"
               />
             </div>
-            <div className="flex items-end">
-              <Button
-                onClick={handleCalculate}
-                disabled={calculating || !parameters.companyValue}
-                className="w-full"
-              >
-                {calculating ? (
-                  <>
-                    <LoadingSpinner size="sm" className="mr-2" /> Calculating...
-                  </>
-                ) : (
-                  <>Calculate OPM</>
-                )}
-              </Button>
-            </div>
           </div>
+
+          {calculating && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <LoadingSpinner size="sm" />
+              <span>Calculating enterprise value...</span>
+            </div>
+          )}
 
           {error && (
             <Alert variant="destructive" className="mt-4">
@@ -485,17 +560,37 @@ export function OPMBacksolve({ valuationId, assumptions }: OPMBacksolveProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                OPM Analysis Results
+                Backsolve Results
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Total Equity Value:</span>
-                  <span className="font-semibold">
-                    {formatCurrency(analysisResult.totalEquityValue)}
-                  </span>
+              <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="bg-primary/5 rounded-lg border p-4">
+                  <div className="text-sm text-muted-foreground">Enterprise Value</div>
+                  <div className="mt-1 text-2xl font-bold">
+                    {formatCurrency(analysisResult.enterpriseValue)}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    ({analysisResult.iterations} iterations, {analysisResult.method})
+                  </div>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <div className="text-sm text-muted-foreground">Target Price Per Share</div>
+                  <div className="mt-1 text-2xl font-bold">
+                    ${analysisResult.targetFMV.toFixed(4)}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {analysisResult.security?.name}
+                  </div>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <div className="text-sm text-muted-foreground">Actual Price Achieved</div>
+                  <div className="mt-1 text-2xl font-bold">
+                    ${analysisResult.actualFMV.toFixed(4)}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Error: ${analysisResult.error.toFixed(6)}
+                  </div>
                 </div>
               </div>
 

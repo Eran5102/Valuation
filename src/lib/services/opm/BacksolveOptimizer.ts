@@ -46,6 +46,9 @@ export interface BacksolveRequest {
   /** Total shares outstanding (for validation) */
   totalShares: number
 
+  /** Map of security class name -> total shares for that class */
+  shareClassTotals: Map<string, number>
+
   /** Optimization parameters (optional) */
   optimizationParams?: Partial<OptimizationParams>
 }
@@ -148,6 +151,7 @@ export class BacksolveOptimizer {
         blackScholesParams: request.blackScholesParams,
         breakpoints: request.breakpoints,
         totalShares: request.totalShares,
+        shareClassTotals: request.shareClassTotals,
       }
 
       try {
@@ -232,6 +236,7 @@ export class BacksolveOptimizer {
       blackScholesParams: request.blackScholesParams,
       breakpoints: request.breakpoints,
       totalShares: request.totalShares,
+      shareClassTotals: request.shareClassTotals,
     }
 
     const finalAllocation = this.calculationEngine.calculate(finalContext)

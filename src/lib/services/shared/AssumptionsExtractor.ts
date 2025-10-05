@@ -70,31 +70,120 @@ export interface AssumptionValidationResult {
  */
 export class AssumptionsExtractor {
   /**
-   * Extract Black-Scholes parameters from assumptions array
+   * Extract Black-Scholes parameters from assumptions (supports both formats)
    *
-   * @param assumptions - Array of assumption categories from database
+   * @param assumptions - Array of assumption categories OR flat object from valuation_assumptions table
    * @param overrides - Optional parameter overrides
    * @returns Extracted Black-Scholes parameters
    *
    * @example
    * ```typescript
-   * const assumptions = valuation.assumptions
+   * // Array format (old)
+   * const assumptions = [{category: "volatility_assumptions", assumptions: [{id: "equity_volatility", value: 60}]}]
+   * const bsParams = AssumptionsExtractor.extractBlackScholesParams(assumptions)
+   *
+   * // Flat format (new)
+   * const assumptions = {volatility.equity_volatility: 60, volatility.risk_free_rate: 4.5}
    * const bsParams = AssumptionsExtractor.extractBlackScholesParams(assumptions)
    * // { volatility: 0.60, riskFreeRate: 0.045, timeToLiquidity: 3.0, dividendYield: 0 }
    * ```
    */
   static extractBlackScholesParams(
-    assumptions: any[] | null | undefined,
+    assumptions: any[] | any | null | undefined,
     overrides?: Partial<ExtractedBlackScholesParams>
   ): ExtractedBlackScholesParams {
+    // Detect format and normalize to array format
+    const normalizedAssumptions = this.normalizeAssumptions(assumptions)
+
     const extracted = {
-      volatility: this.extractVolatility(assumptions),
-      riskFreeRate: this.extractRiskFreeRate(assumptions),
-      timeToLiquidity: this.extractTimeToLiquidity(assumptions),
-      dividendYield: this.extractDividendYield(assumptions),
+      volatility: this.extractVolatility(normalizedAssumptions),
+      riskFreeRate: this.extractRiskFreeRate(normalizedAssumptions),
+      timeToLiquidity: this.extractTimeToLiquidity(normalizedAssumptions),
+      dividendYield: this.extractDividendYield(normalizedAssumptions),
     }
 
     return { ...extracted, ...overrides }
+  }
+
+  /**
+   * Normalize assumptions to array format (handles both old and new formats)
+   *
+   * @param assumptions - Either array format or flat object format
+   * @returns Normalized array format
+   */
+  static normalizeAssumptions(assumptions: any[] | any | null | undefined): any[] | null {
+    if (!assumptions) {
+      return null
+    }
+
+    // If already array format, return as is
+    if (Array.isArray(assumptions)) {
+      return assumptions
+    }
+
+    // If flat object format (from valuation_assumptions table), convert to array format
+    if (typeof assumptions === 'object') {
+      return this.convertFlatToArrayFormat(assumptions)
+    }
+
+    return null
+  }
+
+  /**
+   * Convert flat assumptions structure to array format
+   *
+   * Converts from: {volatility.equity_volatility: 60, volatility.risk_free_rate: 4.5}
+   * OR from database format: {equity_volatility: 55.62, risk_free_rate: 3.68, time_to_liquidity: 5}
+   * To: [{category: "volatility_assumptions", assumptions: [{id: "equity_volatility", value: 55.62}]}]
+   *
+   * @param flatAssumptions - Flat object with dot-notation keys OR direct database fields
+   * @returns Array format expected by extraction methods
+   */
+  static convertFlatToArrayFormat(flatAssumptions: Record<string, any>): any[] {
+    const categoriesMap = new Map<string, any[]>()
+
+    // Direct field mapping for database format (without dots)
+    const directFieldMap: Record<string, { category: string; field: string }> = {
+      equity_volatility: { category: 'volatility_assumptions', field: 'equity_volatility' },
+      risk_free_rate: { category: 'discount_rates', field: 'risk_free_rate' },
+      time_to_liquidity: { category: 'volatility_assumptions', field: 'time_to_liquidity' },
+      dividend_yield: { category: 'dividend_assumptions', field: 'dividend_yield' },
+    }
+
+    // Group by category
+    Object.entries(flatAssumptions).forEach(([key, value]) => {
+      let category: string
+      let fieldId: string
+
+      // Check if it's a dot-notation key (e.g., "volatility.equity_volatility")
+      if (key.includes('.')) {
+        ;[category, fieldId] = key.split('.')
+      }
+      // Check if it's a direct database field
+      else if (directFieldMap[key]) {
+        category = directFieldMap[key].category
+        fieldId = directFieldMap[key].field
+      }
+      // Skip unknown fields
+      else {
+        return
+      }
+
+      if (!categoriesMap.has(category)) {
+        categoriesMap.set(category, [])
+      }
+
+      categoriesMap.get(category)!.push({
+        id: fieldId,
+        value: value,
+      })
+    })
+
+    // Convert map to array format
+    return Array.from(categoriesMap.entries()).map(([category, assumptions]) => ({
+      category,
+      assumptions,
+    }))
   }
 
   /**
@@ -273,23 +362,26 @@ export class AssumptionsExtractor {
   }
 
   /**
-   * Get assumption source info for display
+   * Get assumption source info for display (supports both formats)
    *
-   * @param assumptions - Assumptions array
+   * @param assumptions - Assumptions array or flat object
    * @returns Object with source info for each parameter
    */
-  static getSourceInfo(assumptions: any[] | null | undefined): {
+  static getSourceInfo(assumptions: any[] | any | null | undefined): {
     volatility: { source: 'assumptions' | 'default'; value: number }
     riskFreeRate: { source: 'assumptions' | 'default'; value: number }
     timeToLiquidity: { source: 'assumptions' | 'default'; value: number }
     dividendYield: { source: 'assumptions' | 'default'; value: number }
   } {
+    // Normalize to array format
+    const normalizedAssumptions = this.normalizeAssumptions(assumptions)
+
     const checkSource = (categoryId: string, fieldId: string, defaultValue: number) => {
-      if (!assumptions || !Array.isArray(assumptions)) {
+      if (!normalizedAssumptions || !Array.isArray(normalizedAssumptions)) {
         return { source: 'default' as const, value: defaultValue }
       }
 
-      for (const category of assumptions) {
+      for (const category of normalizedAssumptions) {
         if (category.assumptions && Array.isArray(category.assumptions)) {
           const assumption = category.assumptions.find((ass: any) => ass.id === fieldId)
           if (assumption && assumption.value !== undefined && assumption.value !== '') {

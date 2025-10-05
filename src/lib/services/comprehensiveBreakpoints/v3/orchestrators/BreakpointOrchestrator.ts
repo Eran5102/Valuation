@@ -292,6 +292,17 @@ export class BreakpointOrchestrator {
       }
     )
 
+    // DIAGNOSTIC: Verify percentages before packaging result
+    if (finalizedBreakpoints.length >= 4) {
+      console.log(
+        '[Orchestrator BEFORE RETURN] BP4 participants:',
+        finalizedBreakpoints[3].participants.map((p) => ({
+          name: p.securityName,
+          percentage: p.participationPercentage.toString(),
+        }))
+      )
+    }
+
     // Package result
     const result: OrchestrationResult = {
       breakpoints: finalizedBreakpoints,

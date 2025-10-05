@@ -32,6 +32,7 @@ export interface FinalizationResult {
   breakpoints: RangeBasedBreakpoint[]
   rangesConnected: number
   participantsUpdated: number
+  percentagesRecalculated: number
   summary: string
 }
 
@@ -54,6 +55,7 @@ export class RangeFinalizationProcessor {
         breakpoints: [],
         rangesConnected: 0,
         participantsUpdated: 0,
+        percentagesRecalculated: 0,
         summary: 'No breakpoints to process',
       }
     }
@@ -64,18 +66,34 @@ export class RangeFinalizationProcessor {
     // Step 2: Accumulate participants
     const participantsUpdated = this.accumulateParticipants(breakpoints, capTable)
 
-    const summary = `Connected ${rangesConnected} ranges, updated ${participantsUpdated} participant lists`
+    // Step 3: Recalculate participation percentages per segment
+    const percentagesRecalculated = this.recalculateParticipationPercentages(breakpoints)
+
+    const summary = `Connected ${rangesConnected} ranges, updated ${participantsUpdated} participant lists, recalculated ${percentagesRecalculated} percentages`
 
     this.auditLogger.info('Range Finalization', summary, {
       totalBreakpoints: breakpoints.length,
       rangesConnected,
       participantsUpdated,
+      percentagesRecalculated,
     })
+
+    // DIAGNOSTIC: Verify percentages are still correct before returning
+    if (breakpoints.length >= 4) {
+      console.log(
+        '[RangeFinalization BEFORE RETURN] BP4 participants:',
+        breakpoints[3].participants.map((p) => ({
+          name: p.securityName,
+          percentage: p.participationPercentage.toString(),
+        }))
+      )
+    }
 
     return {
       breakpoints,
       rangesConnected,
       participantsUpdated,
+      percentagesRecalculated,
       summary,
     }
   }
@@ -168,7 +186,8 @@ export class RangeFinalizationProcessor {
           }
 
           // Update breakpoint with cumulative participants
-          bp.participants = Array.from(cumulativeParticipants.values())
+          // IMPORTANT: Create deep copies to avoid shared references
+          bp.participants = Array.from(cumulativeParticipants.values()).map((p) => ({ ...p }))
           bp.totalParticipatingShares = this.calculateTotalShares(bp.participants)
           updated++
           break
@@ -184,7 +203,8 @@ export class RangeFinalizationProcessor {
           }
 
           // Update breakpoint with cumulative participants
-          bp.participants = Array.from(cumulativeParticipants.values())
+          // IMPORTANT: Create deep copies to avoid shared references
+          bp.participants = Array.from(cumulativeParticipants.values()).map((p) => ({ ...p }))
           bp.totalParticipatingShares = this.calculateTotalShares(bp.participants)
           updated++
           break
@@ -197,7 +217,8 @@ export class RangeFinalizationProcessor {
           }
 
           // Update breakpoint with cumulative participants
-          bp.participants = Array.from(cumulativeParticipants.values())
+          // IMPORTANT: Create deep copies to avoid shared references
+          bp.participants = Array.from(cumulativeParticipants.values()).map((p) => ({ ...p }))
           bp.totalParticipatingShares = this.calculateTotalShares(bp.participants)
           updated++
           break
@@ -213,6 +234,91 @@ export class RangeFinalizationProcessor {
     }
 
     return updated
+  }
+
+  /**
+   * Recalculate participation percentages per segment
+   *
+   * For each breakpoint, recalculate each participant's percentage as:
+   * participationPercentage = participatingShares / totalParticipatingSharesInThisSegment
+   *
+   * ALSO recalculates rvpsAtBreakpoint and sectionValue for each participant.
+   *
+   * This ensures percentages sum to 100% (1.0) within each breakpoint segment.
+   */
+  private recalculateParticipationPercentages(breakpoints: RangeBasedBreakpoint[]): number {
+    let recalculated = 0
+
+    for (let i = 0; i < breakpoints.length; i++) {
+      const bp = breakpoints[i]
+
+      if (bp.participants.length === 0) {
+        continue
+      }
+
+      // Calculate total shares in THIS breakpoint segment
+      const totalSharesInSegment = this.calculateTotalShares(bp.participants)
+
+      if (DecimalHelpers.isZero(totalSharesInSegment)) {
+        this.auditLogger.warning(
+          'Percentage Recalculation',
+          `BP ${i + 1} (${bp.breakpointType}): Zero total shares, cannot recalculate percentages`
+        )
+        continue
+      }
+
+      // Calculate section RVPS for THIS breakpoint segment
+      // Section RVPS = (rangeTo - rangeFrom) / totalShares
+      const rangeFrom = bp.rangeFrom
+      const rangeTo = bp.rangeTo || DecimalHelpers.toDecimal(0) // Will be corrected later for open-ended
+      const rangeWidth = bp.rangeTo ? rangeTo.minus(rangeFrom) : DecimalHelpers.toDecimal(0)
+      const sectionRVPS = DecimalHelpers.safeDivide(rangeWidth, totalSharesInSegment)
+
+      // Update breakpoint's sectionRVPS
+      bp.sectionRVPS = sectionRVPS
+
+      // Recalculate each participant's percentage, rvpsAtBreakpoint, and sectionValue
+      for (const participant of bp.participants) {
+        const oldPercentage = participant.participationPercentage.toNumber()
+        participant.participationPercentage = DecimalHelpers.toDecimalPercentage(
+          participant.participatingShares,
+          totalSharesInSegment
+        )
+        const newPercentage = participant.participationPercentage.toNumber()
+
+        // Update rvpsAtBreakpoint (section RVPS for this participant in THIS segment)
+        participant.rvpsAtBreakpoint = sectionRVPS
+
+        // Update sectionValue (value received in THIS segment)
+        participant.sectionValue = participant.participatingShares.times(sectionRVPS)
+
+        console.log(
+          `[RangeFinalization] BP${i + 1}: ${participant.securityName} percentage ${(oldPercentage * 100).toFixed(2)}% → ${(newPercentage * 100).toFixed(2)}%, sectionRVPS=${sectionRVPS.toFixed(4)}, sectionValue=${participant.sectionValue.toFixed(2)}`
+        )
+      }
+
+      recalculated++
+
+      // Log the recalculated percentages
+      const percentageSum = DecimalHelpers.sum(
+        bp.participants.map((p) => p.participationPercentage)
+      )
+
+      this.auditLogger.debug(
+        'Percentage Recalculation',
+        `BP ${i + 1} (${bp.breakpointType}): Recalculated ${bp.participants.length} percentages (sum: ${DecimalHelpers.formatPercentage(percentageSum)}), sectionRVPS=${DecimalHelpers.formatCurrency(sectionRVPS)}`
+      )
+
+      // Verify percentages sum to ~1.0 (100%)
+      if (Math.abs(percentageSum.toNumber() - 1.0) > 0.001) {
+        this.auditLogger.warning(
+          'Percentage Recalculation',
+          `BP ${i + 1} (${bp.breakpointType}): Percentages do not sum to 100% (sum: ${DecimalHelpers.formatPercentage(percentageSum)})`
+        )
+      }
+    }
+
+    return recalculated
   }
 
   /**

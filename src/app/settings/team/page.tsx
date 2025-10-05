@@ -94,7 +94,7 @@ export default function TeamManagementPage() {
       const membersResponse = await fetch('/api/organization/members')
       if (membersResponse.ok) {
         const membersData = await membersResponse.json()
-        setTeamMembers(membersData)
+        setTeamMembers(membersData.members || membersData || [])
       }
 
       // Fetch pending invitations

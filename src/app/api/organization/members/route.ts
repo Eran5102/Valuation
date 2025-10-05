@@ -3,15 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { PaginationSchema, validateRequest } from '@/lib/validation/api-schemas'
 
 export async function GET(request: NextRequest) {
+  console.log('[Organization Members API] GET request started')
   try {
-    // Validate query parameters
+    // Optional pagination parameters
     const { searchParams } = new URL(request.url)
-    const queryParams = validateRequest(PaginationSchema, {
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      sort: searchParams.get('sort'),
-      order: searchParams.get('order'),
-    })
 
     const supabase = await createClient()
 
@@ -71,19 +66,22 @@ export async function GET(request: NextRequest) {
         const profile = profiles?.find((p) => p.id === member.user_id)
 
         return {
-          id: member.id,
+          id: member.user_id, // Use user_id as the main id for assignment
           user_id: member.user_id,
+          name:
+            profile?.first_name && profile?.last_name
+              ? `${profile.first_name} ${profile.last_name}`
+              : 'Team Member',
+          email: '', // Email not available from this endpoint
           role: member.role,
           joined_at: member.joined_at,
           is_active: member.is_active,
-          email: '', // Email not available from this endpoint
-          first_name: profile?.first_name || '',
-          last_name: profile?.last_name || '',
           avatar_url: profile?.avatar_url || '',
         }
       }) || []
 
-    return NextResponse.json(formattedMembers)
+    console.log('[Organization Members API] Returning', formattedMembers.length, 'members')
+    return NextResponse.json({ members: formattedMembers })
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('Validation failed:')) {
       return NextResponse.json(

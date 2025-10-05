@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Plus, Calculator, TrendingUp, AlertCircle, Info } from 'lucide-react'
@@ -13,6 +20,14 @@ import { ProbabilityHelpers } from '@/lib/services/shared/math/ProbabilityHelper
 import { HybridScenarioCard } from './HybridScenarioCard'
 import { HybridResultsDisplay } from './HybridResultsDisplay'
 import type { HybridScenario, HybridPWERMResult, OPMBlackScholesParams } from '@/types/opm'
+
+interface SecurityClass {
+  id: string
+  name: string
+  shareType: string
+  pricePerShare: number
+  sharesOutstanding: number
+}
 
 interface HybridScenarioManagerProps {
   valuationId: string
@@ -56,7 +71,8 @@ export function HybridScenarioManager({
   const [scenarios, setScenarios] = useState<HybridScenario[]>([])
   const [result, setResult] = useState<HybridPWERMResult | null>(null)
   const [probabilityFormat] = useState<'percentage' | 'decimal'>('percentage')
-  const [securityClassId, setSecurityClassId] = useState<string>('common')
+  const [securities, setSecurities] = useState<SecurityClass[]>([])
+  const [selectedSecurityId, setSelectedSecurityId] = useState<string>('')
 
   // Extract Black-Scholes parameters from assumptions
   const extractedParams = useMemo(() => {
@@ -83,6 +99,39 @@ export function HybridScenarioManager({
     }))
   }, [extractedParams])
 
+  // Fetch cap table for securities
+  useEffect(() => {
+    async function fetchCapTable() {
+      try {
+        const response = await fetch(`/api/valuations/${valuationId}`)
+        const data = await response.json()
+        const capTable = data.cap_table_snapshot || data.cap_table
+
+        if (capTable && capTable.shareClasses) {
+          const securityClasses: SecurityClass[] = capTable.shareClasses.map((sc: any) => ({
+            id: sc.id,
+            name: sc.name,
+            shareType: sc.shareType,
+            pricePerShare: sc.pricePerShare || 0,
+            sharesOutstanding: sc.sharesOutstanding || 0,
+          }))
+          setSecurities(securityClasses)
+
+          // Auto-select first security
+          if (securityClasses.length > 0 && !selectedSecurityId) {
+            setSelectedSecurityId(securityClasses[0].id)
+          }
+        }
+      } catch (error) {
+        console.error('[HybridScenarioManager] Failed to fetch cap table:', error)
+      }
+    }
+
+    if (valuationId) {
+      fetchCapTable()
+    }
+  }, [valuationId])
+
   // Initialize with default scenarios
   useEffect(() => {
     if (scenarios.length === 0) {
@@ -90,6 +139,8 @@ export function HybridScenarioManager({
         id: `scenario_${Date.now()}_${idx}`,
         name: template.name || `Scenario ${idx + 1}`,
         probability: template.probability || 33.33,
+        mode: 'manual' as 'manual' | 'backsolve',
+        enterpriseValue: 0,
         targetFMV: template.targetFMV || 0,
         description: template.description,
         color: template.color,
@@ -109,6 +160,33 @@ export function HybridScenarioManager({
   const totalProbability = useMemo(() => {
     return scenarios.reduce((sum, s) => sum + s.probability, 0)
   }, [scenarios])
+
+  // Detect if there's a backsolve scenario
+  const backsolveScenario = useMemo(() => {
+    return scenarios.find((s) => s.mode === 'backsolve')
+  }, [scenarios])
+
+  // Count backsolve scenarios
+  const backsolveCount = useMemo(() => {
+    return scenarios.filter((s) => s.mode === 'backsolve').length
+  }, [scenarios])
+
+  // Auto-calculate when inputs change
+  useEffect(() => {
+    if (
+      selectedSecurityId &&
+      scenarios.length > 0 &&
+      probabilityValidation?.valid &&
+      backsolveCount <= 1
+    ) {
+      // Debounce the calculation
+      const timer = setTimeout(() => {
+        handleCalculate()
+      }, 500)
+
+      return () => clearTimeout(timer)
+    }
+  }, [scenarios, selectedSecurityId, globalParams, backsolveCount])
 
   /**
    * Add new scenario
@@ -180,9 +258,11 @@ export function HybridScenarioManager({
   }
 
   /**
-   * Calculate hybrid PWERM
+   * Calculate hybrid PWERM (weighted backsolve or regular)
    */
   const handleCalculate = async () => {
+    if (!selectedSecurityId) return
+
     setCalculating(true)
     setError(null)
 
@@ -192,44 +272,123 @@ export function HybridScenarioManager({
         throw new Error('At least one scenario is required')
       }
 
-      if (scenarios.some((s) => s.targetFMV <= 0)) {
-        throw new Error('All scenarios must have a positive target FMV')
-      }
-
       if (!probabilityValidation?.valid) {
         throw new Error(
           `Probability validation failed: ${probabilityValidation?.errors.join(', ')}`
         )
       }
 
-      // Make API request
-      const response = await fetch(`/api/valuations/${valuationId}/opm-hybrid`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          securityClassId,
-          scenarios,
-          globalBlackScholesParams: {
-            timeToLiquidity: globalParams.timeToLiquidity,
-            volatility: globalParams.volatility,
-            riskFreeRate: globalParams.riskFreeRate,
-            dividendYield: globalParams.dividendYield,
-          },
-          probabilityFormat,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to calculate hybrid PWERM')
+      // Check for backsolve scenarios
+      if (backsolveCount > 1) {
+        throw new Error('Only one scenario can be in backsolve mode')
       }
 
-      const data = await response.json()
-      if (data.success) {
-        setResult(data.data)
-        onResultCalculated?.(data.data)
+      // Validate manual scenarios have enterprise values
+      const manualScenarios = scenarios.filter((s) => s.mode === 'manual')
+      if (manualScenarios.some((s) => !s.enterpriseValue || s.enterpriseValue <= 0)) {
+        throw new Error('All manual scenarios must have a positive enterprise value')
+      }
+
+      // Determine which API to call
+      const hasBacksolve = backsolveCount === 1
+
+      if (hasBacksolve) {
+        // Call weighted backsolve API
+        const response = await fetch(`/api/valuations/${valuationId}/opm-weighted-backsolve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            securityClassId: selectedSecurityId,
+            scenarios: scenarios.map((s) => ({
+              name: s.name,
+              probability: s.probability,
+              isBacksolve: s.mode === 'backsolve',
+              enterpriseValue: s.mode === 'manual' ? s.enterpriseValue : undefined,
+              // Merge scenario-specific params with global params
+              timeToLiquidity:
+                s.blackScholesParams?.timeToLiquidity ?? globalParams.timeToLiquidity,
+              volatility: s.blackScholesParams?.volatility ?? globalParams.volatility,
+              riskFreeRate: s.blackScholesParams?.riskFreeRate ?? globalParams.riskFreeRate,
+              dividendYield: s.blackScholesParams?.dividendYield ?? globalParams.dividendYield,
+            })),
+            probabilityFormat,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to calculate weighted backsolve')
+        }
+
+        const data = await response.json()
+        if (data.success) {
+          // Transform weighted backsolve result to match HybridPWERMResult format
+          const transformedResult: HybridPWERMResult = {
+            success: data.data.converged,
+            enterpriseValue:
+              data.data.scenarioResults[data.data.backsolveScenarioIndex]?.enterpriseValue,
+            weightedFMV: data.data.actualWeightedFMV,
+            error: data.data.error,
+            converged: data.data.converged,
+            iterations: data.data.metadata?.iterations || 0,
+            scenarioResults: data.data.scenarioResults.map((sr: any, idx: number) => ({
+              scenarioId: scenarios[idx].id,
+              scenarioName: sr.name,
+              probability: sr.probability,
+              targetFMV: data.data.targetFMV,
+              calculatedFMV: sr.fmvPerShare,
+              blackScholesParams: {
+                companyValue: sr.enterpriseValue,
+                strikePrice: 0,
+                timeToLiquidity:
+                  scenarios[idx].blackScholesParams?.timeToLiquidity ??
+                  globalParams.timeToLiquidity,
+                volatility:
+                  scenarios[idx].blackScholesParams?.volatility ?? globalParams.volatility,
+                riskFreeRate:
+                  scenarios[idx].blackScholesParams?.riskFreeRate ?? globalParams.riskFreeRate,
+                dividendYield:
+                  scenarios[idx].blackScholesParams?.dividendYield ?? globalParams.dividendYield,
+              },
+              breakpoints: [],
+              allocation: sr.allocation,
+              weightedContribution: sr.weightedContribution,
+              percentOfWeightedValue:
+                data.data.actualWeightedFMV > 0
+                  ? (sr.weightedContribution / data.data.actualWeightedFMV) * 100
+                  : 0,
+            })),
+            probabilityValidation: {
+              valid: true,
+              totalProbability: scenarios.reduce((sum, s) => sum + s.probability, 0),
+              normalizedProbabilities: scenarios.map((s) => s.probability),
+            },
+            statistics: {
+              weightedMean: data.data.actualWeightedFMV,
+              weightedVariance: 0,
+              weightedStdDev: 0,
+              coefficientOfVariation: 0,
+              percentile25: 0,
+              percentile50: 0,
+              percentile75: 0,
+            },
+            metadata: {
+              method: data.data.metadata?.method || 'hybrid',
+              executionTimeMs: data.data.metadata?.executionTimeMs || 0,
+            },
+            warnings: data.data.warnings,
+          }
+          setResult(transformedResult)
+          onResultCalculated?.(transformedResult)
+        } else {
+          throw new Error(data.error || 'Calculation failed')
+        }
       } else {
-        throw new Error(data.error || 'Calculation failed')
+        // All manual - call regular hybrid API (if it exists)
+        // For now, show error since we removed the old hybrid API
+        throw new Error(
+          'Regular hybrid PWERM (all manual scenarios) is not yet implemented. Use at least one backsolve scenario.'
+        )
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -253,9 +412,41 @@ export function HybridScenarioManager({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Target Security */}
+            <div>
+              <Label className="text-base font-semibold">
+                Target Security{' '}
+                {backsolveScenario && <span className="text-xs text-muted-foreground">*</span>}
+              </Label>
+              {backsolveScenario && (
+                <Alert className="mt-2">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    The backsolve scenario will calculate the enterprise value needed to achieve
+                    this security's price per share (weighted across all scenarios)
+                  </AlertDescription>
+                </Alert>
+              )}
+              <div className="mt-2">
+                <Label htmlFor="security">Security Class</Label>
+                <Select value={selectedSecurityId} onValueChange={setSelectedSecurityId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select a security" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {securities.map((security) => (
+                      <SelectItem key={security.id} value={security.id}>
+                        {security.name} - ${security.pricePerShare.toFixed(4)}/share
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {/* Global Parameters */}
             <div>
-              <Label className="text-base font-semibold">Global Parameters</Label>
+              <Label className="text-base font-semibold">Global Black-Scholes Parameters</Label>
               <Alert className="mt-2">
                 <Info className="h-4 w-4" />
                 <AlertDescription>
@@ -309,48 +500,71 @@ export function HybridScenarioManager({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="securityClass">Security Class</Label>
+                  <Label htmlFor="dividendYield">Dividend Yield (%)</Label>
                   <Input
-                    id="securityClass"
-                    type="text"
-                    value={securityClassId}
-                    onChange={(e) => setSecurityClassId(e.target.value)}
-                    placeholder="e.g., common"
+                    id="dividendYield"
+                    type="number"
+                    value={(globalParams.dividendYield * 100).toFixed(1)}
+                    onChange={(e) =>
+                      setGlobalParams((prev) => ({
+                        ...prev,
+                        dividendYield: parseFloat(e.target.value) / 100 || 0,
+                      }))
+                    }
                     className="mt-1"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Probability Summary */}
-            <div className="bg-muted/50 flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <div className="text-sm text-muted-foreground">Total Probability</div>
-                <div className="text-2xl font-bold">
-                  {totalProbability.toFixed(1)}%
-                  {probabilityValidation?.valid ? (
-                    <span className="ml-2 text-sm font-normal text-green-600">✓ Valid</span>
-                  ) : (
-                    <span className="ml-2 text-sm font-normal text-red-600">✗ Invalid</span>
-                  )}
+            {/* Probability Summary & Validation */}
+            <div className="space-y-2">
+              <div className="bg-muted/50 flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <div className="text-sm text-muted-foreground">Total Probability</div>
+                  <div className="text-2xl font-bold">
+                    {totalProbability.toFixed(1)}%
+                    {probabilityValidation?.valid ? (
+                      <span className="ml-2 text-sm font-normal text-green-600">✓ Valid</span>
+                    ) : (
+                      <span className="ml-2 text-sm font-normal text-red-600">✗ Invalid</span>
+                    )}
+                  </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNormalizeProbabilities}
+                  disabled={scenarios.length === 0}
+                >
+                  Normalize to 100%
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNormalizeProbabilities}
-                disabled={scenarios.length === 0}
-              >
-                Normalize to 100%
-              </Button>
-            </div>
 
-            {probabilityValidation && !probabilityValidation.valid && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{probabilityValidation.errors.join(', ')}</AlertDescription>
-              </Alert>
-            )}
+              {probabilityValidation && !probabilityValidation.valid && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{probabilityValidation.errors.join(', ')}</AlertDescription>
+                </Alert>
+              )}
+
+              {backsolveCount > 1 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Only one scenario can be in backsolve mode. You currently have {backsolveCount}{' '}
+                    backsolve scenarios.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {calculating && (
+                <Alert>
+                  <LoadingSpinner size="sm" className="h-4 w-4" />
+                  <AlertDescription>Calculating weighted backsolve...</AlertDescription>
+                </Alert>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -380,36 +594,13 @@ export function HybridScenarioManager({
         ))}
       </div>
 
-      {/* Calculate Button */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={handleCalculate}
-              disabled={calculating || !probabilityValidation?.valid || scenarios.length === 0}
-              className="flex-1"
-              size="lg"
-            >
-              {calculating ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2" /> Calculating...
-                </>
-              ) : (
-                <>
-                  <Calculator className="mr-2 h-4 w-4" /> Calculate Hybrid PWERM
-                </>
-              )}
-            </Button>
-          </div>
-
-          {error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+      {/* Errors */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Results */}
       {result && <HybridResultsDisplay result={result} />}

@@ -104,6 +104,7 @@ function LoginForm() {
       if (authData.user) {
         // Redirect to intended destination or dashboard
         router.push(redirectTo)
+        router.refresh()
       }
     } catch (err) {
       console.error('Login error:', err)

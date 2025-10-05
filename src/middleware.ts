@@ -73,6 +73,7 @@ export async function middleware(request: NextRequest) {
     '/auth/callback',
     '/auth/reset-password',
     '/api/auth',
+    '/onboarding',
   ]
 
   const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
