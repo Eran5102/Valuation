@@ -102,9 +102,8 @@ function LoginForm() {
       }
 
       if (authData.user) {
-        // Redirect to intended destination or dashboard
-        router.push(redirectTo)
-        router.refresh()
+        // Use window.location for a hard redirect to ensure cookies are set
+        window.location.href = redirectTo
       }
     } catch (err) {
       console.error('Login error:', err)
