@@ -12,7 +12,6 @@ import {
   TimelineIcon,
   TimelineDescription,
   TimelineContent,
-  TimelineTime,
 } from '@/components/ui/timeline'
 import { Badge } from '@/components/ui/badge'
 
@@ -95,7 +94,7 @@ export default function ActivityPage() {
                         <Icon className="h-4 w-4" />
                       </TimelineIcon>
                       <TimelineTitle>{activity.title}</TimelineTitle>
-                      <TimelineTime>{activity.timestamp}</TimelineTime>
+                      <span className="text-sm text-muted-foreground">{activity.timestamp}</span>
                     </TimelineHeader>
                     <TimelineContent>
                       <TimelineDescription className="flex items-center gap-2">
