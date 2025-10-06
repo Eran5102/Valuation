@@ -9,7 +9,10 @@
       "Bash($env:DATABASE_URL)",
       "Bash(npx supabase:*)",
       "Bash(del test-theme-save.js)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
