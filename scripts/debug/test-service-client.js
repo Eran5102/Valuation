@@ -21,8 +21,8 @@ async function testServiceClient() {
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   })
 
   // Create anon client (subject to RLS)
@@ -61,9 +61,9 @@ async function testServiceClient() {
       variables_schema: {},
       branding: {
         primaryColor: '#000000',
-        fontFamily: 'Arial'
+        fontFamily: 'Arial',
       },
-      version: 1
+      version: 1,
     }
 
     const { data, error } = await serviceClient
@@ -96,10 +96,7 @@ async function testServiceClient() {
 
   console.log('\n--- Testing with Anon Key (should be subject to RLS) ---')
   try {
-    const { data, error } = await anonClient
-      .from('report_templates')
-      .select('id, name')
-      .limit(5)
+    const { data, error } = await anonClient.from('report_templates').select('id, name').limit(5)
 
     if (error) {
       console.error('⚠️  Anon client error (expected):', error.message)

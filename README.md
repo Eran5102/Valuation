@@ -61,6 +61,8 @@ npm install
 
 ### 3. Configure Environment Variables
 
+**📖 See [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) for detailed setup guide**
+
 Copy the example environment file:
 
 ```bash
@@ -138,6 +140,8 @@ npm run test:integration # Integration tests only
 
 ## 🚀 Deployment
 
+**📖 See [VERCEL_SYNC.md](VERCEL_SYNC.md) for environment variable sync guide**
+
 ### Build for Production
 
 ```bash
@@ -152,9 +156,18 @@ npm start
 
 ### Deploy to Vercel
 
+**Option 1: Automatic (Recommended)**
+
+- Push to `main` branch - Vercel auto-deploys
+- Environment variables must be set in Vercel Dashboard
+
+**Option 2: Manual Deploy**
+
 ```bash
 vercel deploy
 ```
+
+**Important**: Vercel uses environment variables from the Dashboard, NOT from `.env` files in your repo. See [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) for details.
 
 ## 📝 Available Scripts
 
