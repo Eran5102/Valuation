@@ -118,7 +118,17 @@ export interface ReportTemplate {
       fontSize?: number
       position?: string
     }
+    theme?: string // Theme ID
+    themeColors?: {
+      primary?: string
+      secondary?: string
+      accent?: string
+      background?: string
+      text?: string
+      muted?: string
+    }
   }
+  branding?: any // Additional branding configuration (fonts, spacing, etc.)
 }
 
 export interface GeneratedReport {

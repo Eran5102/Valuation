@@ -16,7 +16,7 @@ export class TemplatePersistenceService {
     try {
       const method = template.id && !template.id.startsWith('template_') ? 'PUT' : 'POST'
 
-      const response = await fetch('/api/templates', {
+      const response = await fetch('/api/report-templates', {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export class TemplatePersistenceService {
    */
   static async loadTemplate(templateId: string): Promise<ReportTemplate | null> {
     try {
-      const response = await fetch(`/api/templates?id=${templateId}`)
+      const response = await fetch(`/api/report-templates?id=${templateId}`)
 
       if (!response.ok) {
         console.error('Failed to load template:', response.status)
@@ -72,7 +72,7 @@ export class TemplatePersistenceService {
    */
   static async loadTemplates(): Promise<ReportTemplate[]> {
     try {
-      const response = await fetch('/api/templates')
+      const response = await fetch('/api/report-templates')
 
       if (!response.ok) {
         console.error('Failed to load templates:', response.status)
@@ -100,7 +100,7 @@ export class TemplatePersistenceService {
    */
   static async deleteTemplate(templateId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const response = await fetch(`/api/templates?id=${templateId}`, {
+      const response = await fetch(`/api/report-templates?id=${templateId}`, {
         method: 'DELETE',
       })
 

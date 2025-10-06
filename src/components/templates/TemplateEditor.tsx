@@ -114,7 +114,7 @@ export function TemplateEditor({ template, onSave, onPreview, className }: Templ
   const [dialogInputValue, setDialogInputValue] = useState('')
   const [currentSectionId, setCurrentSectionId] = useState<string>('')
 
-  const currentSection = currentTemplate.sections.find((s) => s.id === selectedSection)
+  const currentSection = currentTemplate.sections?.find((s) => s.id === selectedSection)
 
   const handleSave = useCallback(() => {
     onSave(currentTemplate)

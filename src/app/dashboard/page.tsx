@@ -189,7 +189,6 @@ export default function Dashboard() {
       // Fetch real data from APIs with better error handling
       let valuations = []
       let companies = []
-      let reports = []
 
       try {
         const valuationsRes = await fetch(`/api/valuations?t=${Date.now()}`)
@@ -213,16 +212,6 @@ export default function Dashboard() {
         console.error('Error fetching companies:', err)
       }
 
-      try {
-        const reportsRes = await fetch(`/api/reports?t=${Date.now()}`)
-        if (reportsRes.ok) {
-          const data = await reportsRes.json()
-          reports = data.data || []
-        }
-      } catch (err) {
-        console.error('Error fetching reports:', err)
-      }
-
       // Calculate real stats based on actual data
       console.log('[Dashboard] Filtering valuations with user ID:', user?.id)
       const myActiveValuations = valuations.filter((v: any) => {
@@ -240,9 +229,7 @@ export default function Dashboard() {
 
       const myClients = companies.filter((c: any) => c.assigned_to === user?.id).length
 
-      const myPendingReports = reports.filter(
-        (r: any) => r.assigned_to === user?.id && r.status === 'pending'
-      ).length
+      const myPendingReports = 0 // Reports feature not yet implemented
 
       const teamValuations = valuations.filter((v: any) =>
         v.team_members?.includes(user?.id)
@@ -283,23 +270,7 @@ export default function Dashboard() {
           })
         })
 
-      // Add recent reports if any
-      reports
-        .sort(
-          (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-        .slice(0, 2)
-        .forEach((r: any, index: number) => {
-          recentActivity.push({
-            id: recentActivity.length + index + 1,
-            type: 'report',
-            title: r.title || 'Report',
-            client: r.client_name || 'Unknown Client',
-            timestamp: getRelativeTime(r.created_at),
-            status: r.status || 'draft',
-            user: r.assigned_to === user?.id ? extractedFirstName : 'Team',
-          })
-        })
+      // Reports feature not yet implemented - skip recent reports
 
       // Create upcoming deadlines from valuations with next_review dates
       const upcomingDeadlines: DeadlineItem[] = valuations

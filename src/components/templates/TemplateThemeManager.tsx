@@ -224,6 +224,43 @@ export function TemplateThemeManager({ template, onChange }: TemplateThemeManage
   const [customTheme, setCustomTheme] = useState<TemplateTheme | null>(null)
   const [activeTab, setActiveTab] = useState<'themes' | 'custom'>('themes')
 
+  // Load and re-apply theme from template settings on mount
+  React.useEffect(() => {
+    if (template.settings?.theme) {
+      const theme = defaultThemes.find((t) => t.id === template.settings?.theme)
+      if (theme) {
+        setSelectedTheme(theme)
+
+        // Re-apply theme to blocks if they don't already have the theme styling
+        // Check if we need to re-apply by looking at first block's styling
+        const firstBlock = template.sections?.[0]?.blocks?.[0]
+        const needsReapply = firstBlock && firstBlock.styling?.color !== theme.colors.text
+
+        if (needsReapply) {
+          // Apply theme without triggering save
+          const updatedSections = template.sections.map((section) => ({
+            ...section,
+            blocks: section.blocks.map((block) => ({
+              ...block,
+              styling: {
+                ...block.styling,
+                fontFamily: block.type === 'header' ? theme.fonts.heading : theme.fonts.body,
+                color: theme.colors.text,
+              },
+            })),
+          }))
+
+          const updatedTemplate = {
+            ...template,
+            sections: updatedSections,
+          }
+
+          onChange(updatedTemplate)
+        }
+      }
+    }
+  }, [template.settings?.theme, template.id, onChange])
+
   const applyTheme = useCallback(
     (theme: TemplateTheme) => {
       // Apply theme to template by updating the styling of all blocks
